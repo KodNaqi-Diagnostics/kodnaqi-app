@@ -142,6 +142,40 @@ body {
     cursor: pointer;
   }
 
+
+  /* ═══ نظام الثيمات (متغيرات الألوان) ═══ */
+  :root {
+    --primary-color: #0d3b66;
+    --secondary-color: #1e6091;
+    --accent-color: #c9a227;
+  }
+  
+  /* الثيمات (سيتم تفعيلها عند إضافة data-theme للـ html) */
+  [data-theme="navy"] { --primary-color: #0d3b66; --secondary-color: #1e6091; --accent-color: #c9a227; }
+  [data-theme="emerald"] { --primary-color: #064e3b; --secondary-color: #047857; --accent-color: #fbbf24; }
+  [data-theme="purple"] { --primary-color: #4c1d95; --secondary-color: #6d28d9; --accent-color: #fcd34d; }
+  [data-theme="crimson"] { --primary-color: #7f1d1d; --secondary-color: #b91c1c; --accent-color: #fde047; }
+  [data-theme="teal"] { --primary-color: #134e4a; --secondary-color: #0f766e; --accent-color: #fcd34d; }
+  [data-theme="midnight"] { --primary-color: #0f172a; --secondary-color: #1e293b; --accent-color: #38bdf8; }
+  
+  /* ═══ تطبيق الألوان على عناصر التطبيق ═══ */
+  /* الشريط العلوي */
+  .navbar, header { background: var(--primary-color) !important; }
+  
+  /* الأزرار الأساسية */
+  .btn-primary { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; }
+  .btn-outline-primary { color: var(--primary-color) !important; border-color: var(--primary-color) !important; }
+  .btn-outline-primary:hover { background-color: var(--primary-color) !important; color: white !important; }
+  
+  /* الشريط السفلي */
+  .bottom-nav a.active { color: var(--primary-color) !important; }
+  
+  /* النصوص والعناوين */
+  .text-primary, h1, h2, h3 { color: var(--primary-color) !important; }
+  
+  /* حقول الإدخال (الحدود عند التركيز) */
+  .form-control:focus { border-color: var(--primary-color) !important; box-shadow: 0 0 0 0.25rem rgba(13, 59, 102, 0.25) !important; }
+
 </style>
 <link href="./theme.css?v=2" rel="stylesheet">
 </head>

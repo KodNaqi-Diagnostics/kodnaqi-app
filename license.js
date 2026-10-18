@@ -213,7 +213,13 @@
       + '</div>';
     document.documentElement.appendChild(div);
     const btn = div.querySelector('#kodnaqi-open-license');
-    if (btn) btn.addEventListener('click', function() { showDialog(); });
+    if (btn) btn.addEventListener('click', function(e) { 
+      e.preventDefault();
+      try { localStorage.removeItem('kodnaqi_license'); } catch(err) {}
+      const dialog = document.getElementById('kodnaqi-license-dialog');
+      if (dialog) dialog.remove();
+      showActivationInput(); 
+    });
   }
 
   function removeExpiryOverlay() {
@@ -355,26 +361,27 @@
   }
 
   // ═══ القراءة النشطة (ترخيص أو تجريبية) ═══
-  async function getActivePayload() {
+    async function getActivePayload() {
     const st = await getLicenseStatus();
-    if (st.status === 'valid') { setExpiryLock(false); removeExpiryOverlay(); return st.payload; }
+    if (st.status === 'valid') return st.payload;
+    
+    // ═══ إصلاح أمني: إذا كان الترخيص ملغى أو منتهي، لا نعود للتجريبي ═══
+    if (st.status === 'invalid') return null;
 
-    // إذا كان هناك ترخيص لكنه منتهٍ/غير صالح: لا نسمح بالدخول في TRIAL، ونقفل النظام مع بقاء البيانات
-    if (st && st.data && st.data.key && st.status !== 'valid') {
-      setExpiryLock(true);
-      ensureExpiryOverlay();
-      return null;
-    }
-
-    // في وضع TRIAL: نُعيد حمولة وهمية حتى تعمل الميزات
+    // فقط إذا لم يكن هناك ترخيص من الأساس، نسمح بالتجريبي
     const trial = await getTrialStatus();
-    if (trial.active) { setExpiryLock(false); removeExpiryOverlay(); return { tier: 'TRIAL' }; }
+    if (trial.active) return { tier: 'TRIAL' };
     return null;
   }
 
   async function getActiveTier() {
     const p = await getActivePayload();
     if (p) return p.tier;
+    
+    // ═══ إصلاح أمني: منع العودة للتجريبي عند إلغاء الترخيص ═══
+    const st = await getLicenseStatus();
+    if (st.status === 'invalid') return null;
+
     const trial = await getTrialStatus();
     return trial.active ? 'TRIAL' : null;
   }
@@ -456,6 +463,51 @@
   }
 
   // ═══ نافذة الترخيص ═══
+  
+  function showActivationInput() {
+    const old = document.getElementById('kodnaqi-license-dialog');
+    if (old) old.remove();
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'kodnaqi-license-dialog';
+    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px;';
+    wrapper.innerHTML = `
+      <div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:22px;font-family:inherit;direction:rtl;">
+        <h2 style="margin:0 0 12px;color:#0d3b66;">تفعيل النظام</h2>
+        <div style="background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:14px;font-family:monospace;text-align:center;">
+          <div style="font-size:0.85rem;color:#64748b;margin-bottom:4px;">كود هذا الجهاز:</div>
+          <div style="font-size:1.4rem;font-weight:800;color:#0d3b66;letter-spacing:2px;">${formatDeviceCode(_cachedCode || 'XXXXXX')}</div>
+        </div>
+        <input id="kodnaqi-license-input" type="text" placeholder="الصق المفتاح الجديد هنا" style="width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;font-family:monospace;font-size:0.9rem;margin-bottom:10px;box-sizing:border-box;">
+        <div id="kodnaqi-license-msg" style="min-height:20px;color:#dc2626;margin-bottom:10px;font-size:0.9rem;"></div>
+        <button id="kodnaqi-btn-activate" style="width:100%;padding:14px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;margin-bottom:8px;">✅ تفعيل</button>
+        <button id="kodnaqi-btn-close" style="width:100%;padding:12px;background:#e2e8f0;color:#334155;border:none;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;">إغلاق</button>
+      </div>
+    `;
+    document.body.appendChild(wrapper);
+
+    document.getElementById('kodnaqi-btn-close').onclick = () => wrapper.remove();
+    document.getElementById('kodnaqi-btn-activate').onclick = async () => {
+      const input = document.getElementById('kodnaqi-license-input');
+      const msg = document.getElementById('kodnaqi-license-msg');
+      const key = input.value.trim();
+      if (!key) return msg.textContent = 'الصق المفتاح أولاً';
+      
+      msg.style.color = '#0d3b66';
+      msg.textContent = 'جاري التحقق...';
+      
+      const result = await activate(key);
+      if (result.valid) {
+        msg.style.color = '#059669';
+        msg.textContent = '✅ تم التفعيل بنجاح';
+        setTimeout(() => { wrapper.remove(); location.reload(); }, 900);
+      } else {
+        msg.style.color = '#dc2626';
+        msg.textContent = '❌ ' + (result.reason || 'فشل التحقق');
+      }
+    };
+  }
+
   async function showDialog() {
     // إزالة أي نافذة سابقة
     const old = document.getElementById('kodnaqi-license-dialog');
