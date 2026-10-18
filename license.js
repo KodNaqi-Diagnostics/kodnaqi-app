@@ -364,6 +364,11 @@
 
   // ═══ التجريبية ═══
   async function getTrialStatus() {
+    // ═══ إصلاح أمني: إذا كان الجهاز قد فعّل ترخيصاً مدفوعاً سابقاً، يُمنع من التجريبي ═══
+    if (safeGet('kodnaqi_ever_activated') === 'true') {
+      return { active: false, daysLeft: 0, startMs: 0, elapsed: 0, expired: true };
+    }
+
     let start = safeGet(TRIAL_KEY);
     if (!start) {
       start = String(Date.now());
@@ -489,7 +494,7 @@
 
     const wrapper = document.createElement('div');
     wrapper.id = 'kodnaqi-license-dialog';
-    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px;';
+    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000000;padding:16px;';
     wrapper.innerHTML = `
       <div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:22px;font-family:inherit;direction:rtl;">
         <h2 style="margin:0 0 12px;color:#0d3b66;">تفعيل النظام</h2>
@@ -566,10 +571,38 @@
         <div style="font-size:3rem;margin-bottom:15px;">🔒</div>
         <h2 style="color:#dc2626;margin:0 0 10px;font-weight:900;">${title}</h2>
         <p style="color:#475569;margin-bottom:25px;line-height:1.7;font-size:1.05rem;">${msg}</p>
-        <button onclick="document.getElementById('kn-lock-overlay').remove(); window.KodNaqiLicense.showDialog();" style="width:100%;padding:15px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:white;border:none;border-radius:10px;font-weight:bold;font-size:1.1rem;cursor:pointer;">🔑 إدخال مفتاح الترخيص</button>
+        <button onclick="window.KodNaqiLicense.showDialog();" style="width:100%;padding:15px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:white;border:none;border-radius:10px;font-weight:bold;font-size:1.1rem;cursor:pointer;">🔑 إدخال مفتاح الترخيص</button>
         <p style="color:#94a3b8;font-size:0.8rem;margin-top:20px;">معمل الحياة الطبي - KodNaqi Diagnostics</p>
       </div>
     `;
+  }
+
+  
+  async function manualVerify() {
+    if (!navigator.onLine) {
+      if (window.showKNAlert) window.showKNAlert('غير متصل', 'أنت غير متصل بالإنترنت حالياً. يرجى الاتصال بالشبكة أولاً للتحقق من الترخيص.', 'warning');
+      return;
+    }
+
+    const raw = safeGet(STORAGE_KEY);
+    if (!raw) {
+      if (window.showKNAlert) window.showKNAlert('لا يوجد ترخيص', 'لم يتم العثور على ترخيص مفعل على هذا الجهاز.', 'info');
+      return;
+    }
+
+    let data;
+    try { data = JSON.parse(raw); } catch(e) { return; }
+    
+    if (window.showKNAlert) window.showKNAlert('جاري التحقق', 'يتم الآن الاتصال بالخادم للتحقق من صحة الترخيص...', 'info');
+    
+    const check = await verify(data.key);
+    if (check.valid) {
+      if (window.showKNAlert) window.showKNAlert('الترخيص سليم', 'تم التحقق من الترخيص بنجاح! النظام يعمل بشكل صحيح.', 'success');
+    } else {
+      let msg = 'فشل التحقق. السبب: ' + (check.reason || 'غير معروف');
+      if (check.reason === 'server_revoked') msg = 'تم إلغاء هذا الترخيص من قبل الإدارة. يرجى التواصل مع الدعم.';
+      if (window.showKNAlert) window.showKNAlert('تنبيه الترخيص', msg, 'error');
+    }
   }
 
   async function showDialog() {
@@ -606,7 +639,7 @@
 
     const wrapper = document.createElement('div');
     wrapper.id = 'kodnaqi-license-dialog';
-    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px;';
+    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000000;padding:16px;';
 
     wrapper.innerHTML = ''
       + '<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:22px;font-family:inherit;direction:rtl;">'
@@ -702,6 +735,7 @@
     getTierInfo: getTierInfo,
     getTierLimits: getTierLimits,
     showDialog: showDialog,
+    manualVerify: manualVerify,
     // جديدة
     getLicenseStatus: getLicenseStatus,
     getTrialStatus: getTrialStatus,

@@ -1029,6 +1029,60 @@ window.showKNAlert = function(title, message, type) {
 };
 </script>
 
+
+<script>
+// ═══ تحويل كل alert() في النظام إلى النافذة الجميلة ═══
+window.originalAlert = window.alert;
+window.alert = function(msg) {
+  if (window.showKNAlert) {
+    window.showKNAlert('تنبيه', msg, 'info');
+  } else {
+    window.originalAlert(msg);
+  }
+};
+
+// ═══ إضافة زر التحقق من الترخيص في صفحة الإعدادات ═══
+setTimeout(function() {
+  const settingsPage = document.getElementById('page-settings');
+  if (settingsPage && !document.getElementById('kn-license-status-widget')) {
+    const widget = document.createElement('div');
+    widget.id = 'kn-license-status-widget';
+    widget.className = 'card p-3 mb-3';
+    widget.style.cssText = 'background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;';
+    widget.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:bold; color:#0d3b66;"><i class="bi bi-shield-check"></i> حالة الترخيص والاتصال</div>
+        <span id="kn-net-status" style="font-size:0.8rem; background:#e2e8f0; padding:4px 8px; border-radius:12px;">⏳ جاري الفحص</span>
+      </div>
+      <div style="margin-top:12px;">
+        <button onclick="window.KodNaqiLicense.manualVerify()" style="width:100%; padding:10px; background:#0d3b66; color:#fff; border:none; border-radius:8px; font-weight:bold;">🔄 التحقق من الشبكة الآن</button>
+      </div>
+    `;
+    // إضافة الودجت في أعلى صفحة الإعدادات
+    settingsPage.insertAdjacentHTML('afterbegin', widget);
+
+    // تحديث حالة الشبكة
+    function updateNetStatus() {
+      const el = document.getElementById('kn-net-status');
+      if (!el) return;
+      if (navigator.onLine) {
+        el.textContent = '🟢 متصل بالإنترنت';
+        el.style.background = '#dcfce7';
+        el.style.color = '#166534';
+      } else {
+        el.textContent = '🔴 غير متصل (أوفلاين)';
+        el.style.background = '#fee2e2';
+        el.style.color = '#991b1b';
+      }
+    }
+    
+    updateNetStatus();
+    window.addEventListener('online', updateNetStatus);
+    window.addEventListener('offline', updateNetStatus);
+  }
+}, 1500);
+</script>
+
 </body>
 </html>
 
