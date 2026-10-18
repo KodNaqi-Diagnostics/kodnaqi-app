@@ -1,24 +1,14 @@
 name: Build KodNaqi APK
-
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: kodnaqi-apk-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,21 +38,26 @@ jobs:
       - name: Grant Gradle permission
         run: chmod +x android/gradlew
 
-      - name: Verify Android project
-        run: |
-          test -f android/gradlew
-          test -f android/settings.gradle
-          test -f android/app/build.gradle
-          test -f android/app/src/main/AndroidManifest.xml
-
       - name: Build debug APK
         working-directory: android
         run: ./gradlew --no-daemon assembleDebug
 
-      - name: Upload APK
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: android/app/build/outputs/apk/debug
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: KodNaqi-APK
-          path: android/app/build/outputs/apk/debug/*.apk
+          name: KodNaqi-APK-Signed
+          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
           if-no-files-found: error
           retention-days: 14
