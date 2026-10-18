@@ -215,7 +215,7 @@
     const btn = div.querySelector('#kodnaqi-open-license');
     if (btn) btn.addEventListener('click', function(e) { 
       e.preventDefault();
-      try { localStorage.removeItem('kodnaqi_license'); } catch(err) {}
+      // لا نمسح الترخيص هنا حتى لا نعود للتجريبي
       const dialog = document.getElementById('kodnaqi-license-dialog');
       if (dialog) dialog.remove();
       showActivationInput(); 
@@ -615,31 +615,9 @@
     const devCode = await getMyDeviceCode();
     const formatted = formatDeviceCode(devCode);
 
-    let statusHtml = '';
-    let actionLabel = 'تفعيل المفتاح';
-    let hideInput = false;
-
-    if (status.status === 'valid') {
-      const p = status.payload;
-      const tierName = TIER_NAMES[p.tier] || p.tier;
-      const daysText = status.daysLeft === Infinity ? 'دائم' : status.daysLeft + ' يوم';
-      statusHtml = '<div style="background:#d1fae5;color:#065f46;padding:12px;border-radius:8px;margin-bottom:14px;">'
-                 + '<strong>✅ الترخيص نشط</strong><br>'
-                 + 'الباقة: ' + tierName + '<br>'
-                 + 'المتبقي: ' + daysText + '</div>';
-      actionLabel = 'إلغاء الترخيص';
-    } else if (trial.active) {
-      statusHtml = '<div style="background:#fef3c7;color:#92400e;padding:12px;border-radius:8px;margin-bottom:14px;">'
-                 + '<strong>⏳ تجريبية</strong> — متبقٍ ' + trial.daysLeft + ' يوم</div>';
-    } else {
-      statusHtml = '<div style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;margin-bottom:14px;">'
-                 + '<strong>❌ الترخيص منتهٍ</strong></div>';
-      hideInput = false;
-    }
-
     const wrapper = document.createElement('div');
     wrapper.id = 'kodnaqi-license-dialog';
-    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000000;padding:16px;';
+    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000001;padding:16px;';
 
     wrapper.innerHTML = ''
       + '<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:22px;font-family:inherit;direction:rtl;">'
