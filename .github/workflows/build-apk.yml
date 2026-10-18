@@ -42,22 +42,28 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon assembleDebug
 
-      - name: Sign APK
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: android/app/build/outputs/apk/debug
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
+      - name: Decode and Sign APK
+        run: |
+          # 1. Decode the keystore from secrets
+          echo "${{ secrets.SIGNING_KEY }}" | base64 -d > android/app/build/outputs/apk/debug/signingKey.jks
+          
+          # 2. Locate Build Tools
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/34.0.0"
+          
+          # 3. Sign the APK (Using PKCS12 format explicitly)
+          $BUILD_TOOLS/apksigner sign \
+            --ks android/app/build/outputs/apk/debug/signingKey.jks \
+            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEY_STORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --ks-type PKCS12 \
+            --out android/app/build/outputs/apk/debug/app-signed.apk \
+            android/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
           name: KodNaqi-APK-Signed
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          path: android/app/build/outputs/apk/debug/app-signed.apk
           if-no-files-found: error
           retention-days: 14
