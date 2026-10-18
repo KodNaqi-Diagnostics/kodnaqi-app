@@ -504,19 +504,33 @@
       } catch(e) {
         return;
       }
-      if (!check.valid) {
+            if (!check.valid) {
         let msg = '❌ مفتاح الترخيص غير صحيح';
         if (check.reason === 'wrong_device') {
           msg = '⚠️ هذا المفتاح مُصدَر لجهاز آخر\n\n' +
-                'المفتاح يخص: ' + (check.expected || '—') + '\n' +
-                'جهازك الحالي: ' + (check.actual || '—') + '\n\n' +
-                'أرسل كود جهازك للدعم.';
+          'المفتاح يخص: ' + (check.expected || '—') + '\n' +
+          'جهازك الحالي: ' + (check.actual || '—') + '\n\n' +
+          'أرسل كود جهازك للدعم.';
         } else if (check.reason === 'signature') {
-          msg = '❌ المفتاح غير أصلي';
+          msg = '❌ المفتاح غير أصلي (توقيع غير صالح)';
         } else if (check.reason === 'format') {
           msg = '❌ صيغة المفتاح غير صحيحة';
+        } else if (check.reason === 'server_revoked' || check.reason === 'server_suspended') {
+          msg = '⛔ تم إلغاء هذا الترخيص من قبل الإدارة.\n\nيرجى التواصل مع الدعم الفني لتفعيل النظام.';
+        } else if (check.reason === 'server_not_found') {
+          msg = '❌ هذا الترخيص غير موجود في السجلات.\nيرجى التأكد من المفتاح أو التواصل مع الدعم.';
+        } else if (check.reason === 'network_unreachable') {
+          msg = '🌐 لا يوجد اتصال بالإنترنت.\n\nيجب تفعيل الترخيص لأول مرة وأنت متصل بالإنترنت، أو التأكد من صحة المفتاح.';
+        } else if (check.reason === 'expired') {
+          msg = '⏰ انتهت صلاحية هذا الترخيص. يرجى التجديد.';
         } else {
-          msg += '\n\nتأكد من إدخاله كاملًا';
+          msg += '\n\nتأكد من إدخاله كاملاً.';
+        }
+
+        if (typeof window.showKNAlert === 'function') {
+          window.showKNAlert('فشل التفعيل', msg, 'error');
+        } else {
+          alert(msg);
         }
         return;
       }

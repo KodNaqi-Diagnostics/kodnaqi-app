@@ -258,13 +258,29 @@
   async function checkServer(payload) {
     if (!payload || !payload.id) return { ok: true };
     if (!window.KodNaqiSecurity || !window.KodNaqiSecurity.checkServerStatus) return { ok: true };
+    
     const remote = await window.KodNaqiSecurity.checkServerStatus(payload.id);
+    
+    // 1. إذا وصلنا للخادم بنجاح
     if (remote.ok) {
       if (remote.status === 'revoked' || remote.status === 'suspended') {
         return { ok: false, valid: false, reason: 'server_' + remote.status };
       }
       return { ok: true };
     }
+    
+    // 2. إذا قال الخادم أن الترخيص غير موجود (محذوف)
+    if (remote.reason === 'not_found') {
+      return { ok: false, valid: false, reason: 'server_not_found' };
+    }
+    
+    // 3. إذا رفض الخادم القراءة (خطأ في القواعد)
+    if (remote.reason === 'http_401' || remote.reason === 'http_403') {
+      return { ok: false, valid: false, reason: 'server_auth_failed' };
+    }
+    
+    // 4. إذا فشل الاتصال (بدون إنترنت)
+    // نسمح فقط إذا كان لدينا كاش سابق يثبت أن الترخيص كان سليماً
     const cached = window.KodNaqiSecurity.getCachedServerStatus(payload.id);
     if (cached) {
       if (cached.status === 'revoked' || cached.status === 'suspended') {
@@ -275,8 +291,11 @@
       if (age > grace) {
         return { ok: false, valid: false, reason: 'offline_grace_exceeded' };
       }
+      return { ok: true }; // كاش صالح
     }
-    return { ok: true };
+    
+    // 5. لا يوجد كاش ولا إنترنت -> نرفض (يجب تفعيله أونلاين لأول مرة)
+    return { ok: false, valid: false, reason: 'network_unreachable' };
   }
 
   async function verify(key) {
@@ -508,6 +527,51 @@
     };
   }
 
+  
+  // ═══ نظام الإغلاق القسري (Anti-Bypass Lock) ═══
+  async function enforceLicenseOnStartup() {
+    try {
+      const st = await getLicenseStatus();
+      if (st.status === 'valid') return; // الترخيص سليم
+      
+      const trial = await getTrialStatus();
+      if (st.status === 'none' && trial.active) return; // تجريبي سليم
+
+      // إغلاق النظام
+      showLockScreen(st);
+    } catch(e) {
+      console.warn('License check failed, check network.', e);
+    }
+  }
+
+  function showLockScreen(status) {
+    let overlay = document.getElementById('kn-lock-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'kn-lock-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:#f8fafc;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+      document.body.appendChild(overlay);
+    }
+    
+    let title = 'انتهت صلاحية الترخيص';
+    let msg = 'تم إيقاف النظام مؤقتاً. بياناتك محفوظة ولم تُحذف. يرجى تجديد الاشتراك.';
+    
+    if (status.reason && String(status.reason).includes('revoked')) {
+      title = 'تم إلغاء الترخيص';
+      msg = 'تم إلغاء ترخيص هذا الجهاز من قبل الإدارة. يرجى التواصل مع الدعم الفني لتفعيل النظام.';
+    }
+
+    overlay.innerHTML = `
+      <div style="background:white;padding:30px;border-radius:16px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.1);border-top:5px solid #dc2626;">
+        <div style="font-size:3rem;margin-bottom:15px;">🔒</div>
+        <h2 style="color:#dc2626;margin:0 0 10px;font-weight:900;">${title}</h2>
+        <p style="color:#475569;margin-bottom:25px;line-height:1.7;font-size:1.05rem;">${msg}</p>
+        <button onclick="document.getElementById('kn-lock-overlay').remove(); window.KodNaqiLicense.showDialog();" style="width:100%;padding:15px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:white;border:none;border-radius:10px;font-weight:bold;font-size:1.1rem;cursor:pointer;">🔑 إدخال مفتاح الترخيص</button>
+        <p style="color:#94a3b8;font-size:0.8rem;margin-top:20px;">معمل الحياة الطبي - KodNaqi Diagnostics</p>
+      </div>
+    `;
+  }
+
   async function showDialog() {
     // إزالة أي نافذة سابقة
     const old = document.getElementById('kodnaqi-license-dialog');
@@ -651,11 +715,16 @@
     TIER_FEATURES: TIER_FEATURES
   };
 
-  // تشغيل تلقائي
+  // تشغيل تلقائي (فحص الإغلاق والقيود)
+  async function startupCheck() {
+    try { await applyRestrictions(); } catch(e) { console.warn('Restrictions error', e); }
+    try { await enforceLicenseOnStartup(); } catch(e) { console.warn('Lock error', e); }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { applyRestrictions().catch(function(){}); });
+    document.addEventListener('DOMContentLoaded', startupCheck);
   } else {
-    applyRestrictions().catch(function(){});
+    startupCheck();
   }
 
   console.log('[License] v2 (ECDSA) loaded');

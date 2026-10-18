@@ -981,6 +981,54 @@ window.knHandleBack = function() {
   return 'NOT_HANDLED';
 };
 </script>
+
+<script>
+// ═══ نافذة التنبيه الاحترافية (KodNaqi Alert) ═══
+window.showKNAlert = function(title, message, type) {
+  let icon = 'ℹ️';
+  let color = '#0d3b66';
+  if (type === 'error') { icon = '❌'; color = '#dc2626'; }
+  else if (type === 'warning') { icon = '⚠️'; color = '#f59e0b'; }
+  else if (type === 'success') { icon = '✅'; color = '#059669'; }
+
+  let modal = document.getElementById('kn-custom-alert');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'kn-custom-alert';
+    modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:999999; align-items:center; justify-content:center; padding:20px; backdrop-filter: blur(3px);';
+    modal.innerHTML = `
+      <div id="kn-alert-content" style="background:#fff; border-radius:16px; max-width:420px; width:100%; padding:30px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); transform: scale(0.9); transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        <div id="kn-alert-icon" style="font-size:3.5rem; margin-bottom:15px; line-height:1;"></div>
+        <h3 id="kn-alert-title" style="margin:0 0 10px; font-family:inherit; font-weight:900; font-size:1.3rem;"></h3>
+        <div id="kn-alert-msg" style="color:#475569; font-family:inherit; font-size:1rem; line-height:1.7; margin-bottom:25px; white-space:pre-wrap;"></div>
+        <button id="kn-alert-btn" style="width:100%; padding:14px; border:none; border-radius:10px; font-family:inherit; font-weight:800; font-size:1rem; cursor:pointer; color:#fff; transition: opacity 0.2s;">حسناً</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const iconEl = document.getElementById('kn-alert-icon');
+  const titleEl = document.getElementById('kn-alert-title');
+  const msgEl = document.getElementById('kn-alert-msg');
+  const btnEl = document.getElementById('kn-alert-btn');
+  const contentEl = document.getElementById('kn-alert-content');
+
+  iconEl.textContent = icon;
+  titleEl.textContent = title || 'تنبيه';
+  titleEl.style.color = color;
+  msgEl.textContent = message;
+  btnEl.style.background = color;
+
+  modal.style.display = 'flex';
+  setTimeout(() => { contentEl.style.transform = 'scale(1)'; }, 10);
+
+  btnEl.onclick = function() {
+    contentEl.style.transform = 'scale(0.9)';
+    setTimeout(() => { modal.style.display = 'none'; }, 200);
+  };
+};
+</script>
+
 </body>
 </html>
 
