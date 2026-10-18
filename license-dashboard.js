@@ -912,11 +912,11 @@
     window.updateDashboard();
   };
 
+  
   window.updateDashboard = function() {
     const content = document.getElementById('dashContent');
     if (!content) return;
 
-    // إذا كانت الواجهة غير مبنية بعد، نبنيها
     if (!document.getElementById('dashFilters')) {
       content.innerHTML = `
         <div id="dashFilters" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:15px;">
@@ -978,6 +978,17 @@
       }).join('');
     } else expBox.style.display = 'none';
 
+    // ═══ اكتشاف الأجهزة المكررة ═══
+    const activeDevices = {};
+    licenses.forEach(l => {
+      if (licStatusOf(l).key === 'active') {
+        (l.devices || []).forEach(d => {
+          if (!activeDevices[d]) activeDevices[d] = [];
+          activeDevices[d].push(l._id);
+        });
+      }
+    });
+
     const listEl = document.getElementById('dashLicensesList');
     if (filteredList.length === 0) {
       listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">لا توجد تراخيص</div>';
@@ -986,18 +997,29 @@
       listEl.innerHTML = filteredList.map(lic => {
         const st = licStatusOf(lic);
         const days = lic.expires ? Math.ceil((lic.expires - now) / 86400000) : '∞';
-        return `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;">
+        
+        let isDuplicate = false;
+        (lic.devices || []).forEach(d => {
+          if (activeDevices[d] && activeDevices[d].length > 1) isDuplicate = true;
+        });
+        
+        const borderStyle = isDuplicate ? 'border: 2px solid #dc3545; background:#fef2f2;' : 'border: 1px solid #e2e8f0;';
+        const duplicateWarning = isDuplicate ? '<div style="color:#dc3545; font-size:0.75rem; font-weight:bold; margin-top:5px;">⚠️ تحذير: هذا الجهاز مرتبط بأكثر من ترخيص نشط!</div>' : '';
+
+        return `<div style="${borderStyle}border-radius:10px;padding:12px; margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
             <strong style="color:#0d3b66;">${lic.customer}</strong>
             <span style="background:${st.color}22;color:${st.color};padding:3px 8px;border-radius:6px;font-size:0.75rem;">${st.label}</span>
           </div>
           <div style="display:flex;gap:10px;font-size:0.8rem;color:#334155;">
-            <span>🎯 ${lic.tier}</span> <span>📱 ${(lic.devices||[]).length}</span> <span>📅 متبقي ${days} يوم</span>
+            <span>🎯 ${lic.tier}</span> <span>📱 ${(lic.devices||[]).join(', ')}</span> <span>📅 متبقي ${days} يوم</span>
           </div>
+          ${duplicateWarning}
         </div>`;
       }).join('');
     }
   };
+
 
   window.licWhatsAppReminder = function(customer, expiry) {
     const days = Math.ceil((expiry - Date.now()) / 86400000);
