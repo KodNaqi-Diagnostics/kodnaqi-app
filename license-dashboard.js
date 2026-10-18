@@ -920,18 +920,30 @@
     if (!document.getElementById('dashFilters')) {
       content.innerHTML = `
         <div id="dashFilters" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:15px;">
-          <button class="btn btn-sm btn-primary" onclick="setDashFilter('ALL')">الكل</button>
-          <button class="btn btn-sm btn-outline-primary" onclick="setDashFilter('B')">🥉 أساسية</button>
-          <button class="btn btn-sm btn-outline-primary" onclick="setDashFilter('S')">🥈 قياسية</button>
-          <button class="btn btn-sm btn-outline-primary" onclick="setDashFilter('A')">🥇 متقدمة</button>
-          <button class="btn btn-sm btn-outline-primary" onclick="setDashFilter('E')">🏢 مؤسسية</button>
-          <button class="btn btn-sm btn-outline-primary" onclick="setDashFilter('TRIAL')">🎁 تجريبية</button>
+          <button class="btn btn-sm btn-dark" onclick="setDashFilter('ALL')" style="border-radius:20px;">الكل</button>
+          <button class="btn btn-sm btn-outline-warning" onclick="setDashFilter('B')" style="border-radius:20px; border-width:2px;">🥉 أساسية</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="setDashFilter('S')" style="border-radius:20px; border-width:2px;">🥈 قياسية</button>
+          <button class="btn btn-sm btn-outline-success" onclick="setDashFilter('A')" style="border-radius:20px; border-width:2px;">🥇 متقدمة</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="setDashFilter('E')" style="border-radius:20px; border-width:2px;">🏢 مؤسسية</button>
+          <button class="btn btn-sm btn-outline-info" onclick="setDashFilter('TRIAL')" style="border-radius:20px; border-width:2px;">🎁 تجريبية</button>
         </div>
-        <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
-          <div class="stat-card" style="background:#0d6efd; color:white;"><div class="stat-value" id="dashTotalActive">0</div><div class="stat-label">عملاء نشطون</div></div>
-          <div class="stat-card" style="background:#198754; color:white;"><div class="stat-value" id="dashTotalDevices">0</div><div class="stat-label">أجهزة نشطة</div></div>
-          <div class="stat-card" style="background:#fd7e14; color:white;"><div class="stat-value" id="dashExpiring">0</div><div class="stat-label">ينتهي خلال 30 يوم</div></div>
-          <div class="stat-card" style="background:#6f42c1; color:white;"><div class="stat-value" id="dashRevenue">0</div><div class="stat-label">الأرباح ($)</div></div>
+        <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+          <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #06b6d4); color:white; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); border-radius: 12px; border: none;">
+            <div class="stat-value" id="dashTotalActive" style="font-size: 2rem;">0</div>
+            <div class="stat-label" style="opacity: 0.9;">عملاء نشطون</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #34d399); color:white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); border-radius: 12px; border: none;">
+            <div class="stat-value" id="dashTotalDevices" style="font-size: 2rem;">0</div>
+            <div class="stat-label" style="opacity: 0.9;">أجهزة نشطة</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color:white; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); border-radius: 12px; border: none;">
+            <div class="stat-value" id="dashExpiring" style="font-size: 2rem;">0</div>
+            <div class="stat-label" style="opacity: 0.9;">ينتهي قريباً</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa); color:white; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); border-radius: 12px; border: none;">
+            <div class="stat-value" id="dashRevenue" style="font-size: 2rem;">0</div>
+            <div class="stat-label" style="opacity: 0.9;">الأرباح ($)</div>
+          </div>
         </div>
         <div id="dashExpiringBox" style="display:none; background:#fff3cd; border-radius:8px; padding:12px; margin-bottom:15px;">
           <h6 style="color:#856404; font-weight:800; margin:0 0 10px 0;">⚠️ تنبيهات التجديد</h6>
