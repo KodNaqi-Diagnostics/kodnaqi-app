@@ -985,7 +985,7 @@
         const days = Math.ceil((lic.expires - now) / 86400000);
         return `<div style="display:flex; justify-content:space-between; background:#fff; padding:8px; border-radius:6px;">
           <div><strong>${lic.customer}</strong> - متبقي ${days} يوم</div>
-          <button onclick="licWhatsAppReminder('${lic.customer}', ${lic.expires})" class="btn btn-sm btn-success" style="font-size:0.75rem;">💬 تذكير</button>
+          <button onclick="licWhatsAppReminder('${lic.customer}', ${lic.expires}, '${lic.phone || ''}')" class="btn btn-sm btn-success" style="font-size:0.75rem;">💬 تذكير</button>
         </div>`;
       }).join('');
     } else expBox.style.display = 'none';
@@ -1033,16 +1033,45 @@
   };
 
 
-  window.licWhatsAppReminder = function(customer, expiry) {
+  
+  window.licWhatsAppReminder = function(customer, expiry, phone) {
     const days = Math.ceil((expiry - Date.now()) / 86400000);
-    const msg = `مرحباً ${customer}،\n\nنود تذكيركم بأن اشتراككم ينتهي خلال ${days} يوم.\nللتجديد: +249 111 729 111`;
-    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    const msg = `مرحباً ${customer}،
+
+نود تذكيركم بأن اشتراككم في نظام KodNaqi Diagnostics ينتهي خلال ${days} يوم.
+
+للتجديد، يرجى التواصل معنا.`;
+    
+    let cleanPhone = (phone || '').toString().replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0')) cleanPhone = '249' + cleanPhone.substring(1);
+    if (cleanPhone.length === 9) cleanPhone = '249' + cleanPhone;
+    
+    const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
   };
 
 
+
+  
+  window.licSendWhatsApp = function(licenseId) {
+    const lic = (window._licenses || []).find(l => l._id === licenseId);
+    if (!lic) return alert('لم يتم العثور على الترخيص');
+    
+    const msg = `مرحباً ${lic.customer}،\n\nنظام KodNaqi Diagnostics يشكرك على ثقتك.\nلأي استفسار أو دعم، تواصل معنا.`;
+    
+    let cleanPhone = (lic.phone || '').toString().replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0')) cleanPhone = '249' + cleanPhone.substring(1);
+    if (cleanPhone.length === 9) cleanPhone = '249' + cleanPhone;
+    
+    const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
+  
   window.printLicenseInvoice = function(licenseId) {
     const lic = (window._licenses || []).find(l => l._id === licenseId);
     if (!lic) return alert('لم يتم العثور على الترخيص');
+
     const date = new Date().toLocaleDateString('ar-EG');
     const expiry = lic.expires ? new Date(lic.expires).toLocaleDateString('ar-EG') : '—';
     const prices = { 'B': 150, 'S': 300, 'A': 500, 'E': 1000, 'TRIAL': 0 };
@@ -1061,6 +1090,7 @@
         <div style="margin-bottom:30px;">
           <h3 style="color:#0d3b66; margin-bottom:10px;">بيانات العميل:</h3>
           <p style="margin:5px 0;">الاسم / المعمل: <strong>${lic.customer}</strong></p>
+          <p style="margin:5px 0;">رقم الهاتف: <strong>${lic.phone || '—'}</strong></p>
           <p style="margin:5px 0;">الأجهزة المرخصة: <strong>${(lic.devices||[]).join(', ')}</strong></p>
         </div>
         <table style="width:100%; border-collapse:collapse; margin-bottom:30px;">
@@ -1074,7 +1104,7 @@
           </thead>
           <tbody>
             <tr>
-              <td style="padding:10px; border:1px solid #ddd;">رخصة استخدام نظام KodNaqi PWA</td>
+              <td style="padding:10px; border:1px solid #ddd;">رخصة استخدام نظام KodNaqi Diagnostics</td>
               <td style="padding:10px; border:1px solid #ddd;">${lic.tier}</td>
               <td style="padding:10px; border:1px solid #ddd;">${expiry}</td>
               <td style="padding:10px; border:1px solid #ddd;"><strong>$${priceUSD}</strong></td>
@@ -1084,7 +1114,6 @@
         <div style="text-align:left; border-top:2px solid #eee; padding-top:20px;">
           <h2 style="color:#198754; margin:0;">الإجمالي: $${priceUSD}</h2>
           <p style="color:#666; font-size:0.9em;">(يتم سداد ما يعادلها بالجنيه السوداني حسب سعر الصرف وقت الشراء)</p>
-          <p style="color:#666; font-size:0.9em; margin-top:10px;">* التجديد السنوي: 20% من قيمة الرخصة (للدعم الفني).</p>
         </div>
         <div style="margin-top:50px; text-align:center; font-size:0.8em; color:#999;">
           شكراً لثقتكم بـ KodNaqi Diagnostics<br>
@@ -1092,15 +1121,18 @@
         </div>
       </div>
       <div style="text-align:center; margin-top:20px;">
-        <button onclick="window.print()" style="padding:12px 25px; background:#0d3b66; color:white; border:none; border-radius:8px; font-size:1.1rem; cursor:pointer;">🖨️ طباعة / حفظ PDF</button>
-        <button onclick="this.parentElement.parentElement.remove()" style="padding:12px 25px; background:#dc3545; color:white; border:none; border-radius:8px; font-size:1.1rem; cursor:pointer;">✖ إغلاق</button>
+        <button onclick="window.print()" style="padding:12px 25px; background:#0d3b66; color:white; border:none; border-radius:8px; font-size:1.1rem; cursor:pointer; margin-left:10px;">🖨️ طباعة / حفظ PDF</button>
+        <button onclick="this.closest('.kn-modal-overlay').remove()" style="padding:12px 25px; background:#dc3545; color:white; border:none; border-radius:8px; font-size:1.1rem; cursor:pointer;">✖ إغلاق</button>
       </div>
     `;
+
     const win = document.createElement('div');
-    win.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99999;overflow-y:auto;';
+    win.className = 'kn-modal-overlay';
+    win.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999999;overflow-y:auto; padding:20px;';
     win.innerHTML = html;
     document.body.appendChild(win);
   };
+
 
   console.log('[License Dashboard] loaded');
 })();
