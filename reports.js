@@ -372,26 +372,16 @@ table tr:nth-child(even) td { background: #fafbfd; }
 <script>
 async function knSafePrint(btn) {
   if (typeof html2pdf === 'undefined') {
-    alert('أداة PDF لم تُحمّل بعد. يرجى الانتظار 3 ثوانٍ والمحاولة مجدداً.');
+    alert('أداة PDF لم تُحمّل بعد. انتظر 3 ثوانٍ وأعد المحاولة.');
     return;
   }
   
   let originalText = '';
   if (btn) {
     originalText = btn.innerHTML;
-    btn.innerHTML = '⏳ جاري تجهيز PDF عالي الجودة...';
+    btn.innerHTML = '⏳ جاري تجهيز PDF...';
     btn.disabled = true;
   }
-
-  // التأكد من تحميل جميع الصور (التواقيع، الختم، الشعار) قبل توليد الملف
-  const images = Array.from(document.querySelectorAll('img'));
-  await Promise.all(images.map(img => {
-    if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
-    return new Promise(resolve => {
-      img.onload = () => resolve();
-      img.onerror = () => resolve();
-    });
-  }));
 
   var el = document.querySelector('.report') || document.querySelector('.receipt') || document.body;
   var isReceipt = document.querySelector('.receipt') !== null;
@@ -399,22 +389,18 @@ async function knSafePrint(btn) {
   var opt = {
     margin: isReceipt ? 0 : [10, 10, 10, 10],
     filename: (isReceipt ? 'Receipt_' : 'Report_') + Date.now() + '.pdf',
-    image: { type: 'jpeg', quality: 1.0 }, // أعلى جودة للصورة
-    html2canvas: { 
-      scale: 3, // دقة عالية جداً (تُصلح مشكلة ضعف الجودة)
-      useCORS: true, 
-      allowTaint: true,
-      scrollY: 0
-    },
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
     jsPDF: isReceipt ? { unit: 'mm', format: [58, 250] } : { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
   html2pdf().set(opt).from(el).toPdf().get('pdf').then(function(pdf) {
     if (window.AndroidBridge && typeof window.AndroidBridge.savePDF === 'function') {
+      // استخدام الجسر الأصلي (تطبيق الأندرويد)
       var base64 = pdf.output('datauristring');
       window.AndroidBridge.savePDF(base64, opt.filename);
     } else {
-      // للمتصفح العادي: فتح الـ PDF
+      // للمتصفح العادي
       var blob = pdf.output('blob');
       var url = URL.createObjectURL(blob);
       window.open(url, '_blank');
