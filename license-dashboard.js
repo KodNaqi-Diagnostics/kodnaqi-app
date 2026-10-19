@@ -103,6 +103,41 @@
         window._licenses.push(Object.assign({ _id: k }, data[k]));
       });
     }
+    
+    // ═══ مزامنة سجل العملاء مع Firebase ═══
+    try {
+      const local = JSON.parse(localStorage.getItem('kodnaqi_customers') || '[]');
+      let updated = false;
+      window._licenses.forEach(lic => {
+        const existing = local.find(c => c.id === lic._id);
+        if (!existing) {
+          local.push({
+            id: lic._id,
+            labName: lic.customer,
+            phone: lic.phone || '',
+            manager: lic.manager || '',
+            address: lic.address || '',
+            email: lic.email || '',
+            plan: lic.tier,
+            purchaseDate: lic.issued ? new Date(lic.issued).toISOString() : new Date().toISOString(),
+            devices: (lic.devices || []).map(d => ({ code: d, key: '' }))
+          });
+          updated = true;
+        } else {
+          if (lic.customer && existing.labName !== lic.customer) { existing.labName = lic.customer; updated = true; }
+          if (lic.phone && existing.phone !== lic.phone) { existing.phone = lic.phone; updated = true; }
+          if (lic.manager && existing.manager !== lic.manager) { existing.manager = lic.manager; updated = true; }
+          if (lic.address && existing.address !== lic.address) { existing.address = lic.address; updated = true; }
+          if (lic.email && existing.email !== lic.email) { existing.email = lic.email; updated = true; }
+          if (lic.tier && existing.plan !== lic.tier) { existing.plan = lic.tier; updated = true; }
+        }
+      });
+      if (updated) {
+        localStorage.setItem('kodnaqi_customers', JSON.stringify(local));
+        if (typeof renderCustomers === 'function') renderCustomers();
+      }
+    } catch(e) { console.error('Sync error:', e); }
+    
     licRender();
     if (typeof window.updateDashboard === 'function') {
       window.updateDashboard();
