@@ -1127,6 +1127,24 @@ setTimeout(function() {
 }, 1500);
 </script>
 
+
+<script>
+async function openLicenseDialogSafe() {
+    try {
+        if (!window.KodNaqiLicense) {
+            alert('جاري تحميل النظام...');
+            return;
+        }
+        if (!window.KodNaqiLicense.showDialog) {
+            alert('دالة عرض الترخيص غير موجودة! يرجى تحديث الصفحة.');
+            return;
+        }
+        await window.KodNaqiLicense.showDialog();
+    } catch (e) {
+        alert('حدث خطأ في الترخيص: ' + e.message);
+    }
+}
+</script>
 </body>
 </html>
 
