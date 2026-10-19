@@ -625,36 +625,63 @@
   }
 
   async function showDialog() {
-    // إزالة أي نافذة سابقة
     const old = document.getElementById('kodnaqi-license-dialog');
     if (old) old.remove();
 
-    const status = await getLicenseStatus();
-    const trial = await getTrialStatus();
-    const devCode = await getMyDeviceCode();
-    const formatted = formatDeviceCode(devCode);
+    let status = { status: 'none' };
+    let trial = { active: false, daysLeft: 0 };
+    let devCode = '------';
+    let formatted = '---';
+
+    try { status = await getLicenseStatus(); } catch(e) { console.error('Status error:', e); }
+    try { trial = await getTrialStatus(); } catch(e) { console.error('Trial error:', e); }
+    try {
+      devCode = await getMyDeviceCode();
+      formatted = formatDeviceCode(devCode);
+    } catch(e) { console.error('Device code error:', e); }
+
+    let statusHtml = '';
+    let actionLabel = 'تفعيل المفتاح';
+    let hideInput = false;
+
+    if (status.status === 'valid') {
+      const p = status.payload;
+      const tierName = (window.KodNaqiLicense && window.KodNaqiLicense.TIER_NAMES && window.KodNaqiLicense.TIER_NAMES[p.tier]) || p.tier || '—';
+      const daysText = status.daysLeft === Infinity ? 'دائم' : status.daysLeft + ' يوم';
+      statusHtml = '<div style="background:#d1fae5;color:#065f46;padding:12px;border-radius:8px;margin-bottom:14px;">'
+                 + '<strong>✅ الترخيص نشط</strong><br>'
+                 + 'الباقة: ' + tierName + '<br>'
+                 + 'المتبقي: ' + daysText + '</div>';
+      actionLabel = 'إلغاء الترخيص';
+    } else if (trial.active) {
+      statusHtml = '<div style="background:#fef3c7;color:#92400e;padding:12px;border-radius:8px;margin-bottom:14px;">'
+                 + '<strong>⏳ تجريبية</strong> — متبقٍ ' + trial.daysLeft + ' يوم</div>';
+    } else {
+      statusHtml = '<div style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;margin-bottom:14px;">'
+                 + '<strong>❌ الترخيص منتهٍ أو غير مفعل</strong></div>';
+      hideInput = false;
+    }
 
     const wrapper = document.createElement('div');
     wrapper.id = 'kodnaqi-license-dialog';
-    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000001;padding:16px;';
+    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000000;padding:16px;';
 
     wrapper.innerHTML = ''
-      + '<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:22px;font-family:inherit;direction:rtl;">'
+      + '<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:22px;font-family:inherit;direction:rtl; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">'
       + '  <h2 style="margin:0 0 12px;color:#0d3b66;">إدارة الترخيص</h2>'
       +    statusHtml
-      + '  <div style="background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:14px;font-family:monospace;">'
+      + '  <div style="background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:14px;font-family:monospace;text-align:center;">'
       + '    <div style="font-size:0.85rem;color:#64748b;margin-bottom:4px;">كود هذا الجهاز:</div>'
       + '    <div id="kodnaqi-devcode" style="font-size:1.4rem;font-weight:800;color:#0d3b66;letter-spacing:2px;cursor:pointer;" title="اضغط للنسخ">' + formatted + '</div>'
       + '  </div>'
-      + (!hideInput ? '<input id="kodnaqi-license-input" type="text" placeholder="الصق المفتاح هنا" style="width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;font-family:monospace;font-size:0.9rem;margin-bottom:10px;box-sizing:border-box;">' : '')
-      + '<div id="kodnaqi-license-msg" style="min-height:20px;color:#dc2626;margin-bottom:10px;font-size:0.9rem;"></div>'
+      + (!hideInput ? '<input id="kodnaqi-license-input" type="text" placeholder="الصق المفتاح هنا" style="width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;font-family:monospace;font-size:0.9rem;margin-bottom:10px;box-sizing:border-box; text-align:center;">' : '')
+      + '<div id="kodnaqi-license-msg" style="min-height:20px;color:#dc2626;margin-bottom:10px;font-size:0.9rem;text-align:center; font-weight:bold;"></div>'
       + '<button id="kodnaqi-btn-activate" style="width:100%;padding:14px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;margin-bottom:8px;">' + actionLabel + '</button>'
       + '<button id="kodnaqi-btn-close" style="width:100%;padding:12px;background:#e2e8f0;color:#334155;border:none;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;">إغلاق</button>'
       + '</div>';
 
     document.body.appendChild(wrapper);
 
-    // نسخ كود الجهاز بالضغط
     const devEl = document.getElementById('kodnaqi-devcode');
     if (devEl) {
       devEl.addEventListener('click', function() {
@@ -667,7 +694,6 @@
     document.getElementById('kodnaqi-btn-activate').addEventListener('click', async function() {
       const msg = document.getElementById('kodnaqi-license-msg');
 
-      // إذا كان الترخيص نشطًا → إلغاء
       if (status.status === 'valid') {
         if (!confirm('هل أنت متأكد من إلغاء الترخيص؟')) return;
         safeDel(STORAGE_KEY);
@@ -693,16 +719,11 @@
       } else {
         msg.style.color = '#dc2626';
         const map = {
-          empty: 'الصق مفتاح الترخيص أولاً',
-          format: 'صيغة المفتاح غير صحيحة — تأكد من نسخه كاملاً',
-          old_format: 'هذا مفتاح بنظام قديم — تواصل مع الدعم',
-          signature: 'المفتاح غير أصلي — تأكد من المصدر الرسمي',
-          wrong_device: 'هذا المفتاح لجهاز آخر — تواصل مع الدعم',
-          expired: 'انتهت صلاحية الترخيص — جدد الآن',
-          clock_rollback: 'ساعة الجهاز غير صحيحة',
-          clock_before_issued: 'ساعة الجهاز قبل تاريخ الإصدار',
-          security_error: 'تعذر التحقق — أعد المحاولة',
-          exception: 'حدث خطأ — تواصل مع الدعم'
+          empty: 'المفتاح فارغ', format: 'صيغة المفتاح غير صحيحة', old_format: 'هذا مفتاح قديم — تواصل مع المطور',
+          signature: 'التوقيع غير صالح — المفتاح مزوّر', wrong_device: 'هذا المفتاح لا يخص جهازك',
+          expired: 'انتهت صلاحية الترخيص', clock_rollback: 'تم اكتشاف تلاعب بساعة الجهاز',
+          clock_before_issued: 'ساعة الجهاز غير صحيحة', security_not_loaded: 'خطأ في تحميل طبقة الحماية',
+          server_revoked: 'تم إلغاء الترخيص من قبل الإدارة'
         };
         msg.textContent = '❌ ' + (map[result.reason] || result.message || 'فشل التحقق');
       }

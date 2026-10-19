@@ -1,5 +1,3 @@
-
-/*! KodNaqi Theme Manager - Clean Version */
 (function() {
   'use strict';
   const THEMES = {
@@ -16,7 +14,6 @@
     document.documentElement.setAttribute('data-theme', themeKey);
     localStorage.setItem('kodnaqi_color_theme', themeKey);
     
-    // تحديث الإضاءة على الأزرار
     document.querySelectorAll('.theme-option').forEach(function(el) {
       const isActive = el.dataset.theme === themeKey;
       el.style.borderColor = isActive ? THEMES[themeKey].primary : 'transparent';
