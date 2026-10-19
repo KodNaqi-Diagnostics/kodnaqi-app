@@ -118,6 +118,7 @@
             manager: lic.manager || '',
             address: lic.address || '',
             email: lic.email || '',
+            regNumber: lic.regNumber || '',
             plan: lic.tier,
             purchaseDate: lic.issued ? new Date(lic.issued).toISOString() : new Date().toISOString(),
             devices: (lic.devices || []).map(d => ({ code: d, key: '' }))
@@ -357,6 +358,7 @@
 
   window.licCreate = async function() {
     const name = (document.getElementById('licNewName').value || '').trim();
+    const regNumber = (document.getElementById('licNewRegNumber').value || '').trim();
     const manager = (document.getElementById('licNewManager').value || '').trim();
     const phone = (document.getElementById('licNewPhone').value || '').trim();
     const address = (document.getElementById('licNewAddress').value || '').trim();
@@ -414,7 +416,8 @@
           manager: manager,
           phone: phone,
           address: address,
-          email: email
+          email: email,
+          regNumber: regNumber
         })
       });
       if (!r.ok) throw new Error('Firebase HTTP ' + r.status);
@@ -923,7 +926,7 @@
       + '<button onclick="licOpenReplace(\'' + licenseId + '\')" style="padding:6px 12px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">⚠️ نقل كامل</button>'
       + '<button onclick="licTransferWithNewKey(\'' + licenseId + '\')" style="padding:6px 12px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🔑 نقل + مفتاح جديد</button>'
       + '<button onclick="licPrintContract(\'' + licenseId + '\')" style="padding:6px 12px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🖨️ طباعة العقد</button>'
-      + '<button onclick="licPrintInvoice(\'' + licenseId + '\')" style="padding:6px 12px;background:#0891b2;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🧾 فاتورة</button>'
+      + '<button onclick="printLicenseInvoice(\'' + licenseId + '\')" style="padding:6px 12px;background:#0891b2;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🧾 فاتورة</button>'
       + '<button onclick="licSendWhatsApp(\'' + licenseId + '\')" style="padding:6px 12px;background:#25d366;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">💬 واتساب</button>'
       + '</div>';
   };
@@ -1026,8 +1029,8 @@
       document.getElementById('dashExpiringList').innerHTML = expiringList.map(lic => {
         const days = Math.ceil((lic.expires - now) / 86400000);
         return `<div style="display:flex; justify-content:space-between; background:#fff; padding:8px; border-radius:6px;">
-          <div><strong>${lic.customer}</strong> - متبقي ${days} يوم</div>
-          <button onclick="licWhatsAppReminder('${lic.customer}', ${lic.expires}, '${lic.phone || ''}')" class="btn btn-sm btn-success" style="font-size:0.75rem;">💬 تذكير</button>
+          <div><strong>${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}</strong> - متبقي ${days} يوم</div>
+          <button onclick="licWhatsAppReminder('${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}', ${lic.expires}, '${lic.phone || ''}')" class="btn btn-sm btn-success" style="font-size:0.75rem;">💬 تذكير</button>
         </div>`;
       }).join('');
     } else expBox.style.display = 'none';
@@ -1062,7 +1065,7 @@
 
         return `<div style="${borderStyle}border-radius:10px;padding:12px; margin-bottom:8px;">
           <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-            <strong style="color:#0d3b66;">${lic.customer}</strong>
+            <strong style="color:#0d3b66;">${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}</strong>
             <span style="background:${st.color}22;color:${st.color};padding:3px 8px;border-radius:6px;font-size:0.75rem;">${st.label}</span>
           </div>
           <div style="display:flex;gap:10px;font-size:0.8rem;color:#334155;">
@@ -1099,7 +1102,7 @@
     const lic = (window._licenses || []).find(l => l._id === licenseId);
     if (!lic) return alert('لم يتم العثور على الترخيص');
     
-    const msg = `مرحباً ${lic.customer}،\n\nنظام KodNaqi Diagnostics يشكرك على ثقتك.\nلأي استفسار أو دعم، تواصل معنا.`;
+    const msg = `مرحباً ${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}،\n\nنظام KodNaqi Diagnostics يشكرك على ثقتك.\nلأي استفسار أو دعم، تواصل معنا.`;
     
     let cleanPhone = (lic.phone || '').toString().replace(/[^0-9]/g, '');
     if (cleanPhone.startsWith('0')) cleanPhone = '249' + cleanPhone.substring(1);
@@ -1129,7 +1132,8 @@
           <hr style="border-color:#eee;">
           <p><b>رقم الفاتورة:</b> INV-${lic._id}</p>
           <p><b>التاريخ:</b> ${date}</p>
-          <p><b>العميل:</b> ${lic.customer}</p>
+          <p><b>العميل:</b> ${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}</p>
+          ${lic.regNumber ? `<p><b>رقم السجل:</b> ${lic.regNumber}</p>` : ''}
           <p><b>الباقة:</b> ${lic.tier}</p>
           <p><b>تاريخ الانتهاء:</b> ${expiry}</p>
           <p><b>الأجهزة:</b> ${(lic.devices||[]).join(', ')}</p>
