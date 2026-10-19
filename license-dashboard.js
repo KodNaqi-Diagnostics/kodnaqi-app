@@ -927,6 +927,7 @@
       + '<button onclick="licTransferWithNewKey(\'' + licenseId + '\')" style="padding:6px 12px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🔑 نقل + مفتاح جديد</button>'
       + '<button onclick="licPrintContract(\'' + licenseId + '\')" style="padding:6px 12px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🖨️ طباعة العقد</button>'
       + '<button onclick="printLicenseInvoice(\'' + licenseId + '\')" style="padding:6px 12px;background:#0891b2;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🧾 فاتورة</button>'
+        + '<button onclick="licEditInfo(\'' + lic._id + '\')" style="padding:6px 12px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">✏️ تعديل</button>'
       + '<button onclick="licSendWhatsApp(\'' + licenseId + '\')" style="padding:6px 12px;background:#25d366;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">💬 واتساب</button>'
       + '</div>';
   };
@@ -1160,6 +1161,108 @@
     }
   };
 
+
+
+  // ═══ نافذة تعديل بيانات العميل ═══
+  window.licEditInfo = function(id) {
+    const lic = (window._licenses || []).find(l => l._id === id);
+    if (!lic) return alert('لم يتم العثور على الترخيص');
+
+    const modal = document.createElement('div');
+    modal.id = 'kn-edit-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999999;display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto;';
+    
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:20px;max-height:90vh;overflow-y:auto;direction:rtl; text-align:right;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h2 style="margin:0;color:#0d3b66;font-size:1.15rem;">✏️ تعديل بيانات العميل</h2>
+          <button onclick="document.getElementById('kn-edit-modal').remove()" style="background:#e2e8f0;border:none;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;">✕</button>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">🏥 اسم المعمل</label>
+          <input type="text" id="editCustomer" class="form-control" value="${lic.customer || ''}">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📜 رقم السجل</label>
+          <input type="text" id="editRegNumber" class="form-control" value="${lic.regNumber || ''}">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">👨‍⚕️ اسم المدير</label>
+          <input type="text" id="editManager" class="form-control" value="${lic.manager || ''}">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📱 رقم الهاتف</label>
+          <input type="tel" id="editPhone" class="form-control" value="${lic.phone || ''}" dir="ltr">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📍 العنوان</label>
+          <input type="text" id="editAddress" class="form-control" value="${lic.address || ''}">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📧 البريد الإلكتروني</label>
+          <input type="email" id="editEmail" class="form-control" value="${lic.email || ''}" dir="ltr">
+        </div>
+        
+        <div id="editError" style="min-height:22px;margin-bottom:10px;text-align:center;font-size:0.9rem;"></div>
+        
+        <button onclick="saveEditedInfo('${id}')" class="btn btn-primary" style="width:100%;padding:12px;font-weight:800;background:#198754;">💾 حفظ التعديلات</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  // ═══ حفظ التعديلات في Firebase ═══
+  window.saveEditedInfo = async function(id) {
+    const errEl = document.getElementById('editError');
+    const customer = document.getElementById('editCustomer').value.trim();
+    const regNumber = document.getElementById('editRegNumber').value.trim();
+    const manager = document.getElementById('editManager').value.trim();
+    const phone = document.getElementById('editPhone').value.trim();
+    const address = document.getElementById('editAddress').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+
+    if (!customer) {
+      errEl.textContent = '❌ اسم المعمل مطلوب';
+      errEl.style.color = '#dc3545';
+      return;
+    }
+
+    errEl.textContent = '⏳ جاري الحفظ...';
+    errEl.style.color = '#0d3b66';
+
+    try {
+      await licPatch(encodeURIComponent(id), {
+        customer, regNumber, manager, phone, address, email
+      });
+      errEl.textContent = '✅ تم الحفظ بنجاح';
+      errEl.style.color = '#198754';
+      if(window.toast) toast('✅ تم تعديل البيانات بنجاح');
+      
+      // تحديث البيانات في الذاكرة المحلية
+      const lic = window._licenses.find(l => l._id === id);
+      if (lic) {
+        Object.assign(lic, { customer, regNumber, manager, phone, address, email });
+      }
+
+      setTimeout(() => {
+        document.getElementById('kn-edit-modal').remove();
+        licRefresh();
+      }, 800);
+
+      if (typeof window.sendTelegramAlert === 'function') {
+        window.sendTelegramAlert(`✏️ <b>تم تعديل بيانات العميل</b>\n🏥 ${customer}`);
+      }
+    } catch(e) {
+      errEl.textContent = '❌ ' + e.message;
+      errEl.style.color = '#dc3545';
+    }
+  };
 
   console.log('[License Dashboard] loaded');
 })();
