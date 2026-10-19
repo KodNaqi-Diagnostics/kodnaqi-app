@@ -226,7 +226,7 @@
       const rev = ((cur && cur.rev) || 1) + 1;
       await licPatch(encodeURIComponent(id), { status: 'revoked', rev: rev, updatedAt: Date.now() });
       toast('✅ تم الإلغاء');
-      window.sendTelegramAlert(`⚠️ <b>تم إلغاء ترخيص</b>\n🆔 الترخيص: ${id}`);
+      window.sendTelegramAlert(`⚠️ <b>تم إلغاء ترخيص</b>\n🆔 ${id}`);
       licRefresh();
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   };
@@ -237,6 +237,7 @@
       const rev = ((cur && cur.rev) || 1) + 1;
       await licPatch(encodeURIComponent(id), { status: 'active', rev: rev, updatedAt: Date.now() });
       toast('✅ تم إعادة التفعيل');
+      window.sendTelegramAlert(`✅ <b>تم إعادة تفعيل ترخيص</b>\n🆔 ${id}`);
       licRefresh();
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   };
@@ -278,7 +279,7 @@
       const r = await fetch(url, { method: 'DELETE' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       toast('✅ تم الحذف نهائياً');
-      window.sendTelegramAlert(`🗑️ <b>تم حذف ترخيص نهائياً</b>\n🆔 الترخيص: ${id}`);
+      window.sendTelegramAlert(`🗑️ <b>تم حذف ترخيص نهائياً</b>\n🆔 ${id}`);
       licRefresh();
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   };
@@ -440,7 +441,7 @@
       document.getElementById('licNewResultDays').textContent = days;
 
       toast('✅ تم الإصدار والنشر');
-      window.sendTelegramAlert(`🔔 <b>ترخيص جديد!</b>\n👤 العميل: ${name}\n💼 الباقة: ${tier}\n📱 الأجهزة: ${devices.join(', ')}`);
+      window.sendTelegramAlert(`🔔 <b>ترخيص جديد</b>\n🏥 ${name}\n💼 ${tier}\n📱 ${devices.join(', ')}`);
       licRefresh();
     } catch (e) {
       licSetMsg('❌ ' + e.message, '#dc3545');
@@ -1229,6 +1230,7 @@
       errEl.textContent = '✅ تم الحفظ بنجاح';
       errEl.style.color = '#198754';
       if(window.toast) toast('✅ تم تعديل البيانات بنجاح');
+      window.sendTelegramAlert(`✏️ <b>تم تعديل بيانات عميل</b>\n🏥 ${customer}`);
       
       // تحديث البيانات في الذاكرة المحلية
       const lic = window._licenses.find(l => l._id === id);
@@ -1242,11 +1244,41 @@
       }, 800);
 
       if (typeof window.sendTelegramAlert === 'function') {
-        window.sendTelegramAlert(`✏️ <b>تم تعديل بيانات العميل</b>\n🏥 ${customer}`);
       }
     } catch(e) {
       errEl.textContent = '❌ ' + e.message;
       errEl.style.color = '#dc3545';
+    }
+  };
+
+
+  window.sendTelegramAlert = async function(msg) {
+    const token = localStorage.getItem('kn_tg_token');
+    const chatId = localStorage.getItem('kn_tg_chat_id');
+    
+    if (!token || !chatId) {
+      console.warn('⚠️ Telegram not configured. Token or Chat ID missing.');
+      return false;
+    }
+    
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'HTML' })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        console.error('❌ Telegram API Error:', data.description);
+        if (typeof toast === 'function') toast('❌ التلجرام: ' + data.description, 'error');
+        return false;
+      }
+      console.log('✅ Telegram message sent');
+      return true;
+    } catch(e) {
+      console.error('❌ Telegram Network Error:', e.message);
+      if (typeof toast === 'function') toast('❌ شبكة التلجرام: ' + e.message, 'error');
+      return false;
     }
   };
 
