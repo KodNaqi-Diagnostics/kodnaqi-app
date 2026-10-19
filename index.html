@@ -498,6 +498,43 @@ body {
 
   <!-- Settings -->
   <div class="page" id="page-settings">
+
+    <!-- Theme Selector UI -->
+    <div class="card p-3 mb-3" id="theme-selector-ui" style="border-radius: 12px;">
+      <details>
+        <summary style="cursor:pointer; font-weight:bold; color:#0d3b66; display:flex; justify-content:space-between; align-items:center;">
+          <span><i class="bi bi-palette-fill"></i> مظهر التطبيق (الثيم)</span>
+          <i class="bi bi-chevron-down" style="font-size:0.8rem;"></i>
+        </summary>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+          <div class="theme-option" data-theme="navy" onclick="window.KNTheme.set('navy')" style="cursor:pointer; text-align:center; padding:8px; border-radius:8px; border:2px solid transparent; transition: all 0.2s;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 6px; background: linear-gradient(135deg, #0d3b66, #1e6091); border: 2px solid #c9a227;"></div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #334155;">كحلي رسمي</div>
+          </div>
+          <div class="theme-option" data-theme="emerald" onclick="window.KNTheme.set('emerald')" style="cursor:pointer; text-align:center; padding:8px; border-radius:8px; border:2px solid transparent; transition: all 0.2s;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 6px; background: linear-gradient(135deg, #064e3b, #047857); border: 2px solid #fbbf24;"></div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #334155;">زمردي صحي</div>
+          </div>
+          <div class="theme-option" data-theme="purple" onclick="window.KNTheme.set('purple')" style="cursor:pointer; text-align:center; padding:8px; border-radius:8px; border:2px solid transparent; transition: all 0.2s;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 6px; background: linear-gradient(135deg, #4c1d95, #6d28d9); border: 2px solid #fcd34d;"></div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #334155;">بنفسجي ملكي</div>
+          </div>
+          <div class="theme-option" data-theme="crimson" onclick="window.KNTheme.set('crimson')" style="cursor:pointer; text-align:center; padding:8px; border-radius:8px; border:2px solid transparent; transition: all 0.2s;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 6px; background: linear-gradient(135deg, #7f1d1d, #b91c1c); border: 2px solid #fde047;"></div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #334155;">قرمزي طبي</div>
+          </div>
+          <div class="theme-option" data-theme="teal" onclick="window.KNTheme.set('teal')" style="cursor:pointer; text-align:center; padding:8px; border-radius:8px; border:2px solid transparent; transition: all 0.2s;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 6px; background: linear-gradient(135deg, #134e4a, #0f766e); border: 2px solid #fcd34d;"></div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #334155;">أزرق مخضر</div>
+          </div>
+          <div class="theme-option" data-theme="midnight" onclick="window.KNTheme.set('midnight')" style="cursor:pointer; text-align:center; padding:8px; border-radius:8px; border:2px solid transparent; transition: all 0.2s;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; margin: 0 auto 6px; background: linear-gradient(135deg, #0f172a, #1e293b); border: 2px solid #38bdf8;"></div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #334155;">ليلي داكن</div>
+          </div>
+        </div>
+      </details>
+    </div>
+
     <h3 class="mb-3"><i class="bi bi-gear"></i> الإعدادات</h3>
 
     <div class="card p-3 mb-3">
@@ -567,7 +604,7 @@ body {
         <a href="mailto:kodnaqi@gmail.com" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-envelope"></i> التواصل مع المطوّر
         </a>
-        <button onclick="KodNaqiLicense.showDialog()" class="btn btn-outline-success btn-sm">
+        <button onclick="openLicenseDialogSafe()" class="btn btn-outline-success btn-sm">
           <i class="bi bi-key-fill"></i> حالة الترخيص
         </button>
         
