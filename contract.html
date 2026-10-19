@@ -442,7 +442,7 @@
         field.textContent = formatDate(data.issued);
       } else if (li.textContent.includes('تاريخ الانتهاء')) {
         field.textContent = formatDate(data.expires);
-      }
+      } else if (li.textContent.includes('السجل التجاري')) { field.textContent = data.regNumber || '—'; }
     });
 
     // 3. تحديد الباقة المختارة

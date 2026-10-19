@@ -118,7 +118,7 @@
             manager: lic.manager || '',
             address: lic.address || '',
             email: lic.email || '',
-            regNumber: lic.regNumber || '',
+            
             plan: lic.tier,
             purchaseDate: lic.issued ? new Date(lic.issued).toISOString() : new Date().toISOString(),
             devices: (lic.devices || []).map(d => ({ code: d, key: '' }))
@@ -903,25 +903,6 @@
   };
 
   // ═══ طباعة العقد ═══
-  window.licPrintContract = async function(licenseId) {
-    try {
-      const cur = await licFetch(encodeURIComponent(licenseId));
-      const contractData = {
-        customer: cur.customer || '',
-        phone: cur.phone || '',
-        address: cur.address || '',
-        tier: cur.tier || 'B',
-        devices: cur.devices || [],
-        expires: cur.expires || 0,
-        issued: cur.issued || Date.now(),
-        licenseId: licenseId
-      };
-      localStorage.setItem('kodnaqi_contract_data', JSON.stringify(contractData));
-      window.open('contract.html', '_blank');
-    } catch (e) {
-      alert('❌ فشل تحضير العقد: ' + e.message);
-    }
-  };
 
   // ═══ زر "إضافة جهاز" يُدرج في بطاقة كل ترخيص ═══
   window.licAddDeviceButtonHTML = function(licenseId) {
@@ -1381,3 +1362,33 @@ function updateDashboardUI(data) {
 // تصدير للاستخدام
 window.loadDashboard = loadDashboard;
 console.log('[Dashboard] Module loaded');
+
+
+  window.licPrintContract = function(licenseId) {
+    try {
+      const cur = (window._licenses || []).find(l => l._id === licenseId);
+      if (!cur) {
+        alert('لم يتم العثور على بيانات الترخيص.');
+        return;
+      }
+
+      const contractData = {
+        customer: cur.customer || '',
+        phone: cur.phone || '',
+        address: cur.address || '',
+        tier: cur.tier || 'B',
+        devices: cur.devices || [],
+        expires: cur.expires || 0,
+        issued: cur.issued || Date.now(),
+        licenseId: licenseId,
+        regNumber: cur.regNumber || '',
+        manager: cur.manager || '',
+        email: cur.email || ''
+      };
+
+      localStorage.setItem('kodnaqi_contract_data', JSON.stringify(contractData));
+      window.open('contract.html', '_blank');
+    } catch (e) {
+      alert('❌ فشل تحضير العقد: ' + e.message);
+    }
+  };
