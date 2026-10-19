@@ -1145,6 +1145,38 @@ async function openLicenseDialogSafe() {
     }
 }
 </script>
+
+<script>
+// إلغاء تفعيل أي Service Worker قديم لتجنب الكاش
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+    for(let registration of registrations) {
+      registration.unregister().then(function() {
+        console.log('تم إلغاء تفعيل Service Worker القديم');
+      });
+    }
+  });
+}
+</script>
+
+<script>
+// ═══ قناص النصوص المزعجة (يزيل [object HTMLDivElement] تلقائياً) ═══
+(function() {
+  function removeJunkText() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    while (node = walker.nextNode()) {
+      if (node.nodeValue && node.nodeValue.includes('[object HTMLDivElement]')) {
+        node.nodeValue = node.nodeValue.replace('[object HTMLDivElement]', '').trim();
+      }
+    }
+  }
+  // تشغيله فور التحميل وبعد ثانية (لضمان إزالة أي نصوص ديناميكية)
+  document.addEventListener('DOMContentLoaded', removeJunkText);
+  setTimeout(removeJunkText, 1000);
+  setTimeout(removeJunkText, 2500);
+})();
+</script>
 </body>
 </html>
 
