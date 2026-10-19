@@ -167,20 +167,20 @@
     const search = (document.getElementById('licSearch').value || '').trim().toLowerCase();
     let total = 0, active = 0, revoked = 0, expired = 0;
 
-    const html = _licenses.filter(function(lic) {
+    const html = window._licenses.filter(function(lic) {
       if (!search) return true;
       const id = (lic._id || '').toLowerCase();
       const cust = (lic.customer || '').toLowerCase();
       return id.indexOf(search) !== -1 || cust.indexOf(search) !== -1;
     }).map(function(lic) {
       const st = licStatusOf(lic);
+      const devices = Array.isArray(lic.devices) ? lic.devices.join(', ') : '*';
+      const tier = lic.tier || '?';
+      
       total++;
       if (st.key === 'active') active++;
       else if (st.key === 'revoked' || st.key === 'suspended') revoked++;
       else if (st.key === 'expired') expired++;
-
-      const devices = Array.isArray(lic.devices) ? lic.devices.join(', ') : '*';
-      const tier = lic.tier || '?';
 
       return ''
         + '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;">'
@@ -200,7 +200,12 @@
               ? '<button onclick="licRevoke(\'' + lic._id + '\')" style="padding:6px 12px;background:#dc3545;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">⛔ إلغاء</button>'
               : '<button onclick="licReactivate(\'' + lic._id + '\')" style="padding:6px 12px;background:#198754;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">✅ إعادة تفعيل</button>'
                 + '<button onclick="licDelete(\'' + lic._id + '\')" style="padding:6px 12px;background:#b91c1c;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🗑️ حذف نهائي</button>')
-        +     (st.key === 'active' ? window.licAddDeviceButtonHTML(lic._id) : '')
+        +     (st.key === 'active'
+              ? '<button onclick="licOpenAddDevice(\'' + lic._id + '\')" style="padding:6px 12px;background:#0d3b66;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">➕ إضافة جهاز</button>'
+              : '')
+        +     '<button onclick="printLicenseInvoice(\'' + lic._id + '\')" style="padding:6px 12px;background:#0891b2;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🧾 فاتورة</button>'
+        +     '<button onclick="licEditInfo(\'' + lic._id + '\')" style="padding:6px 12px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">✏️ تعديل</button>'
+        +     '<button onclick="licPrintContract(\'' + lic._id + '\')" style="padding:6px 12px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🖨️ طباعة العقد</button>'
         +     '<button onclick="licCopyId(\'' + lic._id + '\')" style="padding:6px 12px;background:#e2e8f0;color:#334155;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">📋 نسخ المعرّف</button>'
         +   '</div>'
         + '</div>';
