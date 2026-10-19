@@ -26,11 +26,28 @@
   
   .note-box { background: #eff6ff; border-right: 5px solid var(--primary); padding: 15px; border-radius: 8px; margin-bottom: 30px; color: #1e3a8a; font-size: 0.95rem; line-height: 1.8; }
   
-  .table-responsive { overflow-x: auto; margin-bottom: 40px; }
+  .table-responsive { 
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
   table { width: 100%; border-collapse: collapse; min-width: 700px; text-align: center; }
   th, td { padding: 15px; border: 1px solid var(--border); }
   th { background: var(--primary); color: white; font-weight: 700; font-size: 1.1rem; }
-  th:first-child { background: #0a2e52; text-align: right; }
+  
+  /* تثبيت العمود الأول على اليمين */
+  th:first-child, td:first-child { 
+    position: sticky; 
+    right: 0; 
+    background: #fff; 
+    z-index: 2; 
+    box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+    text-align: right;
+    min-width: 150px;
+  }
+  th:first-child { background: #0a2e52; z-index: 3; }
   
   /* تنسيق عمود الباقة القياسية (الأكثر طلباً) */
   .col-standard { background: #fefce8; border-left: 2px solid var(--accent); border-right: 2px solid var(--accent); }
@@ -67,6 +84,30 @@
   
   .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); color: #94a3b8; font-size: 0.85rem; }
 
+  /* 📱 التصميم المخصص للهواتف */
+  @media (max-width: 768px) {
+    body { padding: 10px; }
+    .container { padding: 20px 10px; border-radius: 0; box-shadow: none; }
+    .header h1 { font-size: 1.5rem; }
+    .header p { font-size: 0.85rem; }
+    .note-box { font-size: 0.8rem; padding: 10px; }
+    
+    table { min-width: 600px; font-size: 0.85rem; }
+    th, td { padding: 10px 8px; }
+    th:first-child, td:first-child { min-width: 120px; }
+    
+    .price-row td { font-size: 1.1rem; }
+    .price-row .col-standard { font-size: 1.3rem; }
+    
+    .addon-table td { font-size: 0.85rem; padding: 10px; }
+    
+    .info-card { padding: 15px; }
+    .info-card h3 { font-size: 1rem; }
+    .info-card li { font-size: 0.85rem; }
+    
+    .btn { padding: 12px 25px; font-size: 1rem; width: 100%; }
+  }
+
   @media print {
     body { background: #fff; padding: 0; }
     .container { box-shadow: none; padding: 0; max-width: 100%; }
@@ -89,6 +130,7 @@
     • الأسعار تشمل ترخيصاً دائماً لمدة سنة كاملة (تحديثات مجانية + دعم فني).<br>
     • <strong>رسوم التجديد السنوي بعد السنة الأولى:</strong> 25% فقط من قيمة الرخصة.<br>
     • لا توجد اشتراكات شهرية خفية.
+    <div style="margin-top: 10px; color: #b45309; font-weight: bold;">👉 اسحب الجدول يميناً ويساراً لمشاهدة جميع الباقات.</div>
   </div>
 
   <div class="table-responsive">
@@ -104,77 +146,77 @@
       </thead>
       <tbody>
         <tr class="price-row">
-          <td style="text-align: right; font-weight: bold;">السعر السنوي</td>
+          <td style="font-weight: bold;">السعر السنوي</td>
           <td>$150</td>
           <td class="col-standard">$300</td>
           <td>$500</td>
           <td>+$1000</td>
         </tr>
         <tr>
-          <td style="text-align: right;">عدد الأجهزة</td>
+          <td>عدد الأجهزة</td>
           <td>1</td>
           <td class="col-standard">3</td>
           <td>غير محدود</td>
           <td>غير محدود</td>
         </tr>
         <tr>
-          <td style="text-align: right;">عدد المستخدمين</td>
+          <td>عدد المستخدمين</td>
           <td>1</td>
           <td class="col-standard">5</td>
           <td>غير محدود</td>
           <td>غير محدود</td>
         </tr>
         <tr>
-          <td style="text-align: right;">إدارة المرضى والتحاليل</td>
+          <td>إدارة المرضى والتحاليل</td>
           <td><span class="check">✔</span></td>
           <td class="col-standard"><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
         </tr>
         <tr>
-          <td style="text-align: right;">تصدير تقارير PDF</td>
+          <td>تصدير تقارير PDF</td>
           <td><span class="check">✔</span></td>
           <td class="col-standard"><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
         </tr>
         <tr>
-          <td style="text-align: right;">تشفير AES-256</td>
+          <td>تشفير AES-256</td>
           <td><span class="check">✔</span></td>
           <td class="col-standard"><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
         </tr>
         <tr>
-          <td style="text-align: right;">نسخ سحابي (Google Drive)</td>
+          <td>نسخ سحابي (Google Drive)</td>
           <td><span class="cross">✖</span></td>
           <td class="col-standard"><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
         </tr>
         <tr>
-          <td style="text-align: right;">تقارير متقدمة وإحصائيات</td>
+          <td>تقارير متقدمة وإحصائيات</td>
           <td><span class="cross">✖</span></td>
           <td class="col-standard"><span class="text-muted">أساسية</span></td>
           <td><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
         </tr>
         <tr>
-          <td style="text-align: right;">إدارة الصلاحيات (Audit Log)</td>
+          <td>إدارة الصلاحيات (Audit Log)</td>
           <td><span class="cross">✖</span></td>
           <td class="col-standard"><span class="cross">✖</span></td>
           <td><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
         </tr>
         <tr>
-          <td style="text-align: right;">White Label (شعار معملك)</td>
+          <td>White Label (شعار معملك)</td>
           <td><span class="cross">✖</span></td>
           <td class="col-standard"><span class="cross">✖</span></td>
           <td><span class="check">✔</span></td>
           <td><span class="check">✔</span></td>
         </tr>
         <tr>
-          <td style="text-align: right;">مدة الدعم الفني</td>
+          <td>مدة الدعم الفني</td>
           <td>6 أشهر</td>
           <td class="col-standard">سنة كاملة</td>
           <td>سنتان</td>
