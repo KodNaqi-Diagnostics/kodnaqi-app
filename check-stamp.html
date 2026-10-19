@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>فحص ختم المعمل</title>
+<style>
+body{font-family:system-ui;padding:20px;background:#f8fafc;text-align:center;}
+button{padding:15px 30px;font-size:1.2rem;background:#0d3b66;color:#fff;border:none;border-radius:8px;cursor:pointer;margin:10px;}
+#log{margin-top:20px;font-family:monospace;background:#0f172a;color:#a5f3fc;padding:15px;border-radius:8px;text-align:right;white-space:pre-wrap;display:none;line-height:1.8;font-size:0.85rem;}
+#preview{margin-top:20px;padding:15px;background:#fff;border-radius:8px;text-align:center;display:none;}
+#preview img{max-height:120px;border:2px solid #c9a227;padding:5px;border-radius:8px;}
+</style>
+</head>
+<body>
+<h2>🔍 فحص ختم المعمل المحفوظ</h2>
+<button onclick="checkStamp()">اضغط لفحص الختم</button>
+<div id="preview"></div>
+<div id="log"></div>
+<script>
+function checkStamp() {
+  const log = document.getElementById('log');
+  const preview = document.getElementById('preview');
+  log.style.display = 'block';
+  log.innerText = '⏳ جاري البحث...\n\n';
+  
+  const keys = ['kodnaqi_brand_v1', 'kodnaqi_brand', 'brand', 'kodnaqi_brand_data', 'kodnaqi_lab_brand', 'kn_brand'];
+  let found = false;
+  
+  // البحث في كل مفاتيح localStorage
+  const allKeys = Object.keys(localStorage);
+  log.innerText += `📋 إجمالي المفاتيح في الذاكرة: ${allKeys.length}\n\n`;
+  log.innerText += '═══ جميع المفاتيح ═══\n';
+  allKeys.forEach(k => {
+    log.innerText += `• ${k}\n`;
+  });
+  log.innerText += '\n═══ البحث عن الختم ═══\n';
+  
+  for (const key of keys) {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        log.innerText += `\n✅ مفتاح موجود: "${key}"\n`;
+        log.innerText += `   الحقول: ${Object.keys(parsed).join(', ')}\n`;
+        if (parsed.stampData) {
+          found = true;
+          log.innerText += `   🎯 يحتوي على ختم! (${parsed.stampData.substring(0, 50)}...)\n`;
+          preview.innerHTML = '<h3>✅ تم العثور على ختمك:</h3><img src="' + parsed.stampData + '">';
+          preview.style.display = 'block';
+        }
+        if (parsed.logoData) {
+          log.innerText += `   🖼️  يحتوي على شعار\n`;
+        }
+        if (parsed.techSignatureData) {
+          log.innerText += `   ✍️  يحتوي على توقيع فني\n`;
+        }
+        if (parsed.doctorSignatureData) {
+          log.innerText += `   ✍️  يحتوي على توقيع مدير\n`;
+        }
+      } catch(e) {
+        log.innerText += `⚠️ مفتاح "${key}": بيانات غير صالحة\n`;
+      }
+    }
+  }
+  
+  // بحث إضافي: أي مفتاح يحتوي على كلمة brand
+  if (!found) {
+    log.innerText += '\n═══ بحث موسع في كل المفاتيح ═══\n';
+    allKeys.forEach(k => {
+      if (k.toLowerCase().includes('brand') || k.toLowerCase().includes('stamp')) {
+        log.innerText += `🔎 مفتاح محتمل: "${k}"\n`;
+        const raw = localStorage.getItem(k);
+        if (raw && raw.length > 100) {
+          log.innerText += `   القيمة تبدأ بـ: ${raw.substring(0, 100)}...\n`;
+          if (raw.startsWith('data:image')) {
+            preview.innerHTML = '<h3>✅ وجدت صورة ختم:</h3><img src="' + raw + '">';
+            preview.style.display = 'block';
+            found = true;
+          }
+        }
+      }
+    });
+  }
+  
+  if (!found) {
+    log.innerText += '\n❌ لم يتم العثور على أي ختم محفوظ.\n\n';
+    log.innerText += '💡 الحل: اذهب إلى الإعدادات -> تعديل هوية المعمل -> ارفع الختم -> احفظ.\n';
+  }
+}
+</script>
+</body>
+</html>
