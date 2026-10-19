@@ -276,6 +276,12 @@
     if (remote.reason === 'not_found') {
       return { ok: false, valid: false, reason: 'server_not_found' };
     }
+    if (remote.reason === 'no_config') {
+      return { ok: false, valid: false, reason: 'no_config', details: remote.details };
+    }
+    if (remote.reason && remote.reason.startsWith('network:')) {
+      return { ok: false, valid: false, reason: 'network_error_details', details: remote.reason };
+    }
     
     // 3. إذا رفض الخادم القراءة (خطأ في القواعد)
     if (remote.reason === 'http_401' || remote.reason === 'http_403') {

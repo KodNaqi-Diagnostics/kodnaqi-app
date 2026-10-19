@@ -390,9 +390,27 @@
     finally { clearTimeout(t); }
   }
 
+  
+  function getFirebaseConfig() {
+    // 1. محاولة من المتغير العام (إذا حُمّل firebase-config.js)
+    if (window.KODNAQI_FIREBASE && window.KODNAQI_FIREBASE.url) {
+      return window.KODNAQI_FIREBASE;
+    }
+    // 2. احتياطي مدمج داخل security.js (لضمان العمل في APK)
+    console.warn('[Security] firebase-config.js missing, using embedded fallback');
+    return {
+      url: 'https://kodnaqi-licensing-default-rtdb.europe-west1.firebasedatabase.app',
+      licensesPath: 'licenses',
+      gracePeriodMs: 7 * 24 * 60 * 60 * 1000,
+      requestTimeoutMs: 5000
+    };
+  }
+
   async function checkServerStatus(licenseId) {
-    const cfg = window.KODNAQI_FIREBASE;
-    if (!cfg || !cfg.url || !licenseId) return { ok: false, reason: 'no_config' };
+    const cfg = getFirebaseConfig();
+    if (!cfg || !cfg.url || !licenseId) {
+      return { ok: false, reason: 'no_config', details: 'cfg=' + JSON.stringify(cfg) };
+    }
     const url = cfg.url + '/' + cfg.licensesPath + '/' + encodeURIComponent(licenseId) + '.json';
     try {
       const r = await fetchWithTimeout(url, cfg.requestTimeoutMs || 5000);
