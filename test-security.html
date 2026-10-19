@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>فحص دالة الأمان</title>
+<style>body{font-family:system-ui;padding:20px;background:#f8fafc;}
+input{padding:10px;width:90%;margin-bottom:10px;font-size:1rem;direction:ltr;}
+button{padding:15px 30px;font-size:1.1rem;background:#0d3b66;color:#fff;border:none;border-radius:8px;cursor:pointer;width:100%;margin-bottom:10px;}
+#log{margin-top:20px;font-family:monospace;background:#0f172a;color:#a5f3fc;padding:15px;border-radius:8px;text-align:left;white-space:pre-wrap;display:none;font-size:0.8rem;}</style>
+</head>
+<body>
+<h2>🔍 تشخيص دقيق لدالة checkServerStatus</h2>
+<input type="text" id="licId" placeholder="كود الترخيص (مثال: KN-MV...)">
+<button onclick="test1()">1️⃣ اختبار fetch مباشرة</button>
+<button onclick="test2()">2️⃣ اختبار checkServerStatus (دالة التطبيق)</button>
+<button onclick="test3()">3️⃣ اختبار fetchWithTimeout</button>
+<div id="log"></div>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script>
+function print(msg) {
+  const log = document.getElementById('log');
+  log.style.display = 'block';
+  log.innerText += msg + '\n';
+}
+
+async function test1() {
+  document.getElementById('log').innerText = '';
+  const id = document.getElementById('licId').value.trim();
+  if (!id) return alert('أدخل الكود');
+  
+  const cfg = window.KODNAQI_FIREBASE;
+  const url = cfg.url + '/' + cfg.licensesPath + '/' + encodeURIComponent(id) + '.json';
+  print('═══ اختبار 1: fetch مباشرة ═══');
+  print('URL: ' + url);
+  
+  try {
+    const r = await fetch(url);
+    print('Status: ' + r.status);
+    const data = await r.json();
+    print('البيانات: ' + JSON.stringify(data, null, 2));
+  } catch(e) {
+    print('❌ خطأ: ' + e.name + ' - ' + e.message);
+  }
+}
+
+async function test2() {
+  document.getElementById('log').innerText = '';
+  const id = document.getElementById('licId').value.trim();
+  if (!id) return alert('أدخل الكود');
+  
+  print('═══ اختبار 2: checkServerStatus ═══');
+  if (!window.KodNaqiSecurity) {
+    print('❌ KodNaqiSecurity غير محمّل!');
+    return;
+  }
+  
+  try {
+    const result = await window.KodNaqiSecurity.checkServerStatus(id);
+    print('النتيجة: ' + JSON.stringify(result, null, 2));
+  } catch(e) {
+    print('❌ خطأ: ' + e.name + ' - ' + e.message);
+    print('Stack: ' + e.stack);
+  }
+}
+
+async function test3() {
+  document.getElementById('log').innerText = '';
+  const id = document.getElementById('licId').value.trim();
+  if (!id) return alert('أدخل الكود');
+  
+  print('═══ اختبار 3: fetchWithTimeout ═══');
+  const cfg = window.KODNAQI_FIREBASE;
+  const url = cfg.url + '/' + cfg.licensesPath + '/' + encodeURIComponent(id) + '.json';
+  
+  print('Timeout مُعد: ' + (cfg.requestTimeoutMs || 5000) + 'ms');
+  
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), cfg.requestTimeoutMs || 5000);
+  const start = Date.now();
+  
+  try {
+    const r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+    clearTimeout(t);
+    print('✅ نجح في ' + (Date.now() - start) + 'ms');
+    print('Status: ' + r.status);
+  } catch(e) {
+    clearTimeout(t);
+    print('❌ فشل بعد ' + (Date.now() - start) + 'ms');
+    print('الخطأ: ' + e.name + ' - ' + e.message);
+  }
+}
+</script>
+</body>
+</html>

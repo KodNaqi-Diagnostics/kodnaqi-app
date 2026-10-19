@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>فحص اتصال Firebase</title>
+<style>body{font-family:system-ui;padding:20px;background:#f8fafc;text-align:center;}
+button{padding:15px 30px;font-size:1.2rem;background:#0d3b66;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:20px;}
+#log{margin-top:20px;font-family:monospace;background:#0f172a;color:#a5f3fc;padding:15px;border-radius:8px;text-align:left;white-space:pre-wrap;display:none;}</style>
+</head>
+<body>
+<h2>🔍 فحص الاتصال بخادم الترخيص</h2>
+<button id="btn" onclick="run()">اضغط لبدء الفحص</button>
+<div id="log"></div>
+<script src="firebase-config.js"></script>
+<script>
+async function run() {
+  const btn = document.getElementById('btn');
+  const log = document.getElementById('log');
+  btn.disabled = true; btn.innerText = 'جاري الفحص...';
+  log.style.display = 'block'; log.innerText = 'بدء الاتصال...\n';
+
+  const cfg = window.KODNAQI_FIREBASE;
+  if (!cfg) {
+    log.innerText += '❌ خطأ: ملف firebase-config.js غير محمّل.';
+    return;
+  }
+
+  const url = cfg.url + '/licenses.json';
+  log.innerText += 'الرابط: ' + url + '\n\n';
+
+  try {
+    const start = Date.now();
+    const res = await fetch(url);
+    const time = Date.now() - start;
+    
+    log.innerText += '✅ تم الاتصال بالخادم بنجاح!\n';
+    log.innerText += 'الحالة (Status): ' + res.status + '\n';
+    log.innerText += 'الوقت المستغرق: ' + time + 'ms\n\n';
+    
+    const data = await res.json();
+    log.innerText += 'البيانات المستلمة (أول 100 حرف):\n';
+    log.innerText += JSON.stringify(data).substring(0, 100) + '...\n';
+    
+    if (data === null) {
+        log.innerText += '\n⚠️ قاعدة البيانات فارغة (لا يوجد تراخيص).';
+    }
+  } catch(e) {
+    log.innerText += '❌ فشل الاتصال!\n';
+    log.innerText += 'نوع الخطأ: ' + e.name + '\n';
+    log.innerText += 'الرسالة: ' + e.message + '\n\n';
+    log.innerText += '💡 الأسباب المحتملة:\n';
+    log.innerText += '1. حجب من مزود الإنترنت (Firebase محجوب).\n';
+    log.innerText += '2. مشكلة في المتصفح (جرب متصفح آخر).\n';
+    log.innerText += '3. الكود يعمل على localhost بدون HTTPS.\n';
+  }
+  btn.disabled = false;
+  btn.innerText = '🔄 إعادة الفحص';
+}
+</script>
+</body>
+</html>

@@ -1,5 +1,14 @@
 {
   "appId": "com.kodnaqi.medlab.pro",
   "appName": "KodNaqi Diagnostics",
-  "webDir": "www"
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  }
 }

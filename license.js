@@ -260,6 +260,9 @@
     if (!window.KodNaqiSecurity || !window.KodNaqiSecurity.checkServerStatus) return { ok: true };
     
     const remote = await window.KodNaqiSecurity.checkServerStatus(payload.id);
+    console.log('🔍 [DEBUG] checkServerStatus result:', JSON.stringify(remote));
+    console.log('🔍 [DEBUG] payload.id:', payload.id);
+    console.log('🔍 [DEBUG] FIREBASE config:', JSON.stringify(window.KODNAQI_FIREBASE));
     
     // 1. إذا وصلنا للخادم بنجاح
     if (remote.ok) {
@@ -277,6 +280,11 @@
     // 3. إذا رفض الخادم القراءة (خطأ في القواعد)
     if (remote.reason === 'http_401' || remote.reason === 'http_403') {
       return { ok: false, valid: false, reason: 'server_auth_failed' };
+    }
+    
+    // عرض الخطأ الحقيقي القادم من الشبكة (للتشخيص)
+    if (remote.reason && remote.reason.startsWith('network:')) {
+      return { ok: false, valid: false, reason: 'network_error_details', details: remote.reason };
     }
     
     // 4. إذا فشل الاتصال (بدون إنترنت)
@@ -317,11 +325,16 @@
     if (!window.KodNaqiSecurity || !window.KodNaqiSecurity.verifyLicense) {
       return { valid: false, reason: 'security_not_loaded' };
     }
-    const localResult = await window.KodNaqiSecurity.verifyLicense(trimmed);
-    if (!localResult) return { valid: false, reason: 'security_error', message: 'تعذر التحقق من الترخيص' };
-    if (!localResult.valid) return localResult;
+        const localResult = await window.KodNaqiSecurity.verifyLicense(trimmed);
+    if (!localResult.valid) {
+      console.log('❌ localResult failed:', localResult);
+      return localResult;
+    }
     const serverResult = await checkServer(localResult.payload);
-    if (!serverResult.ok) return serverResult;
+    if (!serverResult.ok) {
+      console.log('❌ serverResult failed:', serverResult);
+      return serverResult;
+    }
     return localResult;
   }
 
