@@ -185,6 +185,7 @@
       const rev = ((cur && cur.rev) || 1) + 1;
       await licPatch(encodeURIComponent(id), { status: 'revoked', rev: rev, updatedAt: Date.now() });
       toast('✅ تم الإلغاء');
+      window.sendTelegramAlert(`⚠️ <b>تم إلغاء ترخيص</b>\n🆔 الترخيص: ${id}`);
       licRefresh();
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   };
@@ -236,6 +237,7 @@
       const r = await fetch(url, { method: 'DELETE' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       toast('✅ تم الحذف نهائياً');
+      window.sendTelegramAlert(`🗑️ <b>تم حذف ترخيص نهائياً</b>\n🆔 الترخيص: ${id}`);
       licRefresh();
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   };
@@ -391,6 +393,7 @@
       document.getElementById('licNewResultDays').textContent = days;
 
       toast('✅ تم الإصدار والنشر');
+      window.sendTelegramAlert(`🔔 <b>ترخيص جديد!</b>\n👤 العميل: ${name}\n💼 الباقة: ${tier}\n📱 الأجهزة: ${devices.join(', ')}`);
       licRefresh();
     } catch (e) {
       licSetMsg('❌ ' + e.message, '#dc3545');
