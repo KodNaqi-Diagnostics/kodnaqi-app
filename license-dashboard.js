@@ -1113,66 +1113,46 @@
   window.printLicenseInvoice = function(licenseId) {
     try {
       const lic = (window._licenses || []).find(l => l._id === licenseId);
-      if (!lic) return alert('لم يتم العثور على بيانات الترخيص');
-      
+      if (!lic) {
+        alert('لم يتم العثور على بيانات الترخيص في الذاكرة.');
+        return;
+      }
+
       const date = new Date().toLocaleDateString('ar-EG');
       const expiry = lic.expires ? new Date(lic.expires).toLocaleDateString('ar-EG') : '—';
       const prices = { 'B': 150, 'S': 300, 'A': 500, 'E': 1000, 'TRIAL': 0 };
       const priceUSD = prices[lic.tier] || 0;
 
-      const html = `
-        <div style="direction:rtl; font-family:system-ui; max-width:800px; margin:20px auto; background:#fff; padding:40px; border:1px solid #ddd; border-radius:10px;">
-          <div style="display:flex; justify-content:space-between; border-bottom:3px solid #0d3b66; padding-bottom:20px; margin-bottom:20px;">
-            <div><img src="./logo.png" style="height:80px;" alt="KodNaqi"></div>
-            <div style="text-align:left;">
-              <h1 style="color:#0d3b66; margin:0;">فاتورة ترخيص</h1>
-              <p style="margin:5px 0;">رقم الفاتورة: <strong>INV-${lic._id}</strong></p>
-              <p style="margin:5px 0;">التاريخ: <strong>${date}</strong></p>
-            </div>
+      const htmlContent = `
+        <div style="background:white; padding:20px; border-radius:10px; max-width:600px; width:100%; margin:auto; position:relative; direction:rtl; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+          <h2 style="text-align:center; color:#0d3b66; margin-top:0;">فاتورة ترخيص</h2>
+          <hr style="border-color:#eee;">
+          <p><b>رقم الفاتورة:</b> INV-${lic._id}</p>
+          <p><b>التاريخ:</b> ${date}</p>
+          <p><b>العميل:</b> ${lic.customer}</p>
+          <p><b>الباقة:</b> ${lic.tier}</p>
+          <p><b>تاريخ الانتهاء:</b> ${expiry}</p>
+          <p><b>الأجهزة:</b> ${(lic.devices||[]).join(', ')}</p>
+          <hr style="border-color:#eee;">
+          <h3 style="color:#198754;">الإجمالي: $${priceUSD}</h3>
+          <div style="text-align:center; margin-top:20px;">
+            <button onclick="document.getElementById('kn-invoice-modal').remove()" style="padding:10px 20px; background:#dc3545; color:white; border:none; border-radius:5px; margin-left:10px; font-weight:bold;">إغلاق</button>
+            <button onclick="window.print()" style="padding:10px 20px; background:#0d3b66; color:white; border:none; border-radius:5px; font-weight:bold;">طباعة</button>
           </div>
-          <div style="margin-bottom:30px;">
-            <h3 style="color:#0d3b66; margin-bottom:10px;">بيانات العميل:</h3>
-            <p style="margin:5px 0;">الاسم / المعمل: <strong>${lic.customer || '—'}</strong></p>
-            ${lic.manager ? `<p style="margin:5px 0;">المدير: <strong>${lic.manager}</strong></p>` : ''}
-            ${lic.phone ? `<p style="margin:5px 0;">رقم الهاتف: <strong>${lic.phone}</strong></p>` : ''}
-            ${lic.address ? `<p style="margin:5px 0;">العنوان: <strong>${lic.address}</strong></p>` : ''}
-            <p style="margin:5px 0;">الأجهزة المرخصة: <strong>${(lic.devices||[]).join(', ')}</strong></p>
-          </div>
-          <table style="width:100%; border-collapse:collapse; margin-bottom:30px;">
-            <thead>
-              <tr style="background:#0d3b66; color:white;">
-                <th style="padding:10px; border:1px solid #ddd; text-align:right;">الوصف</th>
-                <th style="padding:10px; border:1px solid #ddd; text-align:right;">الباقة</th>
-                <th style="padding:10px; border:1px solid #ddd; text-align:right;">تاريخ الانتهاء</th>
-                <th style="padding:10px; border:1px solid #ddd; text-align:right;">السعر</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="padding:10px; border:1px solid #ddd;">رخصة استخدام نظام KodNaqi Diagnostics</td>
-                <td style="padding:10px; border:1px solid #ddd;">${lic.tier}</td>
-                <td style="padding:10px; border:1px solid #ddd;">${expiry}</td>
-                <td style="padding:10px; border:1px solid #ddd;"><strong>$${priceUSD}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-          <div style="text-align:left; border-top:2px solid #eee; padding-top:20px;">
-            <h2 style="color:#198754; margin:0;">الإجمالي: $${priceUSD}</h2>
-          </div>
-        </div>
-        <div style="text-align:center; margin-top:20px;">
-          <button onclick="window.print()" style="padding:12px 25px; background:#0d3b66; color:white; border:none; border-radius:8px; font-size:1.1rem; cursor:pointer; margin-left:10px;">🖨️ طباعة / حفظ PDF</button>
-          <button onclick="document.getElementById('kn-invoice-modal').remove()" style="padding:12px 25px; background:#dc3545; color:white; border:none; border-radius:8px; font-size:1.1rem; cursor:pointer;">✖ إغلاق</button>
         </div>
       `;
 
-      const win = document.createElement('div');
-      win.id = 'kn-invoice-modal';
-      win.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999999;overflow-y:auto; padding:20px;';
-      win.innerHTML = html;
-      document.body.appendChild(win);
-    } catch(e) {
-      alert('خطأ في عرض الفاتورة: ' + e.message);
+      const existingModal = document.getElementById('kn-invoice-modal');
+      if (existingModal) existingModal.remove();
+
+      const modal = document.createElement('div');
+      modal.id = 'kn-invoice-modal';
+      modal.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:2147483647; display:flex; align-items:center; justify-content:center; padding:20px;';
+      modal.innerHTML = htmlContent;
+      document.body.appendChild(modal);
+
+    } catch (error) {
+      alert('خطأ في إنشاء الفاتورة: ' + error.message);
     }
   };
 
