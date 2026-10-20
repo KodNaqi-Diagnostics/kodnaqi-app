@@ -358,11 +358,43 @@ async function savePatient() {
     const phone = document.getElementById('pPhone').value.trim();
     
     if (!name) {
-      alert("⚠️ الاسم مطلوب");
-      return;
-    }
-    
-    void("2. الاسم: " + name);
+          alert("⚠️ الاسم مطلوب");
+          return;
+        }
+
+        // ═══ فحص تكرار اسم المريض (ميزة الحماية) ═══
+        try {
+          const allPatients = await dbGetAll('patients');
+          const normalize = (str) => (str || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          const normalizedInput = normalize(name);
+          
+          // البحث عن اسم مطابق تماماً (بعد توحيد المسافات)
+          const existingPatient = allPatients.find(p => normalize(p.name) === normalizedInput);
+          
+          if (existingPatient) {
+            const viewOld = confirm(`⚠️ تنبيه: المريض "${name}" مسجل مسبقاً برقم (${existingPatient.serial || existingPatient.id}).\n\nهل تريد عرض ملفه القديم بدلاً من إنشاء ملف جديد؟`);
+            
+            if (viewOld) {
+              closeModal(); // إغلاق نافذة الإضافة
+              
+              // فتح ملف المريض القديم
+              if (typeof showPatientDetails === 'function') {
+                showPatientDetails(existingPatient.id);
+              } else if (typeof openPatient === 'function') {
+                openPatient(existingPatient.id);
+              } else {
+                if (typeof showPage === 'function') showPage('patients');
+                if (typeof renderPatients === 'function') renderPatients();
+              }
+            }
+            return; // إيقاف عملية الحفظ نهائياً
+          }
+        } catch(e) {
+          console.error('خطأ في فحص تكرار المريض:', e);
+        }
+        // ═══════════════════════════════════════════
+
+        void("2. الاسم: " + name);
     
     // توليد رقم تسلسلي للمريض
     const serial = await getNextSerial('patient');
