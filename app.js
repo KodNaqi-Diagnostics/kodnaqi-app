@@ -372,7 +372,7 @@ async function savePatient() {
           const existingPatient = allPatients.find(p => normalize(p.name) === normalizedInput);
           
           if (existingPatient) {
-            const viewOld = confirm(`⚠️ تنبيه: المريض "${name}" مسجل مسبقاً برقم (${existingPatient.serial || existingPatient.id}).\n\nهل تريد عرض ملفه القديم بدلاً من إنشاء ملف جديد؟`);
+            const viewOld = await window.showKNConfirm('مريض مسجل مسبقاً', `المريض "${name}" مسجل مسبقاً برقم (${existingPatient.serial || existingPatient.id}).\n\nهل تريد عرض ملفه القديم بدلاً من إنشاء ملف جديد؟`, 'warning');
             
             if (viewOld) {
               closeModal(); // إغلاق نافذة الإضافة

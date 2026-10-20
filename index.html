@@ -1177,6 +1177,63 @@ if ('serviceWorker' in navigator) {
   setTimeout(removeJunkText, 2500);
 })();
 </script>
+
+<script>
+// ═══ نافذة تأكيد احترافية (مخصصة للنظام) ═══
+window.showKNConfirm = function(title, message, type) {
+  return new Promise((resolve) => {
+    let icon = '❓';
+    let color = '#0d3b66';
+    if (type === 'warning') { icon = '⚠️'; color = '#f59e0b'; }
+    else if (type === 'danger') { icon = '⛔'; color = '#dc3545'; }
+
+    let modal = document.getElementById('kn-custom-confirm');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'kn-custom-confirm';
+      modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:999999; align-items:center; justify-content:center; padding:20px; backdrop-filter: blur(3px);';
+      modal.innerHTML = `
+        <div id="kn-confirm-content" style="background:#fff; border-radius:16px; max-width:420px; width:100%; padding:30px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); transform: scale(0.9); transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+          <div id="kn-confirm-icon" style="font-size:3.5rem; margin-bottom:15px; line-height:1;"></div>
+          <h3 id="kn-confirm-title" style="margin:0 0 10px; font-family:inherit; font-weight:900; font-size:1.3rem;"></h3>
+          <div id="kn-confirm-msg" style="color:#475569; font-family:inherit; font-size:1rem; line-height:1.7; margin-bottom:25px; white-space:pre-wrap;"></div>
+          <div style="display:flex; gap:10px;">
+            <button id="kn-confirm-ok" style="flex:1; padding:14px; border:none; border-radius:10px; font-family:inherit; font-weight:800; font-size:1rem; cursor:pointer; color:#fff; transition: opacity 0.2s;">موافق</button>
+            <button id="kn-confirm-cancel" style="flex:1; padding:14px; border:none; border-radius:10px; font-family:inherit; font-weight:800; font-size:1rem; cursor:pointer; background:#e2e8f0; color:#334155; transition: opacity 0.2s;">إلغاء</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    const iconEl = document.getElementById('kn-confirm-icon');
+    const titleEl = document.getElementById('kn-confirm-title');
+    const msgEl = document.getElementById('kn-confirm-msg');
+    const btnOk = document.getElementById('kn-confirm-ok');
+    const btnCancel = document.getElementById('kn-confirm-cancel');
+    const contentEl = document.getElementById('kn-confirm-content');
+
+    iconEl.textContent = icon;
+    titleEl.textContent = title || 'تأكيد';
+    titleEl.style.color = color;
+    msgEl.textContent = message;
+    btnOk.style.background = color;
+
+    modal.style.display = 'flex';
+    setTimeout(() => { contentEl.style.transform = 'scale(1)'; }, 10);
+
+    btnOk.onclick = function() {
+      contentEl.style.transform = 'scale(0.9)';
+      setTimeout(() => { modal.style.display = 'none'; resolve(true); }, 200);
+    };
+
+    btnCancel.onclick = function() {
+      contentEl.style.transform = 'scale(0.9)';
+      setTimeout(() => { modal.style.display = 'none'; resolve(false); }, 200);
+    };
+  });
+};
+</script>
 </body>
 </html>
 
