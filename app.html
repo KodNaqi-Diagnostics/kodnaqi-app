@@ -499,6 +499,11 @@ body {
   <!-- Settings -->
   <div class="page" id="page-settings">
 
+    <button onclick="openRatingModal()" class="btn btn-warning btn-sm w-100 mb-2" id="btn-rate-us" style="font-weight:800; color:#fff; background:#f59e0b; border:none; padding:12px; border-radius:8px;">
+      ⭐ قيّم تجربتك مع النظام
+    </button>
+    
+
     <div class="card p-3 mb-3" id="theme-selector-ui" style="border-radius: 12px;">
       <details>
         <summary style="cursor:pointer; font-weight:bold; color:#0d3b66; display:flex; justify-content:space-between; align-items:center;">
@@ -1234,7 +1239,104 @@ window.showKNConfirm = function(title, message, type) {
   });
 };
 </script>
+
+<!-- Rating Modal -->
+<div id="kn-rating-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); z-index:999999; align-items:center; justify-content:center; padding:20px; backdrop-filter: blur(3px);">
+  <div style="background:#fff; border-radius:16px; max-width:400px; width:100%; padding:25px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); direction:rtl;">
+    <h3 style="color:#0d3b66; font-weight:900; margin:0 0 5px;">ما رأيك في نظام KodNaqi؟</h3>
+    <p style="color:#64748b; font-size:0.9rem; margin-bottom:20px;">تقييمك يساعدنا على تقديم الأفضل دائماً.</p>
+    
+    <div id="kn-stars" style="font-size:2.5rem; color:#e2e8f0; margin-bottom:20px; cursor:pointer; user-select:none;">
+      <span data-val="1" onclick="setRating(1)">★</span>
+      <span data-val="2" onclick="setRating(2)">★</span>
+      <span data-val="3" onclick="setRating(3)">★</span>
+      <span data-val="4" onclick="setRating(4)">★</span>
+      <span data-val="5" onclick="setRating(5)">★</span>
+    </div>
+    
+    <textarea id="kn-review-text" placeholder="اكتب ملاحظاتك هنا (اختياري)..." style="width:100%; height:80px; padding:10px; border:2px solid #cbd5e1; border-radius:8px; box-sizing:border-box; font-family:inherit; font-size:0.9rem; resize:none; margin-bottom:15px;"></textarea>
+    
+    <div id="kn-review-msg" style="min-height:20px; font-size:0.85rem; font-weight:bold; margin-bottom:10px;"></div>
+    
+    <div style="display:flex; gap:10px;">
+      <button onclick="submitRating()" style="flex:1; padding:12px; background:#0d3b66; color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">إرسال التقييم</button>
+      <button onclick="document.getElementById('kn-rating-modal').style.display='none'" style="flex:1; padding:12px; background:#e2e8f0; color:#334155; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _currentRating = 0;
+
+function openRatingModal() {
+  document.getElementById('kn-rating-modal').style.display = 'flex';
+  document.getElementById('kn-review-msg').textContent = '';
+  document.getElementById('kn-review-text').value = '';
+  setRating(0);
+}
+
+function setRating(val) {
+  _currentRating = val;
+  document.querySelectorAll('#kn-stars span').forEach(star => {
+    const starVal = parseInt(star.getAttribute('data-val'));
+    star.style.color = starVal <= val ? '#f59e0b' : '#e2e8f0';
+  });
+}
+
+async function submitRating() {
+  const msg = document.getElementById('kn-review-msg');
+  if (_currentRating === 0) {
+    msg.textContent = '⚠️ يرجى اختيار عدد النجوم أولاً';
+    msg.style.color = '#dc3545';
+    return;
+  }
+  
+  const text = document.getElementById('kn-review-text').value.trim();
+  msg.textContent = '⏳ جاري الإرسال...';
+  msg.style.color = '#0d3b66';
+
+  try {
+    const cfg = window.KODNAQI_FIREBASE;
+    if (!cfg || !cfg.url) throw new Error('إعدادات الشبكة غير متوفرة');
+    
+    // محاولة جلب اسم العميل من بيانات الترخيص
+    let customerName = 'عميل غير معروف';
+    try {
+      const lic = JSON.parse(localStorage.getItem('kodnaqi_license') || '{}');
+      if (lic.payload && lic.payload.customer) customerName = lic.payload.customer;
+    } catch(e) {}
+
+    const url = cfg.url + '/reviews.json';
+    const payload = {
+      stars: _currentRating,
+      text: text,
+      customer: customerName,
+      date: Date.now(),
+      deviceCode: localStorage.getItem('kodnaqi_device_code_v1') || 'unknown'
+    };
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!res.ok) throw new Error('فشل الاتصال بالخادم');
+
+    msg.textContent = '✅ شكراً لك! تم إرسال تقييمك بنجاح.';
+    msg.style.color = '#10b981';
+    
+    setTimeout(() => {
+      document.getElementById('kn-rating-modal').style.display = 'none';
+    }, 2000);
+  } catch (e) {
+    msg.textContent = '❌ ' + e.message;
+    msg.style.color = '#dc3545';
+  }
+}
+</script>
 </body>
+
 </html>
 
 <style>

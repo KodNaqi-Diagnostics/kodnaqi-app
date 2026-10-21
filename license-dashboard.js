@@ -1282,6 +1282,59 @@
     }
   };
 
+
+  // ═══ نظام التقييمات (Reviews) ═══
+  window.loadReviews = async function() {
+    const listEl = document.getElementById('reviewsList');
+    if (!listEl) return;
+    
+    listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">⏳ جاري تحميل التقييمات...</div>';
+    
+    try {
+      const secret = getSecret();
+      if (!secret) {
+        listEl.innerHTML = '<div style="text-align:center;color:#dc3545;padding:20px;">❌ يرجى تسجيل الدخول بالـ Secret أولاً.</div>';
+        return;
+      }
+      
+      const cfg = window.KODNAQI_FIREBASE;
+      const url = cfg.url + '/reviews.json?auth=' + encodeURIComponent(secret);
+      
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      
+      if (!data) {
+        listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">لا توجد تقييمات حتى الآن.</div>';
+        return;
+      }
+      
+      const reviews = Object.values(data).sort((a, b) => b.date - a.date);
+      
+      listEl.innerHTML = reviews.map(r => {
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+          starsHtml += `<span style="color: ${i <= r.stars ? '#f59e0b' : '#e2e8f0'}; font-size:1.5rem;">★</span>`;
+        }
+        const date = new Date(r.date).toLocaleDateString('ar-EG');
+        
+        return `
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:15px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="font-weight:800; color:#0d3b66;">${r.customer || 'عميل'}</div>
+              <div style="font-size:0.8rem; color:#64748b;">${date}</div>
+            </div>
+            <div style="margin-bottom:8px;">${starsHtml}</div>
+            ${r.text ? `<div style="color:#334155; font-size:0.9rem; line-height:1.6;">"${r.text}"</div>` : ''}
+          </div>
+        `;
+      }).join('');
+      
+    } catch (e) {
+      listEl.innerHTML = `<div style="text-align:center;color:#dc3545;padding:20px;">❌ خطأ: ${e.message}</div>`;
+    }
+  };
+
   console.log('[License Dashboard] loaded');
 })();
 
