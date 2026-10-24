@@ -1369,6 +1369,41 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
+    <!-- زر الطباعة العائم -->
+    <button id="btn-floating-print" onclick="openPrintModal()" style="position:fixed; bottom:85px; right:15px; width:56px; height:56px; border-radius:50%; background:#0d3b66; color:white; border:none; box-shadow:0 4px 12px rgba(0,0,0,0.3); font-size:1.5rem; cursor:pointer; z-index:9998; display:flex; align-items:center; justify-content:center;">
+      🖨️
+    </button>
+    
+
+    <!-- نافذة الطباعة -->
+    <div id="print-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; align-items:center; justify-content:center; padding:20px;">
+      <div style="background:white; padding:25px; border-radius:16px; max-width:400px; width:100%; direction:rtl; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="color:#0d3b66; margin-top:0; text-align:center;">🖨️ خيارات الطباعة</h3>
+        
+        <div style="margin:15px 0; padding:10px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc;">
+          <label style="font-weight:bold; cursor:pointer;"><input type="radio" name="print-type" value="wifi" checked> طباعة حرارية (WiFi)</label>
+          <input type="text" id="printer-ip" placeholder="192.168.1.100" style="width:100%; padding:10px; margin-top:8px; border:1px solid #ccc; border-radius:8px; direction:ltr; box-sizing:border-box;">
+        </div>
+
+        <div style="margin:15px 0; padding:10px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc;">
+          <label style="font-weight:bold; cursor:pointer;"><input type="radio" name="print-type" value="bt"> طباعة حرارية (Bluetooth)</label>
+          <select id="bt-printer-select" style="width:100%; padding:10px; margin-top:8px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+            <option value="">جاري البحث عن الطابعات...</option>
+          </select>
+        </div>
+
+        <div style="margin:15px 0; padding:10px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc;">
+          <label style="font-weight:bold; cursor:pointer;"><input type="radio" name="print-type" value="pdf"> طباعة تقرير (PDF) لطابعة ليزر</label>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button onclick="doPrint()" style="flex:1; padding:12px; background:#198754; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">بدء الطباعة</button>
+          <button onclick="document.getElementById('print-modal').style.display='none'" style="flex:1; padding:12px; background:#dc3545; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">إلغاء</button>
+        </div>
+      </div>
+    </div>
+    
 </body>
 
 </html>
