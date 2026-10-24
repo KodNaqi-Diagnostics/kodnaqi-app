@@ -1335,6 +1335,28 @@ async function submitRating() {
   }
 }
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const statusEl = document.getElementById('kn-net-status');
+  const textEl = document.getElementById('kn-net-text');
+
+  function updateNetworkStatus() {
+    if (navigator.onLine) {
+      statusEl.className = 'online';
+      textEl.textContent = 'متصل بالإنترنت';
+    } else {
+      statusEl.className = 'offline';
+      textEl.textContent = 'يعمل أوفلاين';
+    }
+  }
+
+  window.addEventListener('online', updateNetworkStatus);
+  window.addEventListener('offline', updateNetworkStatus);
+  updateNetworkStatus(); // تشغيل عند التحميل
+});
+</script>
+
 </body>
 
 </html>
