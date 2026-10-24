@@ -972,52 +972,7 @@ function ensureHtml2Canvas() {
 </div>
 <button id="knTestBtn" style="display:none;" onclick="knRunTest()" style="position:fixed;bottom:80px;right:8px;z-index:9998;width:48px;height:48px;border-radius:50%;background:#0d3b66;color:#fff;border:none;font-size:1.2rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3);">🧪</button>
 
-<script>
-async function knRunTest() {
-  const out = document.getElementById('knTestOut');
-  const panel = document.getElementById('knTestPanel');
-  panel.style.display = 'block';
-  out.textContent = '⏳ جاري الفحص...';
 
-  let result = '🧪 نتائج فحص الترخيص\n';
-  result += '═══════════════════════\n\n';
-
-  try {
-    const tier = await window.KodNaqiLicense.getActiveTier();
-    result += '📊 الباقة الحالية: ' + (tier || 'بلا ترخيص') + '\n\n';
-  } catch (e) {
-    result += '❌ getActiveTier: ' + e.message + '\n';
-  }
-
-  const features = ['finance', 'cloud', 'jsonIO', 'users', 'advReports', 'roles', 'audit', 'whiteLabel'];
-  result += '🔍 الميزات:\n';
-  for (const f of features) {
-    try {
-      const ok = await window.KodNaqiLicense.hasFeature(f);
-      result += '  ' + (ok ? '✅' : '❌') + ' ' + f + '\n';
-    } catch (e) {
-      result += '  ⚠️ ' + f + ': ' + e.message + '\n';
-    }
-  }
-
-  result += '\n📋 العناصر المحمية:\n';
-  const protected_els = document.querySelectorAll('[data-require-feature]');
-  result += '  إجمالي: ' + protected_els.length + '\n';
-  protected_els.forEach(el => {
-    const f = el.getAttribute('data-require-feature');
-    const visible = el.style.display !== 'none' && !el.hidden;
-    const tag = el.tagName.toLowerCase();
-    const id = el.id || (el.dataset.page || '');
-    result += '  ' + (visible ? '👁️' : '🚫') + ' [' + f + '] ' + tag + (id ? '#' + id : '') + '\n';
-  });
-
-  result += '\n🧪 اختبار الحجب:\n';
-  result += '  افتح Console للاختبار الحقيقي\n';
-
-  out.textContent = result;
-  console.log(result);
-}
-</script>
 
 <script src="offline-intercept.js"></script>
 
@@ -1351,26 +1306,7 @@ async function submitRating() {
 }
 </script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const statusEl = document.getElementById('kn-net-status');
-  const textEl = document.getElementById('kn-net-text');
 
-  function updateNetworkStatus() {
-    if (navigator.onLine) {
-      statusEl.className = 'online';
-      textEl.textContent = 'متصل بالإنترنت';
-    } else {
-      statusEl.className = 'offline';
-      textEl.textContent = 'يعمل أوفلاين';
-    }
-  }
-
-  window.addEventListener('online', updateNetworkStatus);
-  window.addEventListener('offline', updateNetworkStatus);
-  updateNetworkStatus(); // تشغيل عند التحميل
-});
-</script>
 
 
     <!-- زر الطباعة العائم -->
@@ -1462,6 +1398,330 @@ async function exportDataAsJson() {
     alert('❌ خطأ في التصدير: ' + e.message);
   }
 }
+</script>
+
+<script>
+// ═══ معالج الأخطاء الشامل ═══
+window.onerror = function(msg, url, line, col, error) {
+  if (typeof showKNAlert === 'function') {
+    showKNAlert('خطأ تقني', 'حدث خطأ: ' + msg + '\nفي السطر: ' + line, 'error');
+  } else {
+    console.error('Error:', msg, 'Line:', line);
+  }
+  return false;
+};
+
+// إجبار تعريف الدوال
+window.openPrintModal = function() {
+  try {
+    const modal = document.getElementById('print-modal');
+    if (modal) modal.style.display = 'flex';
+    else alert('خطأ: نافذة الطباعة غير موجودة في الصفحة.');
+  } catch(e) {
+    alert('خطأ في فتح الطباعة: ' + e.message);
+  }
+};
+
+
+</script>
+
+<script>
+// ═══ 1. نافذة التنبيه ═══
+window.showKNAlert = function(title, message, type) {
+  var icon = 'ℹ️'; var color = '#0d3b66';
+  if (type === 'error') { icon = '❌'; color = '#dc2626'; }
+  else if (type === 'warning') { icon = '⚠️'; color = '#f59e0b'; }
+  else if (type === 'success') { icon = '✅'; color = '#059669'; }
+
+  var modal = document.getElementById('kn-custom-alert');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'kn-custom-alert';
+    modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:999999; align-items:center; justify-content:center; padding:20px;';
+    
+    var div = document.createElement('div');
+    div.id = 'kn-alert-content';
+    div.style.cssText = 'background:#fff; border-radius:16px; max-width:420px; width:100%; padding:30px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.2);';
+    
+    var iconEl = document.createElement('div'); iconEl.id = 'kn-alert-icon'; iconEl.style.cssText = 'font-size:3.5rem; margin-bottom:15px;';
+    var titleEl = document.createElement('h3'); titleEl.id = 'kn-alert-title'; titleEl.style.cssText = 'margin:0 0 10px; font-weight:900; font-size:1.3rem;';
+    var msgEl = document.createElement('div'); msgEl.id = 'kn-alert-msg'; msgEl.style.cssText = 'color:#475569; font-size:1rem; line-height:1.7; margin-bottom:25px;';
+    var btnEl = document.createElement('button'); btnEl.id = 'kn-alert-btn'; btnEl.style.cssText = 'width:100%; padding:14px; border:none; border-radius:10px; font-weight:800; font-size:1rem; cursor:pointer; color:#fff;'; btnEl.textContent = 'حسناً';
+    
+    div.appendChild(iconEl); div.appendChild(titleEl); div.appendChild(msgEl); div.appendChild(btnEl);
+    modal.appendChild(div); document.body.appendChild(modal);
+  }
+
+  document.getElementById('kn-alert-icon').textContent = icon;
+  var titleEl = document.getElementById('kn-alert-title'); titleEl.textContent = title || 'تنبيه'; titleEl.style.color = color;
+  document.getElementById('kn-alert-msg').textContent = message;
+  var btnEl = document.getElementById('kn-alert-btn'); btnEl.style.background = color;
+
+  modal.style.display = 'flex';
+  btnEl.onclick = function() { modal.style.display = 'none'; };
+};
+
+// ═══ 2. نافذة التأكيد ═══
+window.showKNConfirm = function(title, message, type) {
+  return new Promise(function(resolve) {
+    var icon = '❓'; var color = '#0d3b66';
+    if (type === 'warning') { icon = '⚠️'; color = '#f59e0b'; }
+    else if (type === 'danger') { icon = '⛔'; color = '#dc3545'; }
+
+    var modal = document.getElementById('kn-custom-confirm');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'kn-custom-confirm';
+      modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:999999; align-items:center; justify-content:center; padding:20px;';
+      
+      var div = document.createElement('div'); div.id = 'kn-confirm-content'; div.style.cssText = 'background:#fff; border-radius:16px; max-width:420px; width:100%; padding:30px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.2);';
+      var iconEl = document.createElement('div'); iconEl.id = 'kn-confirm-icon'; iconEl.style.cssText = 'font-size:3.5rem; margin-bottom:15px;';
+      var titleEl = document.createElement('h3'); titleEl.id = 'kn-confirm-title'; titleEl.style.cssText = 'margin:0 0 10px; font-weight:900; font-size:1.3rem;';
+      var msgEl = document.createElement('div'); msgEl.id = 'kn-confirm-msg'; msgEl.style.cssText = 'color:#475569; font-size:1rem; line-height:1.7; margin-bottom:25px;';
+      var btnDiv = document.createElement('div'); btnDiv.style.cssText = 'display:flex; gap:10px;';
+      var okBtn = document.createElement('button'); okBtn.id = 'kn-confirm-ok'; okBtn.style.cssText = 'flex:1; padding:14px; border:none; border-radius:10px; font-weight:800; font-size:1rem; cursor:pointer; color:#fff;'; okBtn.textContent = 'موافق';
+      var cancelBtn = document.createElement('button'); cancelBtn.id = 'kn-confirm-cancel'; cancelBtn.style.cssText = 'flex:1; padding:14px; border:none; border-radius:10px; font-weight:800; font-size:1rem; cursor:pointer; background:#e2e8f0; color:#334155;'; cancelBtn.textContent = 'إلغاء';
+      
+      btnDiv.appendChild(okBtn); btnDiv.appendChild(cancelBtn);
+      div.appendChild(iconEl); div.appendChild(titleEl); div.appendChild(msgEl); div.appendChild(btnDiv);
+      modal.appendChild(div); document.body.appendChild(modal);
+    }
+
+    document.getElementById('kn-confirm-icon').textContent = icon;
+    var titleEl = document.getElementById('kn-confirm-title'); titleEl.textContent = title || 'تأكيد'; titleEl.style.color = color;
+    document.getElementById('kn-confirm-msg').textContent = message;
+    var okBtn = document.getElementById('kn-confirm-ok'); okBtn.style.background = color;
+
+    modal.style.display = 'flex';
+
+    okBtn.onclick = function() { modal.style.display = 'none'; resolve(true); };
+    document.getElementById('kn-confirm-cancel').onclick = function() { modal.style.display = 'none'; resolve(false); };
+  });
+};
+
+// ═══ 3. الطباعة ═══
+window.openPrintModal = async function() {
+  try {
+    var modal = document.getElementById('print-modal');
+    if (modal) modal.style.display = 'flex';
+    else alert('خطأ: نافذة الطباعة غير موجودة.');
+    
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ThermalPrinter) {
+      try {
+        var res = await window.Capacitor.Plugins.ThermalPrinter.list({ transport: 'bluetooth' });
+        var select = document.getElementById('bt-printer-select');
+        if (res && res.devices && res.devices.length > 0) {
+          var htmlStr = '';
+          for (var i = 0; i < res.devices.length; i++) {
+            htmlStr += '<option value="' + res.devices[i].address + '">' + (res.devices[i].name || res.devices[i].address) + '</option>';
+          }
+          select.innerHTML = htmlStr;
+        } else {
+          select.innerHTML = '<option value="">لا توجد طابعات مقترنة</option>';
+        }
+      } catch(e) {
+        document.getElementById('bt-printer-select').innerHTML = '<option value="">خطأ: ' + e.message + '</option>';
+      }
+    } else {
+      var select = document.getElementById('bt-printer-select');
+      if (select) select.innerHTML = '<option value="">البلوتوث يعمل فقط في التطبيق (APK)</option>';
+    }
+  } catch(e) {
+    alert('خطأ في فتح الطباعة: ' + e.message);
+  }
+};
+
+// ═══ 4. تعديل القيم المرجعية ═══
+window.openRangesEditor = async function() {
+  try {
+    var modal = document.getElementById('ranges-modal');
+    if (!modal) return alert('خطأ: نافذة القيم المرجعية غير موجودة.');
+    modal.style.display = 'flex';
+    
+    var select = document.getElementById('ranges-test-select');
+    select.innerHTML = '<option value="">جاري التحميل...</option>';
+    
+    var tests = await dbGetAll('tests');
+    if (!tests || tests.length === 0) throw new Error('لا توجد فحوصات');
+    
+    tests.sort(function(a, b) { return a.name.localeCompare(b.name); });
+    var htmlStr = '<option value="">-- اختر فحصاً --</option>';
+    for (var i = 0; i < tests.length; i++) {
+      htmlStr += '<option value="' + tests[i].id + '">' + (tests[i].name_ar || tests[i].name) + '</option>';
+    }
+    select.innerHTML = htmlStr;
+  } catch (e) {
+    alert('❌ حدث خطأ: ' + e.message);
+  }
+};
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var statusEl = document.getElementById('kn-net-status');
+  var textEl = document.getElementById('kn-net-text');
+
+  // التحقق من وجود العنصر قبل التعديل (لحماية الكود من الانهيار)
+  if (!statusEl || !textEl) {
+    console.warn('Network indicator elements not found in DOM.');
+    return;
+  }
+
+  function updateNetworkStatus() {
+    if (navigator.onLine) {
+      statusEl.className = 'online';
+      statusEl.style.background = '#d1fae5';
+      statusEl.style.color = '#065f46';
+      statusEl.style.borderColor = '#10b981';
+      textEl.textContent = 'متصل بالإنترنت';
+    } else {
+      statusEl.className = 'offline';
+      statusEl.style.background = '#fee2e2';
+      statusEl.style.color = '#991b1b';
+      statusEl.style.borderColor = '#ef4444';
+      textEl.textContent = 'يعمل أوفلاين';
+    }
+  }
+
+  window.addEventListener('online', updateNetworkStatus);
+  window.addEventListener('offline', updateNetworkStatus);
+  updateNetworkStatus();
+});
+</script>
+
+<!-- نافذة تعديل القيم المرجعية -->
+<div id="ranges-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); z-index:999999; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto; backdrop-filter: blur(3px);">
+  <div style="background:#fff; border-radius:16px; max-width:600px; width:100%; padding:25px; text-align:right; box-shadow:0 20px 40px rgba(0,0,0,0.2); margin:20px auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <h3 style="color:#0d3b66; margin:0;">📊 تعديل القيم المرجعية</h3>
+      <button onclick="document.getElementById('ranges-modal').style.display='none'" style="background:#e2e8f0; border:none; width:35px; height:35px; border-radius:50%; cursor:pointer; font-size:1.2rem;">×</button>
+    </div>
+    <p style="color:#64748b; font-size:0.9rem; margin-bottom:20px;">اختر الفحص، ثم قم بتعديل القيم (الأدنى والأعلى).</p>
+    
+    <select id="ranges-test-select" onchange="loadParametersForRanges(this.value)" style="width:100%; padding:12px; border:2px solid #cbd5e1; border-radius:8px; margin-bottom:15px; font-family:inherit;">
+      <option value="">-- اختر فحصاً --</option>
+    </select>
+    
+    <div id="ranges-params-list" style="max-height:400px; overflow-y:auto;"></div>
+    <div id="ranges-msg" style="min-height:20px; font-weight:bold; text-align:center; margin-top:10px;"></div>
+    
+    <button onclick="saveRanges()" style="width:100%; padding:14px; background:#198754; color:#fff; border:none; border-radius:8px; font-weight:bold; font-size:1rem; margin-top:15px;">💾 حفظ التعديلات</button>
+  </div>
+</div>
+
+
+<script>
+// ═══ دالة الطباعة الفعلية ═══
+window.doPrint = async function() {
+  var typeEl = document.querySelector('input[name="print-type"]:checked');
+  if (!typeEl) return alert('اختر نوع الطباعة أولاً');
+  
+  var printType = typeEl.value;
+  
+  if (printType === 'pdf') {
+    document.getElementById('print-modal').style.display = 'none';
+    window.print();
+    return;
+  }
+  
+  if (!window.Capacitor || !window.Capacitor.Plugins || !window.Capacitor.Plugins.ThermalPrinter) {
+    return alert('الطباعة الحرارية تتطلب تطبيق الأندرويد (APK) مع تفعيل الإضافة.');
+  }
+  
+  try {
+    var printer = window.Capacitor.Plugins.ThermalPrinter;
+    var config = { data: btoa("KodNaqi Diagnostics\nTest Print\n----------------\n") };
+    
+    if (printType === 'wifi') {
+      var ip = document.getElementById('printer-ip').value.trim();
+      if (!ip) throw new Error('أدخل عنوان IP');
+      config.transport = 'tcp';
+      config.ip = ip;
+      config.port = 9100;
+    } else if (printType === 'bt') {
+      var address = document.getElementById('bt-printer-select').value;
+      if (!address) throw new Error('اختر طابعة بلوتوث');
+      config.transport = 'bluetooth';
+      config.address = address;
+    }
+    
+    await printer.print(config);
+    alert('✅ تم إرسال أمر الطباعة بنجاح!');
+    document.getElementById('print-modal').style.display = 'none';
+  } catch (e) {
+    alert('❌ فشل الطباعة: ' + e.message);
+  }
+};
+
+// ═══ دوال تعديل القيم المرجعية ═══
+window.loadParametersForRanges = async function(testId) {
+  var list = document.getElementById('ranges-params-list');
+  if (!testId) { list.innerHTML = ''; return; }
+  
+  list.innerHTML = '<div style="text-align:center; padding:10px;">⏳ جاري التحميل...</div>';
+  
+  try {
+    var allParams = await dbGetAll('parameters');
+    var params = allParams.filter(function(p) { return p.test_id === parseInt(testId); });
+    
+    if (params.length === 0) {
+      list.innerHTML = '<div style="text-align:center; padding:10px;">لا توجد بارامترات لهذا الفحص.</div>';
+      return;
+    }
+    
+    var htmlStr = '';
+    for (var i = 0; i < params.length; i++) {
+      var p = params[i];
+      var minVal = (p.ref_min !== null && p.ref_min !== undefined) ? p.ref_min : '';
+      var maxVal = (p.ref_max !== null && p.ref_max !== undefined) ? p.ref_max : '';
+      
+      htmlStr += '<div style="display:flex; gap:10px; align-items:center; background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:8px; border:1px solid #e2e8f0;">';
+      htmlStr += '<div style="flex:1; font-weight:bold; font-size:0.9rem;">' + (p.name_ar || p.name) + '</div>';
+      htmlStr += '<input type="number" id="ref-min-' + p.id + '" value="' + minVal + '" placeholder="الأدنى" style="width:80px; padding:8px; border:1px solid #cbd5e1; border-radius:6px; text-align:center;" step="any">';
+      htmlStr += '<span style="font-weight:bold;">-</span>';
+      htmlStr += '<input type="number" id="ref-max-' + p.id + '" value="' + maxVal + '" placeholder="الأعلى" style="width:80px; padding:8px; border:1px solid #cbd5e1; border-radius:6px; text-align:center;" step="any">';
+      htmlStr += '<span style="font-size:0.8rem; color:#64748b;">' + (p.unit || '') + '</span>';
+      htmlStr += '</div>';
+    }
+    list.innerHTML = htmlStr;
+  } catch (e) {
+    list.innerHTML = '<div style="color:#dc3545; text-align:center;">خطأ: ' + e.message + '</div>';
+  }
+};
+
+window.saveRanges = async function() {
+  var testId = document.getElementById('ranges-test-select').value;
+  if (!testId) return;
+  
+  var msg = document.getElementById('ranges-msg');
+  msg.textContent = '⏳ جاري الحفظ...';
+  msg.style.color = '#0d3b66';
+  
+  try {
+    var allParams = await dbGetAll('parameters');
+    var params = allParams.filter(function(p) { return p.test_id === parseInt(testId); });
+    
+    for (var i = 0; i < params.length; i++) {
+      var p = params[i];
+      var minEl = document.getElementById('ref-min-' + p.id);
+      var maxEl = document.getElementById('ref-max-' + p.id);
+      
+      if (minEl && maxEl) {
+        var minVal = minEl.value.trim();
+        var maxVal = maxEl.value.trim();
+        p.ref_min = minVal !== '' ? parseFloat(minVal) : null;
+        p.ref_max = maxVal !== '' ? parseFloat(maxVal) : null;
+        await dbPut('parameters', p);
+      }
+    }
+    msg.textContent = '✅ تم حفظ التعديلات بنجاح!';
+    msg.style.color = '#198754';
+    setTimeout(function() { document.getElementById('ranges-modal').style.display = 'none'; }, 1500);
+  } catch (e) {
+    msg.textContent = '❌ خطأ: ' + e.message;
+    msg.style.color = '#dc3545';
+  }
+};
 </script>
 </body>
 
