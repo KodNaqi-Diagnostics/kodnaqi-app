@@ -1296,8 +1296,8 @@ async function submitRating() {
   msg.style.color = '#0d3b66';
 
   try {
-    const cfg = window.KODNAQI_FIREBASE;
-    if (!cfg || !cfg.url) throw new Error('إعدادات الشبكة غير متوفرة');
+    const cfg = { url: 'https://kodnaqi-licensing-default-rtdb.europe-west1.firebasedatabase.app' };
+    
     
     // محاولة جلب اسم العميل من بيانات الترخيص
     let customerName = 'عميل غير معروف';
