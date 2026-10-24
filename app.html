@@ -1254,6 +1254,7 @@ window.showKNConfirm = function(title, message, type) {
       <span data-val="5" onclick="setRating(5)">★</span>
     </div>
     
+    <input type="text" id="kn-review-customer" placeholder="اسم معملك (اختياري)..." style="width:100%; padding:10px; border:2px solid #cbd5e1; border-radius:8px; box-sizing:border-box; font-family:inherit; font-size:0.9rem; margin-bottom:10px;">
     <textarea id="kn-review-text" placeholder="اكتب ملاحظاتك هنا (اختياري)..." style="width:100%; height:80px; padding:10px; border:2px solid #cbd5e1; border-radius:8px; box-sizing:border-box; font-family:inherit; font-size:0.9rem; resize:none; margin-bottom:15px;"></textarea>
     
     <div id="kn-review-msg" style="min-height:20px; font-size:0.85rem; font-weight:bold; margin-bottom:10px;"></div>
@@ -1272,6 +1273,7 @@ function openRatingModal() {
   document.getElementById('kn-rating-modal').style.display = 'flex';
   document.getElementById('kn-review-msg').textContent = '';
   document.getElementById('kn-review-text').value = '';
+  document.getElementById('kn-review-customer').value = '';
   setRating(0);
 }
 
@@ -1300,11 +1302,21 @@ async function submitRating() {
     
     
     // محاولة جلب اسم العميل من بيانات الترخيص
-    let customerName = 'عميل غير معروف';
-    try {
-      const lic = JSON.parse(localStorage.getItem('kodnaqi_license') || '{}');
-      if (lic.payload && lic.payload.customer) customerName = lic.payload.customer;
-    } catch(e) {}
+    let customerName = document.getElementById('kn-review-customer').value.trim();
+    
+    // إذا لم يكتب العميل اسمه، نأخذه من إعدادات الهوية أو الترخيص
+    if (!customerName) {
+      try {
+        const brand = JSON.parse(localStorage.getItem('kodnaqi_brand_v1') || '{}');
+        if (brand.labName) {
+          customerName = brand.labName;
+        } else {
+          const lic = JSON.parse(localStorage.getItem('kodnaqi_license') || '{}');
+          if (lic.payload && lic.payload.customer) customerName = lic.payload.customer;
+        }
+      } catch(e) {}
+    }
+    if (!customerName) customerName = 'عميل غير معروف';
 
     const url = cfg.url + '/reviews.json';
     const payload = {
