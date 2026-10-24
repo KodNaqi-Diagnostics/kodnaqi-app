@@ -498,6 +498,9 @@ body {
 
   <!-- Settings -->
   <div class="page" id="page-settings">
+<button onclick="openRangesEditor()" class="btn btn-info btn-sm w-100 mb-2" id="btn-edit-ranges" style="font-weight:800; color:#fff; background:#0d3b66; border:none; padding:12px; border-radius:8px;">
+      📊 تعديل القيم المرجعية للفحوصات
+    </button>
 
     <button onclick="openRatingModal()" class="btn btn-warning btn-sm w-100 mb-2" id="btn-rate-us" style="font-weight:800; color:#fff; background:#f59e0b; border:none; padding:12px; border-radius:8px;">
       ⭐ قيّم تجربتك مع النظام
@@ -1404,6 +1407,62 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     </div>
     
+
+<script>
+window.saveJsonFile = async function(filename, data) {
+  const jsonStr = JSON.stringify(data, null, 2);
+  
+  // محاولة استخدام المشاركة (تعمل في التطبيق والمتصفح)
+  if (navigator.share) {
+    try {
+      const file = new File([jsonStr], filename, { type: 'application/json' });
+      await navigator.share({
+        title: 'نسخة احتياطية',
+        text: 'حفظ النسخة الاحتياطية',
+        files: [file]
+      });
+      return true;
+    } catch (e) {
+      console.warn('Share failed, trying download:', e);
+    }
+  }
+  
+  // طريقة التحميل التقليدية (للمتصفح)
+  try {
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    return true;
+  } catch (e) {
+    alert('فشل حفظ الملف: ' + e.message);
+    return false;
+  }
+};
+</script>
+
+<script>
+async function exportDataAsJson() {
+  try {
+    const data = await window.KNBackup.gatherData ? await window.KNBackup.gatherData() : {};
+    if (!data || Object.keys(data).length === 0) {
+      alert('لا توجد بيانات للتصدير.');
+      return;
+    }
+    const filename = 'kodnaqi-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    const success = await window.saveJsonFile(filename, data);
+    if (success) {
+      alert('✅ تم تجهيز النسخة الاحتياطية. يمكنك حفظها الآن.');
+    }
+  } catch(e) {
+    alert('❌ خطأ في التصدير: ' + e.message);
+  }
+}
+</script>
 </body>
 
 </html>
