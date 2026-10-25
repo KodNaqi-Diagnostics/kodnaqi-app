@@ -257,7 +257,7 @@
       total += price;
       itemsHTML += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;">' +
         '<span>' + (test ? (test.name || test.name_ar) : '—') + '</span>' +
-        '<span>' + price.toLocaleString() + ' SDG</span>' +
+        '<span>' + price.toLocaleString('en-US') + ' SDG</span>' +
       '</div>';
     }
     
@@ -287,12 +287,12 @@
     html += '<div class="hr"></div>';
     html += itemsHTML;
     html += '<div class="hr"></div>';
-    html += '<div class="row"><span>Subtotal:</span><span>' + total.toLocaleString() + ' SDG</span></div>';
-    if (discount > 0) html += '<div class="row"><span>Discount:</span><span>-' + discount.toLocaleString() + ' SDG</span></div>';
-    html += '<div class="row total"><span>TOTAL:</span><span>' + net.toLocaleString() + ' SDG</span></div>';
-    html += '<div class="row"><span>Paid:</span><span>' + paid.toLocaleString() + ' SDG</span></div>';
-    if (remaining > 0) html += '<div class="row" style="color:#dc2626;"><span>Remaining:</span><span>' + remaining.toLocaleString() + ' SDG</span></div>';
-    else if (remaining < 0) html += '<div class="row" style="color:#059669;"><span>Change:</span><span>' + Math.abs(remaining).toLocaleString() + ' SDG</span></div>';
+    html += '<div class="row"><span>Subtotal:</span><span>' + total.toLocaleString('en-US') + ' SDG</span></div>';
+    if (discount > 0) html += '<div class="row"><span>Discount:</span><span>-' + discount.toLocaleString('en-US') + ' SDG</span></div>';
+    html += '<div class="row total"><span>TOTAL:</span><span>' + net.toLocaleString('en-US') + ' SDG</span></div>';
+    html += '<div class="row"><span>Paid:</span><span>' + paid.toLocaleString('en-US') + ' SDG</span></div>';
+    if (remaining > 0) html += '<div class="row" style="color:#dc2626;"><span>Remaining:</span><span>' + remaining.toLocaleString('en-US') + ' SDG</span></div>';
+    else if (remaining < 0) html += '<div class="row" style="color:#059669;"><span>Change:</span><span>' + Math.abs(remaining).toLocaleString('en-US') + ' SDG</span></div>';
     else html += '<div class="center" style="color:#059669;font-weight:bold;">PAID IN FULL ✓</div>';
     html += '<div class="hr"></div>';
     var qrI = makeQR(qrPayload(b));
