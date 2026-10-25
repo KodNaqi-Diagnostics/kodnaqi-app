@@ -371,16 +371,36 @@ table tr:nth-child(even) td { background: #fafbfd; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 async function knSafePrint(btn) {
-  if (typeof html2pdf === 'undefined') {
-    alert('أداة PDF لم تُحمّل بعد. انتظر 3 ثوانٍ وأعد المحاولة.');
-    return;
-  }
-  
   let originalText = '';
   if (btn) {
     originalText = btn.innerHTML;
-    btn.innerHTML = '⏳ جاري تجهيز PDF...';
+    btn.innerHTML = '⏳ جاري التجهيز...';
     btn.disabled = true;
+  }
+
+  // 1. محاولة فتح نافذة الطباعة الأصلية (Native Print Dialog)
+  try {
+    // إذا كنا داخل تطبيق الأندرويد واستخدمنا الجسر (لكي نفتح نافذة الطباعة الأصلية للأندرويد)
+    if (window.AndroidBridge && typeof window.AndroidBridge.printPage === 'function') {
+      window.AndroidBridge.printPage();
+      if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+      return;
+    }
+    
+    // في المتصفح العادي (Chrome/Safari)
+    window.print();
+    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+    return;
+    
+  } catch (e) {
+    console.warn('Native print failed, falling back to PDF generation...', e);
+  }
+
+  // 2. الحل البديل: توليد PDF (في حال فشل الطباعة المباشرة)
+  if (typeof html2pdf === 'undefined') {
+    alert('نافذة الطباعة غير مدعومة في هذا الجهاز، ومكتبة PDF لم تُحمل.');
+    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+    return;
   }
 
   var el = document.querySelector('.report') || document.querySelector('.receipt') || document.body;
@@ -394,22 +414,21 @@ async function knSafePrint(btn) {
     jsPDF: isReceipt ? { unit: 'mm', format: [58, 250] } : { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(el).toPdf().get('pdf').then(function(pdf) {
+  try {
+    const pdf = await html2pdf().set(opt).from(el).toPdf().get('pdf');
     if (window.AndroidBridge && typeof window.AndroidBridge.savePDF === 'function') {
-      // استخدام الجسر الأصلي (تطبيق الأندرويد)
       var base64 = pdf.output('datauristring');
       window.AndroidBridge.savePDF(base64, opt.filename);
     } else {
-      // للمتصفح العادي
       var blob = pdf.output('blob');
       var url = URL.createObjectURL(blob);
       window.open(url, '_blank');
     }
-    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
-  }).catch(function(e) {
+  } catch (e) {
     alert('فشل إنشاء PDF: ' + e.message);
+  } finally {
     if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
-  });
+  }
 }
 
 function knSafeClose() {
