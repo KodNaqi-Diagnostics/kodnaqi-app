@@ -264,7 +264,7 @@ table tr:nth-child(even) td { background: #fafbfd; }
 </head>
 <body>
 <div class="no-print">
-  <button onclick="knSafePrint()">🖨️ Print / Save PDF</button>
+  <button onclick="window.knSafePrint(this)">🖨️ Print / Save PDF</button>
   <button onclick="knSafeClose()">✖ Close</button>
 </div>
 <div class="report">
@@ -370,66 +370,53 @@ table tr:nth-child(even) td { background: #fafbfd; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-async function knSafePrint(btn) {
-  let originalText = '';
-  if (btn) {
-    originalText = btn.innerHTML;
-    btn.innerHTML = '⏳ جاري التجهيز...';
-    btn.disabled = true;
-  }
-
-  // 1. محاولة فتح نافذة الطباعة الأصلية (Native Print Dialog)
-  try {
-    // إذا كنا داخل تطبيق الأندرويد واستخدمنا الجسر (لكي نفتح نافذة الطباعة الأصلية للأندرويد)
-    if (window.AndroidBridge && typeof window.AndroidBridge.printPage === 'function') {
-      window.AndroidBridge.printPage();
-      if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
-      return;
-    }
-    
-    // في المتصفح العادي (Chrome/Safari)
-    window.print();
-    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
-    return;
-    
-  } catch (e) {
-    console.warn('Native print failed, falling back to PDF generation...', e);
-  }
-
-  // 2. الحل البديل: توليد PDF (في حال فشل الطباعة المباشرة)
-  if (typeof html2pdf === 'undefined') {
-    alert('نافذة الطباعة غير مدعومة في هذا الجهاز، ومكتبة PDF لم تُحمل.');
-    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+window.knSafePrint = function(btn) {
+  const reportEl = document.querySelector('.report') || document.querySelector('.receipt');
+  if (!reportEl) {
+    alert('لم يتم العثور على التقرير للطباعة.');
     return;
   }
 
-  var el = document.querySelector('.report') || document.querySelector('.receipt') || document.body;
-  var isReceipt = document.querySelector('.receipt') !== null;
-  
-  var opt = {
-    margin: isReceipt ? 0 : [10, 10, 10, 10],
-    filename: (isReceipt ? 'Receipt_' : 'Report_') + Date.now() + '.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-    jsPDF: isReceipt ? { unit: 'mm', format: [58, 250] } : { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  try {
-    const pdf = await html2pdf().set(opt).from(el).toPdf().get('pdf');
-    if (window.AndroidBridge && typeof window.AndroidBridge.savePDF === 'function') {
-      var base64 = pdf.output('datauristring');
-      window.AndroidBridge.savePDF(base64, opt.filename);
-    } else {
-      var blob = pdf.output('blob');
-      var url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    }
-  } catch (e) {
-    alert('فشل إنشاء PDF: ' + e.message);
-  } finally {
-    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+  // فتح نافذة جديدة فارغة
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('الرجاء السماح بالنوافذ المنبثقة (Pop-ups) للطباعة.');
+    return;
   }
-}
+
+  // نسخ الأنماط (CSS) من الصفحة الأصلية
+  const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map(el => el.outerHTML).join('');
+
+  // كتابة التقرير في النافذة الجديدة مع إخفاء كل شيء آخر
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl">
+    <head>
+      <meta charset="utf-8">
+      <title>طباعة التقرير</title>
+      ${styles}
+      <style>
+        body { margin: 0; padding: 0; background: white; }
+        @page { size: A4; margin: 10mm; }
+        .report, .receipt { border: none !important; box-shadow: none !important; }
+        .no-print { display: none !important; }
+      </style>
+    </head>
+    <body>
+      ${reportEl.outerHTML}
+      <script>
+        window.onload = function() {
+          // ننتظر نصف ثانية لضمان تحميل الصور والتواقيع
+          setTimeout(function() {
+            window.print();
+          }, 500);
+        };
+      <\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+};
 
 function knSafeClose() {
   if (window.AndroidBridge && typeof window.AndroidBridge.closeReport === 'function') {
@@ -565,7 +552,7 @@ body { font-family: system-ui, Tahoma, sans-serif; background: #eee; padding: 10
 </head>
 <body>
 <div class="no-print">
-  <button onclick="knSafePrint()">🖨️ طباعة</button>
+  <button onclick="window.knSafePrint(this)">🖨️ طباعة</button>
   <button onclick="knSafeClose()">✖ إغلاق</button>
 </div>
 <div class="receipt">
