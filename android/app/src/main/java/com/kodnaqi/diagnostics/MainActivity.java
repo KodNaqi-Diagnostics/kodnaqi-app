@@ -14,6 +14,7 @@ import java.io.FileOutputStream;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(KNPrintPlugin.class);
         super.onCreate(savedInstanceState);
         WebView webView = getBridge().getWebView();
         webView.addJavascriptInterface(new WebAppInterface(), "AndroidBridge");

@@ -380,7 +380,10 @@ async function showVisitResults(visitId) {
           <i class="bi bi-receipt"></i> فاتورة 58mm
         </button>
         <button class="btn btn-warning btn-sm" onclick="window.printViaBluetooth(${visitId})">
-          <i class="bi bi-bluetooth"></i> طباعة بلوتوث مباشرة
+          <i class="bi bi-bluetooth"></i> طباعة حرارية مباشرة
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="window.KNPrinterSetup()">
+          <i class="bi bi-gear"></i> إعداد الطابعة الحرارية (بلوتوث / WiFi)
         </button>
         ${patient.phone ? `<button class="btn btn-success btn-sm" onclick="closeInfoModal(); showNotificationMenu(${visitId})">
           <i class="bi bi-whatsapp"></i> إرسال واتساب
