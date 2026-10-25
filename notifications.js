@@ -1,3 +1,22 @@
+function knFmtDate(x) {
+  var d = new Date(x || Date.now());
+  if (isNaN(d)) return '';
+  var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return String(d.getDate()).padStart(2, '0') + ' ' + M[d.getMonth()] + ' ' + d.getFullYear();
+}
+function knBrand() {
+  try { return (window.KodNaqiBrand && window.KodNaqiBrand.get && window.KodNaqiBrand.get()) || {}; } catch (e) { return {}; }
+}
+function knLabPhone() { return knBrand().phone || '+249111729111'; }
+function knLabAddress() { return knBrand().address || 'الخرطوم - السودان'; }
+
+function knLabName() {
+  try {
+    var c = (window.KodNaqiBrand && window.KodNaqiBrand.get && window.KodNaqiBrand.get()) || {};
+    return c.labName || 'KodNaqi Diagnostics';
+  } catch (e) { return 'KodNaqi Diagnostics'; }
+}
+
 // ============================================================
 // KodNaqi — نظام الإشعارات WhatsApp
 // ============================================================
@@ -8,14 +27,14 @@ const NOTIFICATION_TEMPLATES = {
     name: 'نتائج جاهزة',
     icon: '✅',
     build: function(patient, visit) {
-      var dateStr = new Date(visit.date).toLocaleDateString('ar-EG');
+      var dateStr = knFmtDate(visit.date);
       return 'عزيزنا ' + patient.name + '،\n\n' +
-        'نتائج تحاليلك جاهزة في *KodNaqi Diagnostics* ✅\n\n' +
+        'نتائج تحاليلك جاهزة في *' + knLabName() + '* ✅\n\n' +
         '📋 رقم التقرير: *' + visit.serial + '*\n' +
         '📅 التاريخ: ' + dateStr + '\n\n' +
         'يرجى التواصل معنا لاستلام التقرير أو نرسله لك.\n\n' +
-        '📞 +249111729111\n' +
-        '📍 الخرطوم - السودان\n\n' +
+        '📞 \u200E' + knLabPhone() + '\n' +
+        '📍 ' + knLabAddress() + '\n\n' +
         'شكراً لثقتكم 🌟';
     }
   },
@@ -23,28 +42,28 @@ const NOTIFICATION_TEMPLATES = {
     name: 'تذكير بالاستلام',
     icon: '⏰',
     build: function(patient, visit) {
-      var dateStr = new Date(visit.date).toLocaleDateString('ar-EG');
+      var dateStr = knFmtDate(visit.date);
       return 'عزيزنا ' + patient.name + '،\n\n' +
         'نودّ تذكيرك بأن نتائج تحاليلك لا تزال في انتظارك 📋\n\n' +
         '📋 رقم التقرير: *' + visit.serial + '*\n' +
         '📅 تاريخ التحليل: ' + dateStr + '\n\n' +
         'يرجى المرور لاستلامها.\n\n' +
-        '📞 +249111729111\n' +
-        '📍 الخرطوم - السودان';
+        '📞 \u200E' + knLabPhone() + '\n' +
+        '📍 ' + knLabAddress();
     }
   },
   'abnormal': {
     name: 'نتائج تحتاج مراجعة',
     icon: '⚠️',
     build: function(patient, visit) {
-      var dateStr = new Date(visit.date).toLocaleDateString('ar-EG');
+      var dateStr = knFmtDate(visit.date);
       return 'عزيزنا ' + patient.name + '،\n\n' +
         'نتائج تحاليلك جاهزة، وبعض القيم تحتاج مراجعة الطبيب ⚠️\n\n' +
         '📋 رقم التقرير: *' + visit.serial + '*\n' +
         '📅 التاريخ: ' + dateStr + '\n\n' +
         'يرجى التواصل معنا بأسرع وقت.\n\n' +
-        '📞 +249111729111\n' +
-        '📍 الخرطوم - السودان\n\n' +
+        '📞 \u200E' + knLabPhone() + '\n' +
+        '📍 ' + knLabAddress() + '\n\n' +
         'نتمنى لك الشفاء العاجل 🌟';
     }
   },
@@ -52,13 +71,13 @@ const NOTIFICATION_TEMPLATES = {
     name: 'تذكير بموعد',
     icon: '📅',
     build: function(patient, visit) {
-      var dateStr = new Date(visit.date).toLocaleDateString('ar-EG');
+      var dateStr = knFmtDate(visit.date);
       return 'عزيزنا ' + patient.name + '،\n\n' +
         'نودّ تذكيرك بموعدك معنا 📅\n\n' +
         '📅 الموعد: ' + dateStr + '\n\n' +
         'يرجى الحضور في الوقت المحدد.\n\n' +
-        '📞 +249111729111\n' +
-        '📍 الخرطوم - السودان';
+        '📞 \u200E' + knLabPhone() + '\n' +
+        '📍 ' + knLabAddress();
     }
   },
   'thanks': {
@@ -66,10 +85,10 @@ const NOTIFICATION_TEMPLATES = {
     icon: '💚',
     build: function(patient, visit) {
       return 'عزيزنا ' + patient.name + '،\n\n' +
-        'شكراً لثقتك بـ *KodNaqi Diagnostics* 💚\n\n' +
+        'شكراً لثقتك بـ *' + knLabName() + '* 💚\n\n' +
         'نتائجك جاهزة، ونتمنى لك دوام الصحة والعافية.\n\n' +
-        '📞 +249111729111\n' +
-        '📍 الخرطوم - السودان';
+        '📞 \u200E' + knLabPhone() + '\n' +
+        '📍 ' + knLabAddress();
     }
   }
 };
