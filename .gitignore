@@ -89,3 +89,4 @@ launch-checklist.html
 *.OLD_*
 firebase-config.js
 admin.html
+*.bak_*

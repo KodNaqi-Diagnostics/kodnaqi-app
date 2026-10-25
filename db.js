@@ -304,10 +304,22 @@ async function getNextSerial(type) {
   const key = 'kodnaqi_serial_' + type + '_' + year;
   let current = parseInt(localStorage.getItem(key) || '0', 10);
   if (isNaN(current)) current = 0;
+  if (type !== 'patient' && type !== 'visit') {
+    current++;
+    localStorage.setItem(key, String(current));
+    return String(current);
+  }
+  const prefix = type === 'patient' ? 'KN-P-' + year + '-' : 'KN-' + year + '-';
+  try {
+    const all = await dbGetAll(type === 'patient' ? 'patients' : 'visits');
+    (all || []).forEach(function (r) {
+      if (r && typeof r.serial === 'string' && r.serial.indexOf(prefix) === 0) {
+        const n = parseInt(r.serial.slice(prefix.length), 10);
+        if (!isNaN(n) && n > current) current = n;
+      }
+    });
+  } catch (e) { console.warn('serial scan failed', e); }
   current++;
   localStorage.setItem(key, String(current));
-  const num = String(current).padStart(6, '0');
-  if (type === 'patient') return 'KN-P-' + year + '-' + num;
-  if (type === 'visit') return 'KN-' + year + '-' + num;
-  return String(current);
+  return prefix + String(current).padStart(6, '0');
 }

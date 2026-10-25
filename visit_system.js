@@ -373,13 +373,13 @@ async function showVisitResults(visitId) {
         <i class="bi bi-save"></i> حفظ النتائج
       </button>
       <div class="d-grid gap-1">
-        <button class="btn btn-outline-dark btn-sm" onclick="generateReport(${visitId})">
+        <button class="btn btn-outline-dark btn-sm" onclick="window.generateReport(${visitId})">
           <i class="bi bi-printer"></i> طباعة التقرير (A4)
         </button>
-        <button class="btn btn-outline-success btn-sm" onclick="generateInvoice(${visitId})">
+        <button class="btn btn-outline-success btn-sm" onclick="window.generateInvoice(${visitId})">
           <i class="bi bi-receipt"></i> فاتورة 58mm
         </button>
-        <button class="btn btn-warning btn-sm" onclick="printViaBluetooth(${visitId})">
+        <button class="btn btn-warning btn-sm" onclick="window.printViaBluetooth(${visitId})">
           <i class="bi bi-bluetooth"></i> طباعة بلوتوث مباشرة
         </button>
         ${patient.phone ? `<button class="btn btn-success btn-sm" onclick="closeInfoModal(); showNotificationMenu(${visitId})">
@@ -528,3 +528,9 @@ window.updateVisitTotal = updateVisitTotal;
 window.saveVisitResults = saveVisitResults;
 window.openVisit = openVisit;
 window.getRefDisplay = getRefDisplay;
+
+
+// ═══ تعريف الدالة على النطاق العام ═══
+if (typeof generateReport === 'function') {
+  window.generateReport = generateReport;
+}

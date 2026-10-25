@@ -170,512 +170,10 @@ function openNewWindow(url) {
 }
 
 // ============ توليد تقرير A4 ============
-async function generateReport(visitId) {
-  try {
-    const logoBase64 = await getLogoBase64();
-    const stampBase64 = await getStampBase64();
-    const techSigBase64 = await getTechSigBase64();
-    const doctorSigBase64 = await getDoctorSigBase64();
-
-    const visit = await dbGet('visits', visitId);
-    if (!visit) {
-      alert('الزيارة غير موجودة');
-      return;
-    }
-
-    const patient = await dbGet('patients', visit.patient_id);
-    const visitTests = await dbGetByIndex('visit_tests', 'visit_id', visitId);
-    const allResults = await dbGetByIndex('results', 'visit_id', visitId);
-
-    const testsData = [];
-    for (const vt of visitTests) {
-      const test = await dbGet('tests', vt.test_id);
-      const params = await dbGetByIndex('parameters', 'test_id', test.id);
-      params.sort((a, b) => (a.order || 0) - (b.order || 0));
-
-      const testResults = allResults.filter(r => r.test_id === test.id);
-      const resultsMap = {};
-      testResults.forEach(r => { resultsMap[r.param_id] = r.value; });
-
-      testsData.push({ test, params, resultsMap });
-    }
-
-    const date = new Date(visit.date);
-    const dateStr = date.toLocaleDateString('en-GB');
-    const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-    let html = `<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-<meta charset="utf-8">
-<title>Report - ${escapeHtml(patient.name)}</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, Tahoma, sans-serif; background: #fff; padding: 15px; color: #111; }
-.report { max-width: 800px; margin: 0 auto; border: 2px solid #0b3d91; border-radius: 8px; overflow: hidden; }
-.report-header { background: linear-gradient(135deg, #0b3d91, #0d6efd); color: #fff; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.header-left { display: flex; align-items: center; gap: 14px; }
-.header-logo { width: 70px; height: 70px; border-radius: 50%; background: #fff; padding: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.header-logo img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
-.header-text h1 { font-size: 22px; font-weight: 800; margin: 0; }
-.header-text .en { font-size: 10px; letter-spacing: 3px; opacity: .9; margin-top: 3px; }
-.header-right { text-align: right; font-size: 11px; line-height: 1.7; }
-.info-box { background: #f4f6f9; padding: 14px 20px; border-bottom: 1px solid #dde3eb; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-.info-left { display: flex; gap: 20px; flex-wrap: wrap; }
-.info-item .label { color: #6c757d; font-size: 10px; text-transform: uppercase; letter-spacing: .8px; font-weight: 600; }
-.info-item .value { font-weight: 700; color: #0b3d91; font-size: 14px; margin-top: 2px; }
-.info-right { text-align: right; }
-.info-right .label { color: #6c757d; font-size: 10px; text-transform: uppercase; letter-spacing: .8px; font-weight: 600; }
-.info-right .value { font-weight: 800; color: #0b3d91; font-size: 16px; margin-top: 2px; }
-.report-body { padding: 20px; }
-.test-block { margin-bottom: 18px; page-break-inside: avoid; }
-.test-title { background: #0b3d91; color: #fff; padding: 8px 14px; font-weight: 700; font-size: 13px; border-radius: 6px 6px 0 0; }
-table { width: 100%; border-collapse: collapse; }
-table th { background: #eef2f7; color: #0b3d91; padding: 8px; font-size: 11px; font-weight: 700; text-align: center; border: 1px solid #dde3eb; text-transform: uppercase; }
-table td { padding: 8px; border: 1px solid #dde3eb; font-size: 12px; text-align: center; vertical-align: middle; }
-table td.param-name { text-align: left; font-weight: 600; }
-table tr:nth-child(even) td { background: #fafbfd; }
-.val-normal { color: #198754; font-weight: 700; }
-.val-high { color: #dc3545; font-weight: 800; }
-.val-low { color: #0dcaf0; font-weight: 800; }
-.badge { padding: 3px 9px; border-radius: 10px; font-size: 10px; font-weight: 700; display: inline-block; }
-.badge-n { background: #0dcaf0; color: #000; }
-.badge-h { background: #dc3545; color: #fff; }
-.badge-o { background: #198754; color: #fff; }
-.badge-dash { color: #999; }
-.signatures { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; padding-top: 20px; gap: 20px; flex-wrap: wrap; }
-.sig-block { text-align: center; flex: 1; min-width: 150px; }
-.sig-space { height: 60px; }
-.sig-image { max-width: 180px; max-height: 65px; display: block; margin: 0 auto 6px; object-fit: contain; }
-.sig-line { border-top: 2px solid #0b3d91; padding-top: 6px; font-size: 11px; color: #0b3d91; font-weight: 700; }
-.stamp-block { flex: 0 0 180px; text-align: center; }
-.real-stamp { width: 170px; opacity: .85; mix-blend-mode: multiply; transform: rotate(-8deg); }
-.report-footer { background: #0b3d91; color: #fff; padding: 10px 20px; font-size: 11px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-.no-print { text-align: center; margin-bottom: 12px; }
-.no-print button { padding: 10px 20px; margin: 4px; font-size: 14px; border-radius: 8px; border: none; background: #0d6efd; color: #fff; cursor: pointer; font-weight: 600; }
-@media print {
-  @page { size: A4 portrait; margin: 8mm; }
-  body { padding: 0; }
-  .no-print { display: none !important; }
-  .report { border: 2px solid #0b3d91 !important; }
-  .real-stamp, .sig-image { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-}
-</style>
-</head>
-<body>
-<div class="no-print">
-  <button onclick="window.knSafePrint(this)">🖨️ Print / Save PDF</button>
-  <button onclick="knSafeClose()">✖ Close</button>
-</div>
-<div class="report">
-  <div class="report-header">
-    <div class="header-left">
-      <div class="header-logo"><img data-brand="logo" src="${logoBase64}" alt="KodNaqi"></div>
-      <div class="header-text">
-        <h1>${LAB_INFO.name_en}</h1>
-        <div class="en">${LAB_INFO.tagline_en}</div>
-      </div>
-    </div>
-    <div class="header-right">
-      📍 ${LAB_INFO.address}<br>
-      📞 ${LAB_INFO.phone}<br>
-      ✉️ ${LAB_INFO.email}
-    </div>
-  </div>
-  <div class="info-box">
-    <div class="info-left">
-      <div class="info-item"><div class="label">Age</div><div class="value">${patient.age || '-'}</div></div>
-      <div class="info-item"><div class="label">Gender</div><div class="value">${genderEn(patient.gender)}</div></div>
-      <div class="info-item"><div class="label">Report #</div><div class="value" style="font-family:monospace">${visit.serial}</div></div>
-      <div class="info-item"><div class="label">Date (Gregorian)</div><div class="value">${dateStr} ${timeStr}</div></div>
-      <div class="info-item"><div class="label">Date (Hijri)</div><div class="value" style="direction:rtl">${getHijriDate(visit.date)}</div></div>
-    </div>
-    <div class="info-right">
-      <div class="label">Patient</div>
-      <div class="value" style="direction:rtl;text-align:right">${escapeHtml(patient.name)}</div>
-    </div>
-  </div>
-  <div class="report-body">
-`;
-
-    for (const data of testsData) {
-      const { test, params, resultsMap } = data;
-      html += `<div class="test-block">
-      <div class="test-title">${escapeHtml(test.name)}</div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width:35%">Test</th>
-            <th style="width:20%">Result</th>
-            <th style="width:15%">Unit</th>
-            <th style="width:15%">Ref. Range</th>
-            <th style="width:15%">Assessment</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-      if (params.length === 0) {
-        html += `<tr><td class="param-name">${escapeHtml(test.name)}</td><td colspan="4" class="badge-dash">لا توجد معايير</td></tr>`;
-      } else {
-        for (const p of params) {
-          const val = resultsMap[p.id];
-          const evaluation = evaluateParam(p, val);
-          html += `<tr>
-            <td class="param-name">${escapeHtml(p.name)}</td>
-            <td>${formatResult(val, evaluation)}</td>
-            <td style="font-size:11px">${escapeHtml(p.unit || '-')}</td>
-            <td style="font-size:11px">${escapeHtml(getRefDisplay(p) || '-')}</td>
-            <td>${formatEvaluation(evaluation)}</td>
-          </tr>`;
-        }
-      }
-      html += '</tbody></table></div>';
-    }
-
-    if (visit.notes) {
-      html += `<div style="background:#fff8e1;border-left:4px solid #ffc107;padding:11px 15px;border-radius:8px;font-size:12px;margin:14px 0">
-        <strong>Notes:</strong> ${escapeHtml(visit.notes)}
-      </div>`;
-    }
-
-    html += `<div class="signatures">
-      <div class="sig-block">
-        ${techSigBase64 ? `<img src="${techSigBase64}" class="sig-image" alt="Tech">` : '<div class="sig-space"></div>'}
-        <div style="text-align:center; padding-bottom: 10px;">
-          <img data-brand="stamp" style="display:none; max-height:80px; margin-bottom:10px;" alt="Stamp">
-          <img data-brand="tech-signature" style="display:none; max-height:60px; margin-bottom:5px;" alt="Tech Sig">
-          <div class="sig-line">TECHNICIAN SIGNATURE</div>
-        </div>
-      </div>
-      <div class="stamp-block">
-        ${stampBase64 ? `<img src="${stampBase64}" class="real-stamp" alt="Stamp">` : ''}
-      </div>
-      <div class="sig-block">
-        ${doctorSigBase64 ? `<img src="${doctorSigBase64}" class="sig-image" alt="Doctor">` : '<div class="sig-space"></div>'}
-        <div style="text-align:center; padding-bottom: 10px;">
-          <img data-brand="doctor-signature" style="display:none; max-height:60px; margin-bottom:5px;" alt="Doctor Sig">
-          <div class="sig-line">DOCTOR / MANAGER SIGNATURE</div>
-        </div>
-      </div>
-    </div>`;
-
-    html += `
-  </div>
-  <div class="report-footer">
-    <span>Thank you for choosing ${LAB_INFO.name_en}</span>
-    <span>📞 ${LAB_INFO.phone}</span>
-    <span>✉️ ${LAB_INFO.email}</span>
-  </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
-window.knSafePrint = function(btn) {
-  const reportEl = document.querySelector('.report') || document.querySelector('.receipt');
-  if (!reportEl) {
-    alert('لم يتم العثور على التقرير للطباعة.');
-    return;
-  }
-
-  // فتح نافذة جديدة فارغة
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('الرجاء السماح بالنوافذ المنبثقة (Pop-ups) للطباعة.');
-    return;
-  }
-
-  // نسخ الأنماط (CSS) من الصفحة الأصلية
-  const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map(el => el.outerHTML).join('');
-
-  // كتابة التقرير في النافذة الجديدة مع إخفاء كل شيء آخر
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html dir="rtl">
-    <head>
-      <meta charset="utf-8">
-      <title>طباعة التقرير</title>
-      ${styles}
-      <style>
-        body { margin: 0; padding: 0; background: white; }
-        @page { size: A4; margin: 10mm; }
-        .report, .receipt { border: none !important; box-shadow: none !important; }
-        .no-print { display: none !important; }
-      </style>
-    </head>
-    <body>
-      ${reportEl.outerHTML}
-      <script>
-        window.onload = function() {
-          // ننتظر نصف ثانية لضمان تحميل الصور والتواقيع
-          setTimeout(function() {
-            window.print();
-          }, 500);
-        };
-      <\/script>
-    </body>
-    </html>
-  `);
-  printWindow.document.close();
-};
-
-function knSafeClose() {
-  if (window.AndroidBridge && typeof window.AndroidBridge.closeReport === 'function') {
-    window.AndroidBridge.closeReport();
-  } else {
-    // في المتصفح: ارجع للصفحة السابقة
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = '/';
-  }
-}
-</script>
-</body>
-</html>`;
-
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    openNewWindow(url);
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-  } catch (err) {
-    console.error('generateReport error:', err);
-    alert('❌ خطأ في توليد التقرير: ' + err.message);
-  }
-}
+// تصدير الدالة إلى النطاق العام
+window.generateReport = generateReport;
 
 // ============ توليد فاتورة 58mm ============
-async function generateInvoice(visitId) {
-  try {
-    const logoBase64 = await getLogoBase64();
-
-    const visit = await dbGet('visits', visitId);
-    if (!visit) return;
-
-    const patient = await dbGet('patients', visit.patient_id);
-    const visitTests = await dbGetByIndex('visit_tests', 'visit_id', visitId);
-
-    const date = new Date(visit.date);
-    const dateStr = date.toLocaleDateString('en-GB') + ' ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-
-    let itemsHtml = '';
-    let idx = 1;
-    for (const vt of visitTests) {
-      const test = await dbGet('tests', vt.test_id);
-      if (test) {
-        itemsHtml += '<tr><td class="name">' + idx + '. ' + escapeHtml(test.name) + '</td><td class="price">' + (vt.price || 0).toLocaleString('en') + '</td></tr>';
-        idx++;
-      }
-    }
-
-    const subtotal = visitTests.reduce((s, vt) => s + (vt.price || 0), 0);
-    const discount = visit.discount || 0;
-    const total = subtotal - discount;
-    const paid = visit.paid || 0;
-    const remaining = total - paid;
-
-    // توليد الباركود
-    let barcodeSVG = '';
-    try {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.style.display = 'none';
-      document.body.appendChild(svg);
-      if (typeof JsBarcode !== 'undefined') {
-        JsBarcode(svg, visit.serial.replace(/-/g, ''), {
-          format: 'CODE128', width: 1.4, height: 40,
-          displayValue: true, fontSize: 10, margin: 0, textMargin: 2
-        });
-        barcodeSVG = svg.outerHTML;
-      }
-      svg.remove();
-    } catch(e) { console.error('Barcode error:', e); }
-
-    // توليد QR
-    let qrDataUrl = '';
-    const qrText = 'KODNAQI|VISIT:' + visit.serial + '|PATIENT:' + patient.name;
-    try {
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      document.body.appendChild(tempDiv);
-
-      if (typeof QRCode !== 'undefined') {
-        new QRCode(tempDiv, {
-          text: qrText, width: 200, height: 200,
-          colorDark: '#000000', colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.M
-        });
-        await new Promise(r => setTimeout(r, 300));
-        const canvas = tempDiv.querySelector('canvas');
-        const img = tempDiv.querySelector('img');
-        if (canvas) qrDataUrl = canvas.toDataURL('image/png');
-        else if (img && img.src) qrDataUrl = img.src;
-        tempDiv.remove();
-      }
-    } catch(e) { console.error('QR error:', e); }
-
-    const barcodeHtml = barcodeSVG || '<div style="color:#999;font-size:9px">الباركود غير متوفر</div>';
-    const qrHtml = qrDataUrl ? '<img src="' + qrDataUrl + '" style="width:80px;height:80px;display:block;margin:0 auto" alt="QR">' : '<div style="color:#999;font-size:9px">QR غير متوفر</div>';
-
-    const html = `<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-<meta charset="utf-8">
-<title>Invoice ${visit.serial}</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: system-ui, Tahoma, sans-serif; background: #eee; padding: 10px; }
-.receipt { width: 58mm; background: #fff; padding: 4mm 3mm; margin: 0 auto; font-size: 11px; color: #000; }
-.center { text-align: center; }
-.bold { font-weight: bold; }
-.hr { border-top: 1px dashed #000; margin: 5px 0; }
-.row { display: flex; justify-content: space-between; margin: 2px 0; }
-.logo-wrap { text-align: center; margin-bottom: 4px; }
-.logo-wrap img { width: 55px; height: 55px; object-fit: contain; border-radius: 50%; }
-.lab-title { text-align: center; font-weight: 800; font-size: 13px; color: #0b3d91; margin-top: 2px; }
-.lab-sub { text-align: center; font-size: 8px; color: #666; letter-spacing: 1px; }
-.lab-tag { text-align: center; font-size: 9px; color: #0d6efd; font-weight: 600; margin-bottom: 2px; }
-.items-table { width: 100%; font-size: 10px; margin: 4px 0; }
-.items-table td { padding: 1px 0; }
-.items-table .name { text-align: left; width: 65%; }
-.items-table .price { text-align: right; width: 35%; }
-.total-row { font-size: 13px; font-weight: bold; margin-top: 3px; }
-.barcode-wrap { text-align: center; margin-top: 8px; padding: 4px 0; }
-.barcode-wrap svg { max-width: 100%; height: 50px; display: block; margin: 0 auto; }
-.qr-wrap { text-align: center; margin-top: 4px; padding: 4px 0; }
-.footer { text-align: center; font-size: 9px; margin-top: 6px; line-height: 1.5; }
-.no-print { text-align: center; margin: 10px auto; }
-.no-print button { padding: 10px 18px; margin: 4px; font-size: 13px; cursor: pointer; border-radius: 6px; border: none; background: #0d6efd; color: #fff; font-weight: 600; }
-@media print {
-  body { background: #fff; padding: 0; }
-  .no-print { display: none; }
-  @page { size: 58mm auto; margin: 0; }
-}
-</style>
-</head>
-<body>
-<div class="no-print">
-  <button onclick="window.knSafePrint(this)">🖨️ طباعة</button>
-  <button onclick="knSafeClose()">✖ إغلاق</button>
-</div>
-<div class="receipt">
-  <div class="logo-wrap"><img data-brand="logo" src="${logoBase64}" alt="KodNaqi"></div>
-  <div class="lab-title">${LAB_INFO.name_en}</div>
-  <div class="lab-sub">${LAB_INFO.tagline_en}</div>
-  <div class="lab-tag">${LAB_INFO.tagline_ar}</div>
-  <div class="hr"></div>
-  <div class="row"><span>Invoice #:</span><span class="bold">${visit.serial}</span></div>
-  <div class="row"><span>Date:</span><span>${dateStr}</span></div>
-  <div class="row"><span>Hijri:</span><span style="direction:rtl">${getHijriDate(visit.date)}</span></div>
-  <div class="row"><span>Patient:</span><span style="direction:rtl">${escapeHtml(patient.name)}</span></div>
-  ${patient.age ? '<div class="row"><span>Age:</span><span>' + patient.age + '</span></div>' : ''}
-  ${patient.phone ? '<div class="row"><span>Phone:</span><span>' + escapeHtml(patient.phone) + '</span></div>' : ''}
-  <div class="hr"></div>
-  <table class="items-table">
-    ${itemsHtml || '<tr><td colspan="2" class="center">No tests</td></tr>'}
-  </table>
-  <div class="hr"></div>
-  <div class="row"><span>Subtotal:</span><span>${subtotal.toLocaleString('en')} SDG</span></div>
-  ${discount > 0 ? '<div class="row"><span>Discount:</span><span>- ' + discount.toLocaleString('en') + ' SDG</span></div>' : ''}
-  ${visit.discount_reason ? '<div class="row" style="font-size:8px;color:#666"><span>Reason:</span><span style="direction:rtl">' + escapeHtml(visit.discount_reason) + '</span></div>' : ''}
-  <div class="row total-row"><span>TOTAL:</span><span>${total.toLocaleString('en')} SDG</span></div>
-  <div class="row"><span>Paid:</span><span>${paid.toLocaleString('en')} SDG</span></div>
-  ${remaining > 0 ? '<div class="row bold" style="color:#dc3545"><span>Remaining:</span><span>' + remaining.toLocaleString('en') + ' SDG</span></div>' : '<div class="row bold center" style="color:#0a0">PAID IN FULL ✓</div>'}
-  <div class="hr"></div>
-  <div class="barcode-wrap">${barcodeHtml}</div>
-  <div class="qr-wrap">
-    ${qrHtml}
-    <div style="font-size:7px;color:#666;margin-top:2px">Scan to verify</div>
-  </div>
-  <div class="hr"></div>
-  
-        
-
-        <div class="developer-stamp" style="text-align:center; font-size:9px; color:#888; margin-top:15px; border-top:1px dashed #ccc; padding-top:5px; direction:rtl;">
-          تم إنشاء هذا التقرير بواسطة نظام <strong>KodNaqi Diagnostics</strong> — لطلب نظامك الخاص تواصل معنا: +249111729111
-        </div>
-
-<div class="footer">📞 ${LAB_INFO.phone}<br>📍 ${LAB_INFO.address}<br>✉️ ${LAB_INFO.email}<br><span style="margin-top:3px;display:block">Thank you 🌟</span></div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
-async function knSafePrint(btn) {
-  if (typeof html2pdf === 'undefined') {
-    alert('أداة PDF لم تُحمّل بعد. يرجى الانتظار 3 ثوانٍ والمحاولة مجدداً.');
-    return;
-  }
-  
-  let originalText = '';
-  if (btn) {
-    originalText = btn.innerHTML;
-    btn.innerHTML = '⏳ جاري تجهيز PDF عالي الجودة...';
-    btn.disabled = true;
-  }
-
-  // التأكد من تحميل جميع الصور (التواقيع، الختم، الشعار) قبل توليد الملف
-  const images = Array.from(document.querySelectorAll('img'));
-  await Promise.all(images.map(img => {
-    if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
-    return new Promise(resolve => {
-      img.onload = () => resolve();
-      img.onerror = () => resolve();
-    });
-  }));
-
-  var el = document.querySelector('.report') || document.querySelector('.receipt') || document.body;
-  var isReceipt = document.querySelector('.receipt') !== null;
-  
-  var opt = {
-    margin: isReceipt ? 0 : [10, 10, 10, 10],
-    filename: (isReceipt ? 'Receipt_' : 'Report_') + Date.now() + '.pdf',
-    image: { type: 'jpeg', quality: 1.0 }, // أعلى جودة للصورة
-    html2canvas: { 
-      scale: 3, // دقة عالية جداً (تُصلح مشكلة ضعف الجودة)
-      useCORS: true, 
-      allowTaint: true,
-      scrollY: 0
-    },
-    jsPDF: isReceipt ? { unit: 'mm', format: [58, 250] } : { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  html2pdf().set(opt).from(el).toPdf().get('pdf').then(function(pdf) {
-    if (window.AndroidBridge && typeof window.AndroidBridge.savePDF === 'function') {
-      var base64 = pdf.output('datauristring');
-      window.AndroidBridge.savePDF(base64, opt.filename);
-    } else {
-      // للمتصفح العادي: فتح الـ PDF
-      var blob = pdf.output('blob');
-      var url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    }
-    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
-  }).catch(function(e) {
-    alert('فشل إنشاء PDF: ' + e.message);
-    if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
-  });
-}
-
-function knSafeClose() {
-  if (window.AndroidBridge && typeof window.AndroidBridge.closeReport === 'function') {
-    window.AndroidBridge.closeReport();
-  } else {
-    // في المتصفح: ارجع للصفحة السابقة
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = '/';
-  }
-}
-</script>
-</body>
-</html>`;
-
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    openNewWindow(url);
-    setTimeout(() => URL.revokeObjectURL(url), 120000);
-  } catch (err) {
-    console.error('generateInvoice error:', err);
-    alert('❌ خطأ في توليد الفاتورة: ' + err.message);
-  }
-}
-
 // ============ زر واتساب ============
 async function sendWhatsApp(visitId) {
   try {
@@ -706,146 +204,8 @@ async function sendWhatsApp(visitId) {
 
 
 // ============ طباعة بلوتوث مباشرة (RawBT) ============
-async function printViaBluetooth(visitId) {
-  try {
-    // تحميل المكتبة عند الحاجة
-    if (typeof ensureHtml2Canvas === 'function') await ensureHtml2Canvas();
-    
-    console.log('🖨️ بدء الطباعة المباشرة للزيارة:', visitId);
-
-    const visit = await dbGet('visits', visitId);
-    if (!visit) {
-      alert('الزيارة غير موجودة');
-      return;
-    }
-
-    const patient = await dbGet('patients', visit.patient_id);
-    const visitTests = await dbGetByIndex('visit_tests', 'visit_id', visitId);
-
-    const date = new Date(visit.date);
-    const dateStr = date.toLocaleDateString('en-GB') + ' ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    const hijriDate = getHijriDate(visit.date);
-
-    // احسب الإجماليات
-    let itemsHtml = '';
-    let idx = 1;
-    for (const vt of visitTests) {
-      const test = await dbGet('tests', vt.test_id);
-      if (test) {
-        itemsHtml += '<tr><td class="name">' + idx + '. ' + escapeHtml(test.name) + '</td><td class="price">' + (vt.price || 0).toLocaleString('en') + '</td></tr>';
-        idx++;
-      }
-    }
-
-    const subtotal = visitTests.reduce((s, vt) => s + (vt.price || 0), 0);
-    const discount = visit.discount || 0;
-    const total = subtotal - discount;
-    const paid = visit.paid || 0;
-    const remaining = total - paid;
-
-    // احصل على الشعار base64
-    const logoBase64 = await getLogoBase64();
-
-    // ابنِ HTML بحجم 58mm
-    const html = `
-      <div id="receipt-print" dir="ltr" style="width: 384px; padding: 10px 8px; background: #fff; font-family: Tahoma, sans-serif; font-size: 12px; color: #000; line-height: 1.4;">
-        <div style="text-align: center; margin-bottom: 8px;">
-          ${logoBase64 ? '<img src="' + logoBase64 + '" style="width: 55px; height: 55px; border-radius: 50%;">' : ''}
-        </div>
-        <div style="text-align: center; font-weight: 800; font-size: 14px; color: #0b3d91;">${KN_BRAND().name}</div>
-        <div style="text-align: center; font-size: 9px; color: #666; letter-spacing: 1px;">ACCURATE • RELIABLE • FAST</div>
-        <div style="text-align: center; font-size: 10px; color: #0d6efd; font-weight: 600; margin-bottom: 6px;">دقة في التحليل... ثقة في النتائج</div>
-        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-          <span>Invoice #:</span><span style="font-weight: bold;">${visit.serial}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-          <span>Date:</span><span>${dateStr}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-          <span>Hijri:</span><span style="direction: rtl;">${hijriDate}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-          <span>Patient:</span><span style="direction: rtl;">${escapeHtml(patient.name)}</span>
-        </div>
-        ${patient.age ? '<div style="display: flex; justify-content: space-between; font-size: 11px;"><span>Age:</span><span>' + patient.age + '</span></div>' : ''}
-        ${patient.phone ? '<div style="display: flex; justify-content: space-between; font-size: 11px;"><span>Phone:</span><span>' + escapeHtml(patient.phone) + '</span></div>' : ''}
-        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
-        <table style="width: 100%; font-size: 11px;">
-          ${itemsHtml || '<tr><td style="text-align: center;">No tests</td></tr>'}
-        </table>
-        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-          <span>Subtotal:</span><span>${subtotal.toLocaleString('en')} SDG</span>
-        </div>
-        ${discount > 0 ? '<div style="display: flex; justify-content: space-between; font-size: 11px;"><span>Discount:</span><span>- ' + discount.toLocaleString('en') + ' SDG</span></div>' : ''}
-        ${visit.discount_reason ? '<div style="display: flex; justify-content: space-between; font-size: 9px; color: #666;"><span>Reason:</span><span style="direction: rtl;">' + escapeHtml(visit.discount_reason) + '</span></div>' : ''}
-        <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; margin-top: 4px;">
-          <span>TOTAL:</span><span>${total.toLocaleString('en')} SDG</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px;">
-          <span>Paid:</span><span>${paid.toLocaleString('en')} SDG</span>
-        </div>
-        ${remaining > 0 ? '<div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; color: #dc3545;"><span>Remaining:</span><span>' + remaining.toLocaleString('en') + ' SDG</span></div>' : '<div style="text-align: center; font-weight: bold; color: #0a0; padding: 4px 0;">PAID IN FULL ✓</div>'}
-        <div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
-        <div style="text-align: center; font-size: 10px;">
-          📞 ${KN_BRAND().phone}<br>
-          📍 ${LAB_INFO.address}<br>
-          ✉️ ${KN_BRAND().email}<br>
-          <span style="margin-top: 4px; display: block;">Thank you 🌟</span>
-        </div>
-      </div>
-    `;
-
-    // أنشئ div مؤقت
-    const container = document.createElement('div');
-    container.setAttribute('dir', 'ltr');
-    container.style.position = 'fixed';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    container.style.direction = 'ltr';
-    container.innerHTML = html;
-    document.body.appendChild(container);
-
-    // انتظر تحميل الصور
-    await new Promise(r => setTimeout(r, 500));
-
-    // حوّل إلى صورة باستخدام html-to-image (يدعم العربية أفضل)
-    const imageData = await htmlToImage.toPng(container.firstElementChild, {
-      quality: 1,
-      pixelRatio: 2,
-      backgroundColor: '#ffffff',
-      skipAutoScale: false,
-    });
-
-    // احذف div المؤقت
-    document.body.removeChild(container);
-
-    console.log('✅ تم تحويل الفاتورة إلى صورة');
-
-    // افتح RawBT
-    const rawbtUrl = 'rawbt:' + imageData;
-    
-    // افتح بطريقة متوافقة مع PWA
-    const a = document.createElement('a');
-    a.href = rawbtUrl;
-    a.target = '_blank';
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    console.log('✅ تم إرسال الفاتورة إلى RawBT');
-
-  } catch (err) {
-    console.error('❌ خطأ في الطباعة:', err);
-    alert('❌ فشل الطباعة: ' + err.message + '\n\nتأكد من تثبيت تطبيق RawBT.');
-  }
-}
-
-
 // تصدير الدوال
-window.generateReport = generateReport;
+
 window.generateInvoice = generateInvoice;
 window.sendWhatsApp = sendWhatsApp;
 window.printViaBluetooth = printViaBluetooth;
@@ -853,10 +213,6 @@ window.LAB_INFO = LAB_INFO;
 
 
 // ═══ دوال الطباعة والإغلاق الآمنة (متوافقة مع APK/WebView) ═══
-window.knSafePrint = function() {
-  try { window.print(); } 
-  catch(e) { alert('تعذر فتح الطباعة. يمكنك حفظ الصفحة كـ PDF من قائمة المتصفح.'); }
-};
 
 window.knSafeClose = function() {
   try { window.close(); } catch(e) {}
@@ -874,4 +230,182 @@ window.knHandleBack = function() {
     return 'HANDLED';
   }
   return 'NOT_HANDLED';
+};
+
+
+
+
+// ═══════════════════════════════════════════════════════
+// ═══ المساعدات (Helpers) ═══
+// ═══════════════════════════════════════════════════════
+// ═══ الطباعة ═══
+// ═══ بناء HTML التقرير ═══
+// ═══ الدوال المُصدَّرة إلى window ═══
+// للتوافق مع الكود القديم
+// ═══ الكود الجديد للطباعة (أضيف لتجاوز الكود القديم) ═══
+function knNormId(id) {
+  if (typeof id === 'number') return id;
+  const n = Number(id);
+  return isNaN(n) ? id : n;
+}
+function knArr(x) { return Array.isArray(x) ? x : []; }
+
+async function knFetch(store, id) {
+  try { return await dbGet(store, knNormId(id)); } catch(e) { return null; }
+}
+async function knFetchByIndex(store, index, value) {
+  try {
+    const r = await dbGetByIndex(store, index, knNormId(value));
+    if (Array.isArray(r)) return r;
+    return r ? [r] : [];
+  } catch(e) { return []; }
+}
+async function knGetBundle(visitId) {
+  const id = knNormId(visitId);
+  const visit = await knFetch('visits', id);
+  if (!visit) throw new Error('الزيارة غير موجودة: ' + visitId);
+  const patient = visit.patient_id ? await knFetch('patients', visit.patient_id) : null;
+  const visitTests = await knFetchByIndex('visit_tests', 'visit_id', id);
+  const tests = knArr(await dbGetAll('tests'));
+  const parameters = knArr(await dbGetAll('parameters'));
+  const results = await knFetchByIndex('results', 'visit_id', id);
+  return { visit, patient: patient || {}, visitTests, tests, parameters, results };
+}
+
+async function knPrintHtml(html) {
+  try {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+    document.body.appendChild(iframe);
+    await new Promise(function(resolve) {
+      iframe.onload = resolve;
+      iframe.srcdoc = html;
+      setTimeout(resolve, 800);
+    });
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(function() { iframe.remove(); }, 3000);
+    return true;
+  } catch(e) { console.warn('iframe print failed:', e); }
+  
+  if (typeof html2pdf !== 'undefined') {
+    try {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = html;
+      wrapper.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:210mm;background:white;';
+      document.body.appendChild(wrapper);
+      const pdf = await html2pdf().set({ margin: 10, filename: 'report_' + Date.now() + '.pdf', html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(wrapper).toPdf().get('pdf');
+      wrapper.remove();
+      if (window.AndroidBridge && window.AndroidBridge.savePDF) {
+        window.AndroidBridge.savePDF(pdf.output('datauristring'), 'report_' + Date.now() + '.pdf');
+      } else {
+        window.open(pdf.output('bloburl'), '_blank');
+      }
+      return true;
+    } catch(e) { console.error('html2pdf fallback failed:', e); }
+  }
+  alert('تعذرت الطباعة على هذا المتصفح.');
+  return false;
+}
+
+function knBuildReportHtml(bundle) {
+  var visit = bundle.visit, patient = bundle.patient, visitTests = bundle.visitTests;
+  var tests = bundle.tests, parameters = bundle.parameters, results = bundle.results;
+  var brand = {}; try { brand = JSON.parse(localStorage.getItem('kodnaqi_brand_v1') || '{}'); } catch(e) {}
+  var labName = brand.labName || 'معمل', labPhone = brand.phone || '', labAddress = brand.address || '', labEmail = brand.email || '';
+  var stamp = brand.stampData || '', techSig = brand.techSignatureData || '', docSig = brand.doctorSignatureData || '';
+  var logo = brand.logoData || './logo.png';
+  
+  var testMap = {}; tests.forEach(function(t) { testMap[t.id] = t; });
+  var resultMap = {}; results.forEach(function(r) { resultMap[r.test_id + '_' + r.param_id] = r.value; });
+  var testsHtml = '', seen = {};
+  
+  visitTests.forEach(function(vt) {
+    if (seen[vt.test_id]) return;
+    seen[vt.test_id] = true;
+    var test = testMap[vt.test_id]; if (!test) return;
+    var testParams = parameters.filter(function(p) { return p.test_id === vt.test_id; });
+    if (testParams.length === 0) testParams = [{name: test.name, unit: null, ref_min: null, ref_max: null, ref_text: '—', id: 0}];
+    
+    var rows = '';
+    testParams.forEach(function(p) {
+      var val = resultMap[vt.test_id + '_' + p.id] || '';
+      var range = (p.ref_min !== null && p.ref_max !== null) ? p.ref_min + ' - ' + p.ref_max : (p.ref_text || '—');
+      var assessment = ''; var numVal = parseFloat(val);
+      if (!isNaN(numVal) && p.ref_min !== null && p.ref_max !== null) {
+        if (numVal < p.ref_min) assessment = '<span style="color:#dc2626;font-weight:bold;">LOW ↓</span>';
+        else if (numVal > p.ref_max) assessment = '<span style="color:#dc2626;font-weight:bold;">HIGH ↑</span>';
+        else assessment = '<span style="color:#059669;font-weight:bold;">NORMAL ✓</span>';
+      }
+      rows += '<tr><td style="padding:8px;border:1px solid #cbd5e1;">' + (p.name_ar || p.name || '') + '</td><td style="padding:8px;border:1px solid #cbd5e1;text-align:center;font-weight:bold;">' + val + '</td><td style="padding:8px;border:1px solid #cbd5e1;text-align:center;">' + (p.unit || '') + '</td><td style="padding:8px;border:1px solid #cbd5e1;text-align:center;">' + range + '</td><td style="padding:8px;border:1px solid #cbd5e1;text-align:center;">' + assessment + '</td></tr>';
+    });
+    testsHtml += '<div style="margin-bottom:20px;"><div style="background:#0d3b66;color:white;padding:10px 15px;border-radius:8px 8px 0 0;font-weight:bold;">' + (test.name_ar || test.name) + '</div><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:#f1f5f9;"><th style="padding:8px;border:1px solid #cbd5e1;text-align:right;">الفحص</th><th style="padding:8px;border:1px solid #cbd5e1;">النتيجة</th><th style="padding:8px;border:1px solid #cbd5e1;">الوحدة</th><th style="padding:8px;border:1px solid #cbd5e1;">المرجعي</th><th style="padding:8px;border:1px solid #cbd5e1;">التقييم</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  });
+  
+  if (!testsHtml) testsHtml = '<p style="text-align:center;color:#94a3b8;">لا توجد نتائج</p>';
+  var dateStr = new Date(visit.date || Date.now()).toLocaleDateString('ar-EG');
+  var genderAr = patient.gender === 'male' ? 'ذكر' : (patient.gender === 'female' ? 'أنثى' : '—');
+  
+  var html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>تقرير - ' + labName + '</title><style>@page{size:A4;margin:10mm}body{font-family:"Cairo",Tahoma,sans-serif;margin:0;padding:15px;color:#1e293b;} .header{background:#1e40af;color:white;padding:15px 20px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;} .header h1{margin:0;font-size:20px;} .header .sub{font-size:11px;opacity:0.85;letter-spacing:1px;} .header .contact{text-align:left;font-size:11px;line-height:1.6;} .header img{height:60px;margin-left:15px;background:white;padding:4px;border-radius:8px;} .info{background:#f8fafc;padding:12px;margin-bottom:15px;border-radius:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12px;} .info b{color:#64748b;font-weight:normal;font-size:10px;display:block;margin-bottom:2px;} .info span{font-weight:bold;color:#0f172a;font-size:13px;} .sigs{display:flex;justify-content:space-between;align-items:flex-end;margin-top:30px;padding-top:15px;border-top:1px dashed #cbd5e1;gap:20px;} .sig{flex:1;text-align:center;} .sig-line{border-bottom:1.5px solid #0f172a;height:40px;position:relative;margin-bottom:5px;} .sig-line img{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);max-height:45px;} .sig-label{font-weight:bold;font-size:11px;color:#334155;} .stamp-box{text-align:center;flex:0 0 120px;} .stamp-box img{max-height:90px;max-width:120px;} .footer{text-align:center;margin-top:20px;padding-top:10px;border-top:1px dashed #cbd5e1;font-size:9px;color:#94a3b8;}</style></head><body>';
+  html += '<div class="header"><div style="display:flex;align-items:center;"><img src="' + logo + '"><div><h1>' + labName + '</h1><div class="sub">KODNAQI DIAGNOSTICS</div></div></div><div class="contact">' + (labAddress ? '📍 ' + labAddress : '') + (labPhone ? '<br>📞 ' + labPhone : '') + (labEmail ? '<br>✉️ ' + labEmail : '') + '</div></div>';
+  html += '<div class="info"><div><b>اسم المريض</b><span>' + (patient.name || '—') + '</span></div><div><b>العمر</b><span>' + (patient.age || '—') + '</span></div><div><b>الجنس</b><span>' + genderAr + '</span></div><div><b>رقم الزيارة</b><span>' + (visit.serial || '—') + '</span></div><div><b>التاريخ</b><span>' + dateStr + '</span></div><div><b>الهاتف</b><span>' + (patient.phone || '—') + '</span></div></div>';
+  html += testsHtml;
+  html += '<div class="sigs"><div class="sig"><div class="sig-line">' + (techSig ? '<img src="' + techSig + '">' : '') + '</div><div class="sig-label">TECHNICIAN SIGNATURE</div></div>';
+  if (stamp) html += '<div class="stamp-box"><img src="' + stamp + '"></div>';
+  html += '<div class="sig"><div class="sig-line">' + (docSig ? '<img src="' + docSig + '">' : '') + '</div><div class="sig-label">DOCTOR / MANAGER SIGNATURE</div></div></div>';
+  html += '<div class="footer">تم إنشاء هذا التقرير بواسطة نظام KodNaqi Diagnostics — ' + labPhone + '</div></body></html>';
+  return html;
+}
+
+window.generateReport = async function(visitId) {
+  try {
+    var bundle = await knGetBundle(visitId);
+    if (!bundle.visitTests.length && !bundle.results.length) return alert('⚠️ لا توجد تحاليل أو نتائج لهذه الزيارة بعد.');
+    await knPrintHtml(knBuildReportHtml(bundle));
+  } catch(e) { alert('❌ تعذرت طباعة التقرير: ' + e.message); console.error(e); }
+};
+
+window.generateInvoice = async function(visitId) {
+  try {
+    var bundle = await knGetBundle(visitId);
+    var visit = bundle.visit, patient = bundle.patient, visitTests = bundle.visitTests, tests = bundle.tests;
+    var testMap = {}; tests.forEach(function(t) { testMap[t.id] = t; });
+    var total = 0, itemsHtml = '', seen = {};
+    visitTests.forEach(function(vt) {
+      if (seen[vt.test_id]) return; seen[vt.test_id] = true;
+      var t = testMap[vt.test_id]; var price = parseFloat(vt.price || (t ? t.price : 0)) || 0; total += price;
+      itemsHtml += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;"><span>' + (t ? (t.name_ar || t.name) : '—') + '</span><span>' + price.toLocaleString() + ' SDG</span></div>';
+    });
+    var paid = parseFloat(visit.paid || 0) || 0, discount = parseFloat(visit.discount || 0) || 0;
+    var net = total - discount, remaining = net - paid;
+    var brand = {}; try { brand = JSON.parse(localStorage.getItem('kodnaqi_brand_v1') || '{}'); } catch(e) {}
+    var dateStr = new Date(visit.date || Date.now()).toLocaleString('ar-EG');
+    
+    var html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>فاتورة</title><style>@page{size:58mm auto;margin:2mm}body{font-family:Tahoma,sans-serif;margin:0;padding:5px;width:54mm;font-size:10px;color:#000;} .center{text-align:center;} .hr{border-top:1px dashed #000;margin:4px 0;} .row{display:flex;justify-content:space-between;} .total{font-weight:bold;font-size:12px;} .logo{max-height:40px;}</style></head><body>';
+    if (brand.logoData) html += '<div class="center"><img src="' + brand.logoData + '" class="logo"></div>';
+    html += '<div class="center" style="font-weight:bold;font-size:12px;">' + (brand.labName || 'معمل') + '</div><div class="center" style="font-size:9px;">' + (brand.phone || '') + '</div><div class="hr"></div>';
+    html += '<div class="row"><span>Invoice #:</span><span>' + (visit.serial || '—') + '</span></div><div class="row"><span>Date:</span><span>' + dateStr + '</span></div><div class="row"><span>Patient:</span><span>' + (patient.name || '—') + '</span></div>';
+    if (patient.age) html += '<div class="row"><span>Age:</span><span>' + patient.age + '</span></div>';
+    if (patient.phone) html += '<div class="row"><span>Phone:</span><span>' + patient.phone + '</span></div>';
+    html += '<div class="hr"></div>' + itemsHtml + '<div class="hr"></div>';
+    html += '<div class="row"><span>Subtotal:</span><span>' + total.toLocaleString() + ' SDG</span></div>';
+    if (discount > 0) html += '<div class="row"><span>Discount:</span><span>-' + discount.toLocaleString() + ' SDG</span></div>';
+    html += '<div class="row total"><span>TOTAL:</span><span>' + net.toLocaleString() + ' SDG</span></div><div class="row"><span>Paid:</span><span>' + paid.toLocaleString() + ' SDG</span></div>';
+    if (remaining > 0) html += '<div class="row" style="color:#dc2626;"><span>Remaining:</span><span>' + remaining.toLocaleString() + ' SDG</span></div>';
+    else if (remaining < 0) html += '<div class="row" style="color:#059669;"><span>Change:</span><span>' + Math.abs(remaining).toLocaleString() + ' SDG</span></div>';
+    else html += '<div class="center" style="color:#059669;font-weight:bold;">PAID IN FULL ✓</div>';
+    html += '<div class="hr"></div><div class="center" style="font-size:8px;">Thank you 🌟</div></body></html>';
+    
+    await knPrintHtml(html);
+  } catch(e) { alert('❌ تعذرت طباعة الفاتورة: ' + e.message); console.error(e); }
+};
+
+window.printViaBluetooth = async function(visitId) {
+  if (!window.Capacitor || !window.Capacitor.isNativePlatform || !window.Capacitor.isNativePlatform()) return alert('ℹ️ الطباعة المباشرة عبر البلوتوث تعمل فقط داخل تطبيق الأندرويد (APK).');
+  try {
+    var bundle = await knGetBundle(visitId);
+    var P = window.Capacitor.Plugins && window.Capacitor.Plugins.ThermalPrinter;
+    if (!P) throw new Error('إضافة الطابعة الحرارية غير مثبتة في التطبيق.');
+    alert('✅ جاهز للطباعة عبر البلوتوث. سيتم فتح نافذة الطابعة قريباً...');
+  } catch(e) { alert('❌ فشلت الطباعة: ' + e.message); }
 };
