@@ -61,15 +61,16 @@ app.on('window-all-closed', () => {
 // ═══════════════════════════════════════════════════
 const { autoUpdater } = require('electron-updater');
 const { dialog } = require('electron');
+autoUpdater.autoDownload = false;
 
 // التحقق من التحديثات عند بدء التشغيل
 app.whenReady().then(() => {
   // التحقق من التحديثات (كل 4 ساعات)
   setInterval(() => {
-    autoUpdater.checkForUpdates();
+    autoUpdater.checkForUpdates().catch(function () {});
   }, 4 * 60 * 60 * 1000);
   
-  autoUpdater.checkForUpdates();
+  autoUpdater.checkForUpdates().catch(function () {});
 });
 
 // عند وجود تحديث
