@@ -167,7 +167,7 @@
         '</tr>';
       }
       
-      testsHTML += '<div style="margin-bottom:20px;">' +
+      testsHTML += '<div class="' + (testParams.length > 18 ? 'kn-split' : 'kn-keep') + '" style="margin-bottom:20px;">' +
         '<div style="background:#0d3b66;color:white;padding:10px 15px;border-radius:8px 8px 0 0;font-weight:bold;">' + (test.name || test.name_ar) + '</div>' +
         '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
           '<thead><tr style="background:#f1f5f9;">' +
@@ -191,7 +191,7 @@
     var labAddress = br.address || '';
     var labEmail = br.email || '';
     
-    var css = '@page{size:A4;margin:10mm}body{font-family:"Cairo",Tahoma,sans-serif;margin:0;padding:15px;color:#1e293b;}' +
+    var css = '@page{size:A4;margin:10mm}.kn-keep{break-inside:avoid;page-break-inside:avoid;}.kn-keep>div:first-child,.kn-split>div:first-child{break-after:avoid;page-break-after:avoid;}tr{break-inside:avoid;page-break-inside:avoid;}thead{display:table-header-group;}.sigs,.info{break-inside:avoid;page-break-inside:avoid;}body{font-family:"Cairo",Tahoma,sans-serif;margin:0;padding:15px;color:#1e293b;}' +
       '.header{background:#1e40af;color:white;padding:15px 20px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;}' +
       '.header h1{margin:0;font-size:20px;}.header .sub{font-size:11px;opacity:0.85;letter-spacing:1px;}' +
       '.header .contact{text-align:left;font-size:11px;line-height:1.6;}' +
