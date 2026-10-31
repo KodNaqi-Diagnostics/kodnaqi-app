@@ -1,27 +1,27 @@
 {
   "name": "kodnaqi-pwa",
   "version": "1.0.0",
-  "description": "تطبيق إدارة معمل طبي تشخيصي — PWA يعمل [...]",
+  "description": "تطبيق إدارة معمل طبي تشخيصي — PWA يعمل بدون إنترنت",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node -e \"const fs=require('fs');if(fs.existsSync('www'))fs.rmSync('www',{recursive:true});fs.mkdirSync('www');['.html','.js','.css','.png','.json','.txt'].forEach(e=>fs.readdirSync('.').filter(f=>f.endsWith(e)).forEach(f=>fs.copyFileSync(f,'www/'+f)));if(fs.existsSync('lib'))fs.cpSync('lib','www/lib',{recursive:true});if(fs.existsSync('www/package.json')){const p=JSON.parse(fs.readFileSync('www/package.json'));delete p.build;fs.writeFileSync('www/package.json',JSON.stringify(p,null,2));}console.log('Synced root to www')\"",
+    "build": "node -e \"const fs=require('fs');if(fs.existsSync('www'))fs.rmSync('www',{recursive:true});fs.mkdirSync('www')\"",
     "start": "electron .",
     "build-win": "electron-builder --win --x64 --publish never",
     "build-win32": "electron-builder --win --ia32"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Alsunni707/kodnaqi-app.git"
+    "url": "git+https://github.com"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Alsunni707/kodnaqi-app/issues"
+    "url": "https://github.com"
   },
-  "homepage": "https://github.com/Alsunni707/kodnaqi-app#readme",
+  "homepage": "https://github.com",
   "dependencies": {
     "@capacitor/android": "^8.5.3",
     "@capacitor/core": "^8.5.3",
@@ -73,7 +73,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "Alsunni707",
+        "owner": "KodNaqi-Diagnostics",
         "repo": "kodnaqi-app"
       }
     ]
