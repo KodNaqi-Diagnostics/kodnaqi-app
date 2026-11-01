@@ -375,7 +375,7 @@ window.ALL_SYSTEM_TESTS = [
         "unit": null,
         "ref_min": null,
         "ref_max": null,
-        "ref_text": "O",
+        "ref_text": null,
         "result_type": "select",
         "options": "A|B|AB|O",
         "order": 0
@@ -386,7 +386,7 @@ window.ALL_SYSTEM_TESTS = [
         "unit": null,
         "ref_min": null,
         "ref_max": null,
-        "ref_text": "Positive",
+        "ref_text": null,
         "result_type": "select",
         "options": "Positive|Negative",
         "order": 1
