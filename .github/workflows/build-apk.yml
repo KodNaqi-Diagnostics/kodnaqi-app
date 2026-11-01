@@ -2,7 +2,11 @@ name: Build KodNaqi APK
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -76,3 +80,14 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-signed.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Rename APK for stable download link
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: cp android/app/build/outputs/apk/debug/app-signed.apk KodNaqi-Diagnostics.apk
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: KodNaqi-Diagnostics.apk
+          generate_release_notes: true
