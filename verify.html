@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>التحقق من عقد — KodNaqi Diagnostics</title>
+<style>
+body{margin:0;background:#eef2f7;font-family:Tahoma,Arial,sans-serif;color:#111}
+.card{max-width:520px;margin:18px auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+h1{font-size:18px;margin:0 0 10px;color:#0d3b66}
+.ok{background:#e8f5ee;border:2px solid #059669;color:#065f46;border-radius:10px;padding:12px;font-size:18px;font-weight:700;text-align:center}
+.bad{background:#fdecec;border:2px solid #b91c1c;color:#7f1d1d;border-radius:10px;padding:12px;font-size:17px;font-weight:700;text-align:center}
+.wait{background:#f3f6fa;border-radius:10px;padding:12px;text-align:center;color:#334155}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:15px}
+td{border:1px solid #d5dde8;padding:7px 9px}
+td:first-child{background:#f3f6fa;width:38%;color:#334155}
+.note{font-size:12.5px;color:#475569;margin-top:12px;line-height:1.7}
+bdi{unicode-bidi:isolate}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>التحقق من صحة عقد ترخيص</h1>
+<div id="res" class="wait">جاري التحقق…</div>
+<table id="tb" style="display:none"></table>
+<p class="note">قارن البيانات أعلاه بما هو مكتوب في العقد الورقي. أي اختلاف في رقم أو تاريخ أو باقة يعني أن الورقة قد عُدّلت. هذه الصفحة تتحقق من توقيع المالك محليًا في جهازك ولا ترسل أي بيانات.</p>
+</div>
+<script>
+(function () {
+  var PUB = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQl3jatQzrvReTLlo8Vl1piYFBX4fH7W1v7YO7hnhfM6QJYGWo/L14AW57wrGQCapiUBdZjBZCyaKZp3B+AQgNg==';
+  var res = document.getElementById('res'), tb = document.getElementById('tb');
+  function b64(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), u = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return u;
+  }
+  function fail(msg) {
+    res.className = 'bad';
+    res.textContent = '❌ ' + msg;
+  }
+  function esc(t) {
+    return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fmt(ts) {
+    var d = new Date(Number(ts));
+    if (isNaN(d)) return '';
+    return String(d.getDate()).padStart(2, '0') + ' ' + M[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function durText(p) {
+    if (!p.issued || !p.expires) return '—';
+    var days = Math.round((Number(p.expires) - Number(p.issued)) / 86400000);
+    if (!(days > 0)) return '—';
+    if (days >= 364 && days <= 366) return 'سنة كاملة (365 يومًا)';
+    if (days % 30 === 0) {
+      var mo = days / 30;
+      return days + ' يومًا (' + (mo === 1 ? 'شهر واحد' : (mo === 2 ? 'شهران' : (mo <= 10 ? mo + ' أشهر' : mo + ' شهرًا'))) + ')';
+    }
+    return days + ' يومًا';
+  }
+  var TIERS = { B: 'الأساسية', S: 'القياسية', A: 'المتقدمة', E: 'المؤسسية' };
+  async function run() {
+    var t = (location.hash || '').replace(/^#/, '');
+    var parts = t.split('.');
+    if (parts.length !== 3 || parts[0] !== 'KODC1') return fail('رمز التحقق غير صالح أو غير موجود. امسح رمز QR من العقد مرة أخرى.');
+    var payloadBytes, sig;
+    try { payloadBytes = b64(parts[1]); sig = b64(parts[2]); } catch (e) { return fail('رمز التحقق تالف.'); }
+    var key = await crypto.subtle.importKey('spki', b64(PUB.replace(/\+/g, '-').replace(/\//g, '_')), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+    var pre = new TextEncoder().encode('KODC1\n');
+    var msg = new Uint8Array(pre.length + payloadBytes.length);
+    msg.set(pre, 0); msg.set(payloadBytes, pre.length);
+    var ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, sig, msg);
+    if (!ok) return fail('التوقيع غير صحيح. هذا العقد مزوّر أو معدَّل. لا تعتمد عليه.');
+    var p;
+    try { p = JSON.parse(new TextDecoder().decode(payloadBytes)); } catch (e) { return fail('بيانات العقد تالفة.'); }
+    if (p.type !== 'contract') return fail('هذا الرمز ليس عقدًا.');
+    res.className = 'ok';
+    res.textContent = '✅ عقد صحيح وموقَّع من KodNaqi Diagnostics';
+    var rows = [
+      ['رقم العقد', '<bdi dir="ltr">' + esc(p.no) + '</bdi>'],
+      ['اسم المعمل', esc(p.customer)],
+      ['السجل التجاري', '<bdi dir="ltr">' + esc(p.reg || '—') + '</bdi>'],
+      ['الباقة', esc(TIERS[p.tier] || p.tier)],
+      ['تاريخ الإصدار', '<bdi dir="ltr">' + esc(fmt(p.issued)) + '</bdi>'],
+      ['تاريخ الانتهاء', '<bdi dir="ltr">' + esc(fmt(p.expires)) + '</bdi>'],
+      ['المدة', esc(durText(p))],
+      ['قيمة الترخيص', p.amount ? '<bdi dir="ltr">' + esc(Number(p.amount).toLocaleString('en-US')) + '</bdi> ' + (p.cur === 'USD' ? 'دولار أمريكي' : 'جنيه سوداني') : '—'],
+      ['تاريخ التوقيع', '<bdi dir="ltr">' + esc(fmt(p.signedAt)) + '</bdi>']
+    ];
+    tb.innerHTML = rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td><b>' + r[1] + '</b></td></tr>'; }).join('');
+    tb.style.display = '';
+    if (p.expires && Number(p.expires) < Date.now()) {
+      res.className = 'bad';
+      res.textContent = '⚠️ العقد صحيح وموقَّع، لكنه منتهي المدة';
+    }
+  }
+  run().catch(function (e) { fail('تعذر التحقق: ' + e.message); });
+  window.addEventListener('hashchange', function () { location.reload(); });
+})();
+</script>
+</body>
+</html>

@@ -1449,7 +1449,22 @@ window.loadDashboard = loadDashboard;
 console.log('[Dashboard] Module loaded');
 
 
-  window.licPrintContract = function(licenseId) {
+  async function knContractNo(id, issued) {
+  var y = new Date(issued || Date.now()).getFullYear();
+  var src = String(id) + '|' + String(issued || 0);
+  var hex = '';
+  try {
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(src));
+    hex = Array.from(new Uint8Array(buf)).slice(0, 4).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('').toUpperCase();
+  } catch (e) {
+    var h = 5381;
+    for (var i = 0; i < src.length; i++) { h = ((h << 5) + h + src.charCodeAt(i)) >>> 0; }
+    hex = h.toString(16).toUpperCase().padStart(8, '0');
+  }
+  return 'KOD-C-' + y + '-' + hex;
+}
+
+  window.licPrintContract = async function(licenseId) {
     try {
       const cur = (window._licenses || []).find(l => l._id === licenseId);
       if (!cur) {
@@ -1457,17 +1472,42 @@ console.log('[Dashboard] Module loaded');
         return;
       }
 
+      if (!window.KodNaqiSigning || !window.KodNaqiSigning.hasKey || !window.KodNaqiSigning.hasKey()) {
+        alert('حمّل المفتاح الخاص أولًا (من قسم إصدار التراخيص) ثم أعد طباعة العقد. لا يُطبع العقد بدون توقيع رقمي.');
+        return;
+      }
+      const amountIn = window.prompt('قيمة الترخيص السنوي بالدولار الأمريكي (أرقام فقط):', '');
+      if (amountIn === null) return;
+      const amountNum = parseInt(String(amountIn).replace(/[^0-9]/g, ''), 10);
+      if (!amountNum || amountNum <= 0) { alert('أدخل قيمة صحيحة بالأرقام.'); return; }
+      const issuedV = cur.issued || Date.now();
+      const contractNoV = await knContractNo(licenseId, cur.issued || 0);
+      const signed = await window.KodNaqiSigning.signContract({
+        no: contractNoV,
+        customer: cur.customer || '',
+        reg: cur.regNumber || '',
+        tier: cur.tier || 'B',
+        issued: issuedV,
+        expires: cur.expires || 0,
+        amount: String(amountNum),
+        cur: 'USD'
+      });
+
       const contractData = {
+        token: signed.token,
+        amount: amountNum,
         customer: cur.customer || '',
         phone: cur.phone || '',
         address: cur.address || '',
         tier: cur.tier || 'B',
         devices: cur.devices || [],
         expires: cur.expires || 0,
-        issued: cur.issued || Date.now(),
+        issued: issuedV,
         licenseId: licenseId,
         regNumber: cur.regNumber || '',
         manager: cur.manager || '',
+        ownerName: cur.manager || '',
+        contractNo: contractNoV,
         email: cur.email || ''
       };
 

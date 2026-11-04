@@ -67,8 +67,24 @@
     };
   }
 
+  async function signContract(data) {
+    if (!_privateKey) throw new Error('لم يتم تحميل المفتاح الخاص');
+    if (!data || !data.no) throw new Error('رقم العقد مفقود');
+    const payload = Object.assign({}, data, { v: 1, type: 'contract', signedAt: Date.now() });
+    const payloadBytes = new TextEncoder().encode(JSON.stringify(payload));
+    const pre = new TextEncoder().encode('KODC1\n');
+    const msg = new Uint8Array(pre.length + payloadBytes.length);
+    msg.set(pre, 0);
+    msg.set(payloadBytes, pre.length);
+    const sigBuf = await crypto.subtle.sign(
+      { name: 'ECDSA', hash: 'SHA-256' },
+      _privateKey, msg
+    );
+    return { token: 'KODC1.' + b64url(payloadBytes) + '.' + b64url(sigBuf), payload };
+  }
+
   window.KodNaqiSigning = {
-    loadPrivateKey, clearPrivateKey, hasKey, getKeyName, generate
+    loadPrivateKey, clearPrivateKey, hasKey, getKeyName, generate, signContract
   };
   console.log('[Signing] Browser signer loaded');
 })();
