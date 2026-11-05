@@ -213,7 +213,13 @@
       + '</div>';
     document.documentElement.appendChild(div);
     const btn = div.querySelector('#kodnaqi-open-license');
-    if (btn) btn.addEventListener('click', function() { showDialog(); });
+    if (btn) btn.addEventListener('click', function(e) { 
+      e.preventDefault();
+      // لا نمسح الترخيص هنا حتى لا نعود للتجريبي
+      const dialog = document.getElementById('kodnaqi-license-dialog');
+      if (dialog) dialog.remove();
+      showActivationInput(); 
+    });
   }
 
   function removeExpiryOverlay() {
@@ -252,13 +258,43 @@
   async function checkServer(payload) {
     if (!payload || !payload.id) return { ok: true };
     if (!window.KodNaqiSecurity || !window.KodNaqiSecurity.checkServerStatus) return { ok: true };
+    
     const remote = await window.KodNaqiSecurity.checkServerStatus(payload.id);
+    console.log('🔍 [DEBUG] checkServerStatus result:', JSON.stringify(remote));
+    console.log('🔍 [DEBUG] payload.id:', payload.id);
+    console.log('🔍 [DEBUG] FIREBASE config:', JSON.stringify(window.KODNAQI_FIREBASE));
+    
+    // 1. إذا وصلنا للخادم بنجاح
     if (remote.ok) {
       if (remote.status === 'revoked' || remote.status === 'suspended') {
         return { ok: false, valid: false, reason: 'server_' + remote.status };
       }
       return { ok: true };
     }
+    
+    // 2. إذا قال الخادم أن الترخيص غير موجود (محذوف)
+    if (remote.reason === 'not_found') {
+      return { ok: false, valid: false, reason: 'server_not_found' };
+    }
+    if (remote.reason === 'no_config') {
+      return { ok: false, valid: false, reason: 'no_config', details: remote.details };
+    }
+    if (remote.reason && remote.reason.startsWith('network:')) {
+      return { ok: false, valid: false, reason: 'network_error_details', details: remote.reason };
+    }
+    
+    // 3. إذا رفض الخادم القراءة (خطأ في القواعد)
+    if (remote.reason === 'http_401' || remote.reason === 'http_403') {
+      return { ok: false, valid: false, reason: 'server_auth_failed' };
+    }
+    
+    // عرض الخطأ الحقيقي القادم من الشبكة (للتشخيص)
+    if (remote.reason && remote.reason.startsWith('network:')) {
+      return { ok: false, valid: false, reason: 'network_error_details', details: remote.reason };
+    }
+    
+    // 4. إذا فشل الاتصال (بدون إنترنت)
+    // نسمح فقط إذا كان لدينا كاش سابق يثبت أن الترخيص كان سليماً
     const cached = window.KodNaqiSecurity.getCachedServerStatus(payload.id);
     if (cached) {
       if (cached.status === 'revoked' || cached.status === 'suspended') {
@@ -269,8 +305,11 @@
       if (age > grace) {
         return { ok: false, valid: false, reason: 'offline_grace_exceeded' };
       }
+      return { ok: true }; // كاش صالح
     }
-    return { ok: true };
+    
+    // 5. لا يوجد كاش ولا إنترنت -> نرفض (يجب تفعيله أونلاين لأول مرة)
+    return { ok: false, valid: false, reason: 'network_unreachable' };
   }
 
   async function verify(key) {
@@ -292,11 +331,16 @@
     if (!window.KodNaqiSecurity || !window.KodNaqiSecurity.verifyLicense) {
       return { valid: false, reason: 'security_not_loaded' };
     }
-    const localResult = await window.KodNaqiSecurity.verifyLicense(trimmed);
-    if (!localResult) return { valid: false, reason: 'security_error', message: 'تعذر التحقق من الترخيص' };
-    if (!localResult.valid) return localResult;
+        const localResult = await window.KodNaqiSecurity.verifyLicense(trimmed);
+    if (!localResult.valid) {
+      console.log('❌ localResult failed:', localResult);
+      return localResult;
+    }
     const serverResult = await checkServer(localResult.payload);
-    if (!serverResult.ok) return serverResult;
+    if (!serverResult.ok) {
+      console.log('❌ serverResult failed:', serverResult);
+      return serverResult;
+    }
     return localResult;
   }
 
@@ -315,6 +359,12 @@
     setExpiryLock(false);
     removeExpiryOverlay();
     try { await applyRestrictions(); } catch(e) {}
+    
+    // إظهار رسالة النجاح الجميلة (مرة واحدة فقط)
+    if (typeof showActivationSuccess === 'function') {
+      showActivationSuccess(check.payload);
+    }
+    
     return { valid: true, payload: check.payload };
   }
 
@@ -333,6 +383,11 @@
 
   // ═══ التجريبية ═══
   async function getTrialStatus() {
+    // ═══ إصلاح أمني: إذا كان الجهاز قد فعّل ترخيصاً مدفوعاً سابقاً، يُمنع من التجريبي ═══
+    if (safeGet('kodnaqi_ever_activated') === 'true') {
+      return { active: false, daysLeft: 0, startMs: 0, elapsed: 0, expired: true };
+    }
+
     let start = safeGet(TRIAL_KEY);
     if (!start) {
       start = String(Date.now());
@@ -349,26 +404,27 @@
   }
 
   // ═══ القراءة النشطة (ترخيص أو تجريبية) ═══
-  async function getActivePayload() {
+    async function getActivePayload() {
     const st = await getLicenseStatus();
-    if (st.status === 'valid') { setExpiryLock(false); removeExpiryOverlay(); return st.payload; }
+    if (st.status === 'valid') return st.payload;
+    
+    // ═══ إصلاح أمني: إذا كان الترخيص ملغى أو منتهي، لا نعود للتجريبي ═══
+    if (st.status === 'invalid') return null;
 
-    // إذا كان هناك ترخيص لكنه منتهٍ/غير صالح: لا نسمح بالدخول في TRIAL، ونقفل النظام مع بقاء البيانات
-    if (st && st.data && st.data.key && st.status !== 'valid') {
-      setExpiryLock(true);
-      ensureExpiryOverlay();
-      return null;
-    }
-
-    // في وضع TRIAL: نُعيد حمولة وهمية حتى تعمل الميزات
+    // فقط إذا لم يكن هناك ترخيص من الأساس، نسمح بالتجريبي
     const trial = await getTrialStatus();
-    if (trial.active) { setExpiryLock(false); removeExpiryOverlay(); return { tier: 'TRIAL' }; }
+    if (trial.active) return { tier: 'TRIAL' };
     return null;
   }
 
   async function getActiveTier() {
     const p = await getActivePayload();
     if (p) return p.tier;
+    
+    // ═══ إصلاح أمني: منع العودة للتجريبي عند إلغاء الترخيص ═══
+    const st = await getLicenseStatus();
+    if (st.status === 'invalid') return null;
+
     const trial = await getTrialStatus();
     return trial.active ? 'TRIAL' : null;
   }
@@ -450,15 +506,139 @@
   }
 
   // ═══ نافذة الترخيص ═══
-  async function showDialog() {
-    // إزالة أي نافذة سابقة
+  
+  function showActivationInput() {
     const old = document.getElementById('kodnaqi-license-dialog');
     if (old) old.remove();
 
-    const status = await getLicenseStatus();
-    const trial = await getTrialStatus();
-    const devCode = await getMyDeviceCode();
-    const formatted = formatDeviceCode(devCode);
+    const wrapper = document.createElement('div');
+    wrapper.id = 'kodnaqi-license-dialog';
+    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000000;padding:16px;';
+    wrapper.innerHTML = `
+      <div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:22px;font-family:inherit;direction:rtl;">
+        <h2 style="margin:0 0 12px;color:#0d3b66;">تفعيل النظام</h2>
+        <div style="background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:14px;font-family:monospace;text-align:center;">
+          <div style="font-size:0.85rem;color:#64748b;margin-bottom:4px;">كود هذا الجهاز:</div>
+          <div style="font-size:1.4rem;font-weight:800;color:#0d3b66;letter-spacing:2px;">${formatDeviceCode(_cachedCode || 'XXXXXX')}</div>
+        </div>
+        <input id="kodnaqi-license-input" type="text" placeholder="الصق المفتاح الجديد هنا" style="width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;font-family:monospace;font-size:0.9rem;margin-bottom:10px;box-sizing:border-box;">
+        <div id="kodnaqi-license-msg" style="min-height:20px;color:#dc2626;margin-bottom:10px;font-size:0.9rem;"></div>
+        <button id="kodnaqi-btn-activate" style="width:100%;padding:14px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;margin-bottom:8px;">✅ تفعيل</button>
+        <button id="kodnaqi-btn-close" style="width:100%;padding:12px;background:#e2e8f0;color:#334155;border:none;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;">إغلاق</button>
+      </div>
+    `;
+    document.body.appendChild(wrapper);
+
+    document.getElementById('kodnaqi-btn-close').onclick = () => wrapper.remove();
+    document.getElementById('kodnaqi-btn-activate').onclick = async () => {
+      const input = document.getElementById('kodnaqi-license-input');
+      const msg = document.getElementById('kodnaqi-license-msg');
+      const key = input.value.trim();
+      if (!key) return msg.textContent = 'الصق المفتاح أولاً';
+      
+      msg.style.color = '#0d3b66';
+      msg.textContent = 'جاري التحقق...';
+      
+      const result = await activate(key);
+      if (result.valid) {
+        msg.style.color = '#059669';
+        msg.textContent = '✅ تم التفعيل بنجاح';
+        setTimeout(() => { wrapper.remove(); location.reload(); }, 900);
+      } else {
+        msg.style.color = '#dc2626';
+        msg.textContent = '❌ ' + (result.reason || 'فشل التحقق');
+      }
+    };
+  }
+
+  
+  // ═══ نظام الإغلاق القسري (Anti-Bypass Lock) ═══
+  async function enforceLicenseOnStartup() {
+    try {
+      const st = await getLicenseStatus();
+      if (st.status === 'valid') return; // الترخيص سليم
+      
+      const trial = await getTrialStatus();
+      if (st.status === 'none' && trial.active) return; // تجريبي سليم
+
+      // إغلاق النظام
+      showLockScreen(st);
+    } catch(e) {
+      console.warn('License check failed, check network.', e);
+    }
+  }
+
+  function showLockScreen(status) {
+    let overlay = document.getElementById('kn-lock-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'kn-lock-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:#f8fafc;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;';
+      document.body.appendChild(overlay);
+    }
+    
+    let title = 'انتهت صلاحية الترخيص';
+    let msg = 'تم إيقاف النظام مؤقتاً. بياناتك محفوظة ولم تُحذف. يرجى تجديد الاشتراك.';
+    
+    if (status.reason && String(status.reason).includes('revoked')) {
+      title = 'تم إلغاء الترخيص';
+      msg = 'تم إلغاء ترخيص هذا الجهاز من قبل الإدارة. يرجى التواصل مع الدعم الفني لتفعيل النظام.';
+    }
+
+    overlay.innerHTML = `
+      <div style="background:white;padding:30px;border-radius:16px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.1);border-top:5px solid #dc2626;">
+        <div style="font-size:3rem;margin-bottom:15px;">🔒</div>
+        <h2 style="color:#dc2626;margin:0 0 10px;font-weight:900;">${title}</h2>
+        <p style="color:#475569;margin-bottom:25px;line-height:1.7;font-size:1.05rem;">${msg}</p>
+        <button onclick="window.KodNaqiLicense.showDialog();" style="width:100%;padding:15px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:white;border:none;border-radius:10px;font-weight:bold;font-size:1.1rem;cursor:pointer;">🔑 إدخال مفتاح الترخيص</button>
+        <p style="color:#94a3b8;font-size:0.8rem;margin-top:20px;">معمل الحياة الطبي - KodNaqi Diagnostics</p>
+      </div>
+    `;
+  }
+
+  
+  async function manualVerify() {
+    if (!navigator.onLine) {
+      if (window.showKNAlert) window.showKNAlert('غير متصل', 'أنت غير متصل بالإنترنت حالياً. يرجى الاتصال بالشبكة أولاً للتحقق من الترخيص.', 'warning');
+      return;
+    }
+
+    const raw = safeGet(STORAGE_KEY);
+    if (!raw) {
+      if (window.showKNAlert) window.showKNAlert('لا يوجد ترخيص', 'لم يتم العثور على ترخيص مفعل على هذا الجهاز.', 'info');
+      return;
+    }
+
+    let data;
+    try { data = JSON.parse(raw); } catch(e) { return; }
+    
+    if (window.showKNAlert) window.showKNAlert('جاري التحقق', 'يتم الآن الاتصال بالخادم للتحقق من صحة الترخيص...', 'info');
+    
+    const check = await verify(data.key);
+    if (check.valid) {
+      if (window.showKNAlert) window.showKNAlert('الترخيص سليم', 'تم التحقق من الترخيص بنجاح! النظام يعمل بشكل صحيح.', 'success');
+    } else {
+      let msg = 'فشل التحقق. السبب: ' + (check.reason || 'غير معروف');
+      if (check.reason === 'server_revoked') msg = 'تم إلغاء هذا الترخيص من قبل الإدارة. يرجى التواصل مع الدعم.';
+      if (window.showKNAlert) window.showKNAlert('تنبيه الترخيص', msg, 'error');
+    }
+  }
+
+  async function showDialog() {
+    const old = document.getElementById('kodnaqi-license-dialog');
+    if (old) old.remove();
+
+    let status = { status: 'none' };
+    let trial = { active: false, daysLeft: 0 };
+    let devCode = '------';
+    let formatted = '---';
+
+    try { status = await getLicenseStatus(); } catch(e) { console.error('Status error:', e); }
+    try { trial = await getTrialStatus(); } catch(e) { console.error('Trial error:', e); }
+    try {
+      devCode = await getMyDeviceCode();
+      formatted = formatDeviceCode(devCode);
+    } catch(e) { console.error('Device code error:', e); }
 
     let statusHtml = '';
     let actionLabel = 'تفعيل المفتاح';
@@ -466,7 +646,7 @@
 
     if (status.status === 'valid') {
       const p = status.payload;
-      const tierName = TIER_NAMES[p.tier] || p.tier;
+      const tierName = (window.KodNaqiLicense && window.KodNaqiLicense.TIER_NAMES && window.KodNaqiLicense.TIER_NAMES[p.tier]) || p.tier || '—';
       const daysText = status.daysLeft === Infinity ? 'دائم' : status.daysLeft + ' يوم';
       statusHtml = '<div style="background:#d1fae5;color:#065f46;padding:12px;border-radius:8px;margin-bottom:14px;">'
                  + '<strong>✅ الترخيص نشط</strong><br>'
@@ -478,31 +658,30 @@
                  + '<strong>⏳ تجريبية</strong> — متبقٍ ' + trial.daysLeft + ' يوم</div>';
     } else {
       statusHtml = '<div style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;margin-bottom:14px;">'
-                 + '<strong>❌ الترخيص منتهٍ</strong></div>';
+                 + '<strong>❌ الترخيص منتهٍ أو غير مفعل</strong></div>';
       hideInput = false;
     }
 
     const wrapper = document.createElement('div');
     wrapper.id = 'kodnaqi-license-dialog';
-    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px;';
+    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000000;padding:16px;';
 
     wrapper.innerHTML = ''
-      + '<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:22px;font-family:inherit;direction:rtl;">'
+      + '<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:22px;font-family:inherit;direction:rtl; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">'
       + '  <h2 style="margin:0 0 12px;color:#0d3b66;">إدارة الترخيص</h2>'
       +    statusHtml
-      + '  <div style="background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:14px;font-family:monospace;">'
+      + '  <div style="background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:14px;font-family:monospace;text-align:center;">'
       + '    <div style="font-size:0.85rem;color:#64748b;margin-bottom:4px;">كود هذا الجهاز:</div>'
       + '    <div id="kodnaqi-devcode" style="font-size:1.4rem;font-weight:800;color:#0d3b66;letter-spacing:2px;cursor:pointer;" title="اضغط للنسخ">' + formatted + '</div>'
       + '  </div>'
-      + (!hideInput ? '<input id="kodnaqi-license-input" type="text" placeholder="الصق المفتاح هنا" style="width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;font-family:monospace;font-size:0.9rem;margin-bottom:10px;box-sizing:border-box;">' : '')
-      + '<div id="kodnaqi-license-msg" style="min-height:20px;color:#dc2626;margin-bottom:10px;font-size:0.9rem;"></div>'
+      + (!hideInput ? '<input id="kodnaqi-license-input" type="text" placeholder="الصق المفتاح هنا" style="width:100%;padding:12px;border:2px solid #cbd5e1;border-radius:8px;font-family:monospace;font-size:0.9rem;margin-bottom:10px;box-sizing:border-box; text-align:center;">' : '')
+      + '<div id="kodnaqi-license-msg" style="min-height:20px;color:#dc2626;margin-bottom:10px;font-size:0.9rem;text-align:center; font-weight:bold;"></div>'
       + '<button id="kodnaqi-btn-activate" style="width:100%;padding:14px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;margin-bottom:8px;">' + actionLabel + '</button>'
       + '<button id="kodnaqi-btn-close" style="width:100%;padding:12px;background:#e2e8f0;color:#334155;border:none;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer;">إغلاق</button>'
       + '</div>';
 
     document.body.appendChild(wrapper);
 
-    // نسخ كود الجهاز بالضغط
     const devEl = document.getElementById('kodnaqi-devcode');
     if (devEl) {
       devEl.addEventListener('click', function() {
@@ -513,10 +692,8 @@
     document.getElementById('kodnaqi-btn-close').addEventListener('click', function() { wrapper.remove(); });
 
     document.getElementById('kodnaqi-btn-activate').addEventListener('click', async function() {
-                                                  alert('زر التفعيل يعمل!');
       const msg = document.getElementById('kodnaqi-license-msg');
 
-      // إذا كان الترخيص نشطًا → إلغاء
       if (status.status === 'valid') {
         if (!confirm('هل أنت متأكد من إلغاء الترخيص؟')) return;
         safeDel(STORAGE_KEY);
@@ -542,15 +719,11 @@
       } else {
         msg.style.color = '#dc2626';
         const map = {
-          empty: 'المفتاح فارغ',
-          format: 'صيغة المفتاح غير صحيحة',
-          old_format: 'هذا مفتاح قديم — تواصل مع المطور',
-          signature: 'التوقيع غير صالح — المفتاح مزوّر',
-          wrong_device: 'هذا المفتاح لا يخص جهازك',
-          expired: 'انتهت صلاحية الترخيص',
-          clock_rollback: 'تم اكتشاف تلاعب بساعة الجهاز',
-          clock_before_issued: 'ساعة الجهاز غير صحيحة',
-          security_not_loaded: 'خطأ في تحميل طبقة الحماية'
+          empty: 'المفتاح فارغ', format: 'صيغة المفتاح غير صحيحة', old_format: 'هذا مفتاح قديم — تواصل مع المطور',
+          signature: 'التوقيع غير صالح — المفتاح مزوّر', wrong_device: 'هذا المفتاح لا يخص جهازك',
+          expired: 'انتهت صلاحية الترخيص', clock_rollback: 'تم اكتشاف تلاعب بساعة الجهاز',
+          clock_before_issued: 'ساعة الجهاز غير صحيحة', security_not_loaded: 'خطأ في تحميل طبقة الحماية',
+          server_revoked: 'تم إلغاء الترخيص من قبل الإدارة'
         };
         msg.textContent = '❌ ' + (map[result.reason] || result.message || 'فشل التحقق');
       }
@@ -580,6 +753,7 @@
     getTierInfo: getTierInfo,
     getTierLimits: getTierLimits,
     showDialog: showDialog,
+    manualVerify: manualVerify,
     // جديدة
     getLicenseStatus: getLicenseStatus,
     getTrialStatus: getTrialStatus,
@@ -593,12 +767,268 @@
     TIER_FEATURES: TIER_FEATURES
   };
 
-  // تشغيل تلقائي
+  // تشغيل تلقائي (فحص الإغلاق والقيود)
+  async function startupCheck() {
+    try { await applyRestrictions(); } catch(e) { console.warn('Restrictions error', e); }
+    try { await enforceLicenseOnStartup(); } catch(e) { console.warn('Lock error', e); }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { applyRestrictions().catch(function(){}); });
+    document.addEventListener('DOMContentLoaded', startupCheck);
   } else {
-    applyRestrictions().catch(function(){});
+    startupCheck();
   }
 
   console.log('[License] v2 (ECDSA) loaded');
 })();
+
+// ═══════════════════════════════════════════════════
+// 🔧 وضع المطور — مفتاح دائم للاختبار
+// ═══════════════════════════════════════════════════
+const DEV_MODE_KEY = 'kodnaqi_dev_mode';
+const DEV_LICENSE = {
+  key: 'KOD2.DEV.MODE.PERMANENT.LICENSE',
+  payload: {
+    v: 1,
+    id: 'KN-DEV-000001',
+    tier: 'E',
+    customer: 'المطور (Developer)',
+    devices: ['*'],
+    issued: 0,
+    expires: 9999999999999 // دائم
+  }
+};
+
+function isDevMode() {
+  try {
+    return localStorage.getItem(DEV_MODE_KEY) === 'true';
+  } catch(e) { return false; }
+}
+
+const DEV_PASSWORD = 'kodnaqi2026dev'; // غيّرها لاحقاً!
+
+function enableDevMode() {
+  const input = prompt('🔐 أدخل كلمة مرور المطور:');
+  if (input !== DEV_PASSWORD) {
+    alert('❌ كلمة المرور غير صحيحة!');
+    return;
+  }
+  
+  try {
+    localStorage.setItem(DEV_MODE_KEY, 'true');
+    localStorage.setItem('kodnaqi_license', JSON.stringify({
+      key: DEV_LICENSE.key,
+      payload: DEV_LICENSE.payload,
+      deviceCode: 'DEV',
+      activatedAt: Date.now()
+    }));
+    alert('✅ تم تفعيل وضع المطور بنجاح!');
+    location.reload();
+  } catch(e) {}
+}
+
+function disableDevMode() {
+  try {
+    localStorage.removeItem(DEV_MODE_KEY);
+    localStorage.removeItem('kodnaqi_license');
+    location.reload();
+  } catch(e) {}
+}
+
+// التحقق من وضع المطور عند بدء التشغيل
+(function checkDevMode() {
+  if (isDevMode()) {
+    // حقن الترخيص المطور قبل أي فحص
+    const originalGetLicenseStatus = window.KodNaqiLicense?.getLicenseStatus;
+    if (window.KodNaqiLicense) {
+      window.KodNaqiLicense.getLicenseStatus = async function() {
+        return {
+          status: 'valid',
+          payload: DEV_LICENSE.payload,
+          daysLeft: Infinity,
+          data: { key: DEV_LICENSE.key, payload: DEV_LICENSE.payload }
+        };
+      };
+    }
+    console.log('[DEV MODE] ✅ Developer mode active — All features unlocked');
+  }
+})();
+
+// إضافة أزرار وضع المطور إلى API
+if (window.KodNaqiLicense) {
+  window.KodNaqiLicense.enableDevMode = enableDevMode;
+  window.KodNaqiLicense.disableDevMode = disableDevMode;
+  window.KodNaqiLicense.isDevMode = isDevMode;
+}
+
+// زر إلغاء وضع المطور (يظهر فقط عندما يكون مفعلاً)
+function addDisableDevButton() {
+  if (!isDevMode()) return;
+  
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-outline-secondary btn-sm mt-2 w-100';
+  btn.innerHTML = '<i class="bi bi-x-circle"></i> إلغاء وضع المطور';
+  btn.onclick = function() {
+    if (confirm('هل تريد إلغاء وضع المطور والعودة للوضع العادي؟')) {
+      disableDevMode();
+    }
+  };
+  
+  // إضافة الزر بجانب زر التفعيل
+  const devBtn = document.getElementById('devModeBtn');
+  if (devBtn && devBtn.parentNode) {
+    devBtn.parentNode.insertBefore(btn, devBtn.nextSibling);
+    // تغيير نص زر التفعيل
+    devBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> وضع المطور مفعل';
+    devBtn.disabled = true;
+  }
+}
+
+// تشغيل عند تحميل الصفحة
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', addDisableDevButton);
+} else {
+  addDisableDevButton();
+}
+
+// ═══════════════════════════════════════════════════
+// 🎉 رسالة نجاح التفعيل — تظهر مرة واحدة فقط
+// ═══════════════════════════════════════════════════
+function showActivationSuccess(payload) {
+  // التحقق من عدم إظهارها مسبقاً
+  const shown = localStorage.getItem('kodnaqi_activation_shown');
+  if (shown === 'true') return;
+  
+  const tierNames = {
+    TRIAL: 'التجريبية',
+    B: 'الأساسية',
+    S: 'القياسية',
+    A: 'المتقدمة',
+    E: 'المؤسسية'
+  };
+  
+  const tierName = tierNames[payload.tier] || payload.tier;
+  const daysLeft = payload.expires ? Math.ceil((payload.expires - Date.now()) / 86400000) : 'دائم';
+  
+  // إنشاء التنبيه الجميل
+  const toast = document.createElement('div');
+  toast.id = 'kodnaqi-toast';
+  toast.className = 'toast-card';
+  
+  toast.innerHTML = `
+    <div class="toast-icon-wrapper">
+      <span class="toast-emoji">🎊</span>
+    </div>
+    <div class="toast-body">
+      <h4 class="toast-headline">مرحى! تم تفعيل باقة ${tierName} بنجاح</h4>
+      <p class="toast-subtext">مدة الاشتراك: ${daysLeft === 'دائم' ? 'دائم' : daysLeft + ' يوم'} — نتمنى لك رحلة ممتعة معنا، وشكراً لانضمامك إلى أسرتنا <span class="brand-highlight">KodNaqi Diagnostics</span></p>
+    </div>
+    <button class="toast-close-x" onclick="closeKodNaqiToast()">×</button>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // إظهار التنبيه بعد لحظة
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 100);
+  
+  // إخفاء تلقائي بعد 5 ثوانٍ
+  setTimeout(() => {
+    closeKodNaqiToast();
+  }, 5000);
+  
+  // حفظ أنه تم الإظهار
+  localStorage.setItem('kodnaqi_activation_shown', 'true');
+}
+
+function closeKodNaqiToast() {
+  const toast = document.getElementById('kodnaqi-toast');
+  if (toast) {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 400);
+  }
+}
+
+// تصدير للاستخدام
+window.showActivationSuccess = showActivationSuccess;
+
+// ═══════════════════════════════════════════════════
+// 🔄 التحديث التلقائي — التحقق من GitHub Releases
+// ═══════════════════════════════════════════════════
+const UPDATE_CHECK_KEY = 'kodnaqi_last_update_check';
+const UPDATE_INTERVAL = 24 * 60 * 60 * 1000; // فحص كل 24 ساعة
+const CURRENT_VERSION = '1.0.1'; // رقم الإصدار الحالي
+
+async function checkForUpdates() {
+  try {
+    // التحقق من آخر فحص
+    const lastCheck = localStorage.getItem(UPDATE_CHECK_KEY) || 0;
+    if (Date.now() - lastCheck < UPDATE_INTERVAL) return;
+    
+    localStorage.setItem(UPDATE_CHECK_KEY, Date.now());
+    
+    // جلب آخر إصدار من GitHub
+    const response = await fetch('https://api.github.com/repos/Alsunni707/kodnaqi-app/releases/latest', {
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) return;
+    
+    const release = await response.json();
+    const latestVersion = release.tag_name.replace('v', '');
+    
+    // مقارنة الإصدارات
+    if (latestVersion > CURRENT_VERSION) {
+      showUpdateDialog(latestVersion, release.html_url, release.assets);
+    }
+  } catch (e) {
+    console.log('[Update] Check failed:', e.message);
+  }
+}
+
+function showUpdateDialog(version, releaseUrl, assets) {
+  // البحث عن ملف APK في assets
+  const apkAsset = assets.find(a => a.name.endsWith('.apk'));
+  const downloadUrl = apkAsset ? apkAsset.browser_download_url : releaseUrl;
+  
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:999999;padding:20px;direction:rtl;';
+  
+  overlay.innerHTML = `
+    <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:24px;padding:35px;max-width:400px;width:100%;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,0.5);color:white;">
+      <div style="font-size:4rem;margin-bottom:15px;">🎉</div>
+      <h2 style="margin:0 0 10px;font-size:1.6rem;font-weight:800;">تحديث جديد متاح!</h2>
+      <p style="margin:0 0 20px;opacity:0.9;">الإصدار ${version} متاح الآن</p>
+      
+      <div style="background:rgba(255,255,255,0.2);border-radius:12px;padding:15px;margin-bottom:20px;font-size:0.9rem;">
+        ✨ تحسينات وإصلاحات جديدة<br>
+        🔒 تحديثات أمنية<br>
+        ⚡ أداء أسرع
+      </div>
+      
+      <button onclick="window.open('${downloadUrl}', '_blank');this.closest('div').parentElement.remove();" style="width:100%;padding:14px;background:white;color:#667eea;border:none;border-radius:12px;font-size:1rem;font-weight:800;cursor:pointer;margin-bottom:10px;">
+        ⬇️ تحميل التحديث
+      </button>
+      
+      <button onclick="this.closest('div').parentElement.remove();" style="width:100%;padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:12px;font-size:0.9rem;cursor:pointer;">
+        لاحقاً
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
+}
+
+// تشغيل الفحص عند تحميل الصفحة
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', checkForUpdates);
+} else {
+  checkForUpdates();
+}
+
+// تصدير للاستخدام اليدوي
+window.checkForUpdates = checkForUpdates;
+console.log('[Update] Auto-update checker loaded');

@@ -1,5 +1,14 @@
 {
   "appId": "com.kodnaqi.diagnostics",
   "appName": "KodNaqi Diagnostics",
-  "webDir": "www"
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": false,
+    "webContentsDebuggingEnabled": false
+  }
 }

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>فحص النسخة الاحتياطية للختم</title>
+<style>
+body{font-family:system-ui;padding:20px;background:#f8fafc;text-align:center;}
+button{padding:15px 30px;font-size:1.2rem;background:#0d3b66;color:#fff;border:none;border-radius:8px;cursor:pointer;margin:10px;}
+#log{margin-top:20px;font-family:monospace;background:#0f172a;color:#a5f3fc;padding:15px;border-radius:8px;text-align:right;white-space:pre-wrap;display:none;line-height:1.8;font-size:0.85rem;}
+#preview{margin-top:20px;padding:15px;background:#fff;border-radius:8px;text-align:center;display:none;}
+#preview img{max-height:120px;border:2px solid #c9a227;padding:5px;border-radius:8px;margin:5px;}
+</style>
+</head>
+<body>
+<h2>🔍 فحص النسخة الاحتياطية (auto_backup)</h2>
+<button onclick="checkBackup()">اضغط للفحص</button>
+<div id="preview"></div>
+<div id="log"></div>
+<script>
+function checkBackup() {
+  const log = document.getElementById('log');
+  const preview = document.getElementById('preview');
+  log.style.display = 'block';
+  log.innerText = '⏳ جاري قراءة النسخة الاحتياطية...\n\n';
+  
+  const raw = localStorage.getItem('kodnaqi_auto_backup');
+  if (!raw) {
+    log.innerText += '❌ لا توجد نسخة احتياطية محفوظة.';
+    return;
+  }
+  
+  log.innerText += `📦 حجم البيانات: ${(raw.length / 1024).toFixed(1)} كيلوبايت\n\n`;
+  
+  try {
+    const data = JSON.parse(raw);
+    log.innerText += `📋 المفاتيح في النسخة: ${Object.keys(data).join(', ')}\n\n`;
+    
+    // البحث عن أي مفتاح يحتوي على brand
+    let found = false;
+    for (const key of Object.keys(data)) {
+      if (key.toLowerCase().includes('brand') || key.toLowerCase().includes('stamp')) {
+        log.innerText += `\n✅ مفتاح هوية: "${key}"\n`;
+        const val = data[key];
+        if (typeof val === 'string') {
+          log.innerText += `   القيمة: ${val.substring(0, 50)}...\n`;
+        } else if (typeof val === 'object') {
+          log.innerText += `   حقول الهوية: ${Object.keys(val).join(', ')}\n`;
+          if (val.stampData) {
+            log.innerText += `   🎯 يحتوي على ختم!\n`;
+            preview.innerHTML += '<div><h4>ختم من auto_backup:</h4><img src="' + val.stampData + '"></div>';
+            preview.style.display = 'block';
+            found = true;
+          }
+          if (val.logoData) {
+            log.innerText += `   🖼️  يحتوي على شعار\n`;
+            preview.innerHTML += '<div><h4>شعار:</h4><img src="' + val.logoData + '"></div>';
+          }
+        }
+      }
+    }
+    
+    if (!found) {
+      log.innerText += '\n❌ لا يوجد ختم في النسخة الاحتياطية.\n';
+      log.innerText += '\n💡 الحل: يجب رفع الختم من جديد عبر: الإعدادات -> تعديل هوية المعمل -> رفع الختم -> حفظ.\n';
+    }
+  } catch(e) {
+    log.innerText += `❌ خطأ في تحليل البيانات: ${e.message}`;
+  }
+}
+</script>
+</body>
+</html>

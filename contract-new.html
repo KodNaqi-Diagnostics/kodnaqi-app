@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>عقد ترخيص استخدام برنامج — KodNaqi Diagnostics</title>
+<link rel="stylesheet" href="lib/cairo.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#e5e7eb;color:#111;font-family:"Cairo",Tahoma,Arial,sans-serif;font-size:11.5pt;line-height:1.8;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.toolbar{position:sticky;top:0;z-index:10;background:#0d3b66;color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:11pt}
+.toolbar button{background:#fff;color:#0d3b66;border:0;border-radius:8px;padding:8px 16px;font:inherit;font-weight:700;cursor:pointer}
+.sheet{width:min(210mm,100%);margin:12px auto;background:#fff;padding:16mm 15mm;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.head{text-align:center;border-bottom:2px solid #0d3b66;padding-bottom:8px;margin-bottom:10px}
+.logo{height:54px;display:block;margin:0 auto 4px}
+.head h1{margin:0;font-size:19pt;color:#0d3b66}
+.sub{margin:2px 0 6px;color:#475569;font-size:10.5pt}
+.meta{display:flex;justify-content:space-between;font-size:10.5pt}
+.intro{margin:8px 0}
+.f{font-weight:700;border-bottom:1px dotted #9aa3af;padding:0 4px}
+.f:empty::after{content:"……………………………";color:#9aa3af;font-weight:400}
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.box{border:1px solid #9fb3c8;border-radius:6px;padding:8px 10px}
+.box h3{margin:0 0 4px;font-size:11.5pt;color:#0d3b66}
+.box div{font-size:10.5pt}
+.art{margin:10px 0}
+.art h2{font-size:12.5pt;margin:0 0 4px;color:#0d3b66;border-bottom:1px solid #c7d2e0;padding-bottom:2px}
+.art p,.art li{margin:2px 0;text-align:justify}
+.art ul,.art ol{margin:2px 0;padding-inline-start:22px}
+.kv,.pk{width:100%;border-collapse:collapse;font-size:10.5pt;margin:4px 0}
+.kv td,.pk td{border:1px solid #cfd8e3;padding:3px 8px}
+.kv td:first-child{background:#f3f6fa;width:40%}
+.pk .bx{width:8%;text-align:center;font-size:13pt}
+.pk tr.on{background:#e8f5ee;font-weight:700}
+.warn{margin-top:6px;color:#7f1d1d}
+.sign{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+.sb{border:1px solid #9fb3c8;border-radius:6px;padding:8px 10px}
+.sb h3{margin:0 0 4px;font-size:11.5pt;color:#0d3b66}
+.line{border-bottom:1px solid #111;height:15mm;margin:6px 0}
+.stamp{border:1px dashed #9aa3af;height:20mm;margin:4px 0;display:flex;align-items:center;justify-content:center;color:#9aa3af;font-size:9pt}
+.wit{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;font-size:10.5pt}
+.note{margin-top:10px;font-size:10pt;color:#334155}
+.foot{margin-top:8px;border-top:1px solid #c7d2e0;padding-top:6px;text-align:center;font-size:9.5pt;color:#475569}
+@page{size:A4;margin:18mm 16mm 20mm 16mm}
+@page{@bottom-center{content:"صفحة " counter(page) " من " counter(pages);font:9pt Tahoma,Arial,sans-serif;color:#555}}
+@media print{
+ body{background:#fff}
+ .toolbar{display:none}
+ .sheet{width:auto;margin:0;padding:0;box-shadow:none}
+ .art,.sign,.parties,.head,.wit,.lastpg{break-inside:avoid;page-break-inside:avoid}
+ .art h2{break-after:avoid;page-break-after:avoid}
+}
+@media (max-width:560px){.parties,.sign,.wit{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="toolbar"><span>عقد ترخيص — ورقة A4</span><button onclick="window.print()">🖨️ طباعة العقد</button></div>
+<main class="sheet">
+<header class="head">
+<img src="logo.png" alt="KodNaqi" class="logo">
+<h1>عقد ترخيص استخدام برنامج</h1>
+<p class="sub">اتفاقية رسمية بين KodNaqi Diagnostics والعميل</p>
+<div class="meta"><div>رقم العقد: <span class="f" data-k="contractNo"></span></div><div>التاريخ: <span class="f" data-k="issued"></span></div></div>
+</header>
+<p class="intro">إنه في يوم <span class="f" data-k="day"></span> الموافق <span class="f" data-k="issued"></span> تم الاتفاق بين كل من:</p>
+<div class="parties">
+<div class="box"><h3>الطرف الأول (المرخِّص / المالك)</h3>
+<div>الاسم: السني خالد محمد أحمد السني</div>
+<div>البريد الإلكتروني: kodnaqi@gmail.com</div>
+<div>الهاتف: <bdi dir="ltr">+249 111 729 111</bdi></div>
+<div>العنوان: الخرطوم - السودان</div></div>
+<div class="box"><h3>الطرف الثاني (المرخَّص له / العميل)</h3>
+<div>اسم المعمل: <span class="f" data-k="customer"></span></div>
+<div>اسم المالك / المدير: <span class="f" data-k="owner"></span></div>
+<div>الهاتف: <span class="f" dir="auto" data-k="phone"></span></div>
+<div>العنوان: <span class="f" data-k="address"></span></div>
+<div>السجل التجاري: <span class="f" data-k="regNumber"></span></div></div>
+</div>
+
+<section class="art"><h2>المادة الأولى: الموضوع</h2>
+<p>يمنح الطرف الأول للطرف الثاني ترخيصًا غير حصري، غير قابل للنقل، غير قابل لإعادة الترخيص، لاستخدام برنامج KodNaqi PWA في المعمل المذكور أعلاه فقط، وفق الشروط المبينة في هذا العقد.</p></section>
+
+<section class="art"><h2>المادة الثانية: الباقة المختارة</h2>
+<p>يختار الطرف الثاني الباقة التالية:</p>
+<table class="pk"><tbody>
+<tr class="pkg" data-t="B"><td class="bx">☐</td><td>الباقة الأساسية</td><td>جهاز واحد · مستخدم واحد</td><td>معمل صغير</td></tr>
+<tr class="pkg" data-t="S"><td class="bx">☐</td><td>الباقة القياسية</td><td>3 أجهزة · 5 مستخدمين</td><td>معمل متوسط</td></tr>
+<tr class="pkg" data-t="A"><td class="bx">☐</td><td>الباقة المتقدمة</td><td>أجهزة ومستخدمون غير محدودين</td><td>معمل كبير</td></tr>
+<tr class="pkg" data-t="E"><td class="bx">☐</td><td>الباقة المؤسسية</td><td>White Label · غير محدود</td><td>مجموعة معامل</td></tr>
+</tbody></table></section>
+
+<section class="art"><h2>المادة الثالثة: نطاق الترخيص</h2>
+<table class="kv"><tbody>
+<tr><td>عدد الأجهزة المسموح بها</td><td><span class="f" data-k="devices"></span></td></tr>
+<tr><td>عدد المستخدمين</td><td><span class="f" data-k="users"></span></td></tr>
+<tr><td>مدة الترخيص</td><td><span class="f" data-k="duration"></span> من تاريخ الإصدار</td></tr>
+<tr><td>تاريخ الإصدار</td><td><span class="f" data-k="issued"></span></td></tr>
+<tr><td>تاريخ الانتهاء</td><td><span class="f" data-k="expires"></span></td></tr>
+<tr><td>مدة الدعم المجاني</td><td>طوال مدة الترخيص (وفق المادة الحادية عشرة)</td></tr>
+</tbody></table></section>
+
+<section class="art"><h2>المادة الرابعة: الثمن وطريقة الدفع</h2>
+<table class="kv"><tbody>
+<tr><td>إجمالي قيمة الترخيص السنوي</td><td><span class="f"></span> جنيه سوداني</td></tr>
+<tr><td>الدفعة المقدمة (50%)</td><td><span class="f"></span> تُدفع عند التوقيع</td></tr>
+<tr><td>الدفعة النهائية (50%)</td><td><span class="f"></span> تُدفع عند التسليم والتفعيل</td></tr>
+</tbody></table>
+<p>طريقة الدفع:</p>
+<ul><li>تحويل بنكي (بنك الخرطوم: 4046346)</li><li>بنك فيصل الإسلامي (51627855)</li><li>محفظة mCash (300045779)</li><li>نقدًا</li></ul></section>
+
+<section class="art"><h2>المادة الخامسة: التجديد</h2>
+<p>ينتهي الترخيص تلقائيًا بعد <span class="f" data-k="duration"></span> من تاريخ الإصدار. للاستمرار في استخدام البرنامج، يجب على الطرف الثاني:</p>
+<ol><li>دفع رسوم التجديد السنوي قبل انتهاء المدة.</li><li>الحصول على مفتاح ترخيص جديد من الطرف الأول.</li></ol>
+<p>ملاحظة: يحق للطرف الثاني الحصول على خصم 20% إذا جدّد قبل انتهاء المدة بـ 30 يومًا على الأقل.</p></section>
+
+<section class="art"><h2>المادة السادسة: التزامات الطرف الأول</h2>
+<ul><li>تسليم البرنامج مفعّلًا وجاهزًا للعمل خلال 7 أيام من استلام الدفعة المقدمة.</li>
+<li>توفير تدريب أولي (ساعتان) لموظفي المعمل.</li>
+<li>تقديم الدعم الفني المجاني وفق المادة الحادية عشرة من هذا العقد.</li>
+<li>إصلاح أي خلل تقني ناتج عن البرنامج دون مقابل.</li>
+<li>إصدار تحديثات مجانية خلال مدة الترخيص.</li>
+<li>عدم الوصول إلى بيانات المرضى، فهي محفوظة محليًا على أجهزة الطرف الثاني.</li></ul></section>
+
+<section class="art"><h2>المادة السابعة: التزامات الطرف الثاني</h2>
+<ul><li>سداد قيمة الترخيص في المواعيد المتفق عليها.</li>
+<li>عدم نسخ أو توزيع أو بيع البرنامج لأي طرف ثالث.</li>
+<li>عدم محاولة فك الكود المصدري أو الهندسة العكسية.</li>
+<li>الحفاظ على سرية كلمات المرور.</li>
+<li>أخذ نسخ احتياطية دورية من البيانات.</li>
+<li>إبلاغ الطرف الأول فورًا بأي مشكلة تقنية.</li>
+<li>استخدام البرنامج في المعمل المذكور فقط.</li></ul></section>
+
+<section class="art"><h2>المادة الثامنة: المحظورات وإساءة استخدام النظام</h2>
+<p>يُحظر على الطرف الثاني صراحةً:</p>
+<ul><li>إعادة بيع البرنامج أو تأجيره أو ترخيصه أو منحه لطرف آخر.</li>
+<li>إزالة إشعارات حقوق النشر من داخل البرنامج أو تعديل ملفاته البرمجية.</li>
+<li>استخدام البرنامج في أكثر من المعمل المذكور في هذا العقد.</li>
+<li>تجاوز قيود الباقة المختارة (مثل استخدام الباقة الأساسية على أكثر من جهاز).</li>
+<li>تعديل البرنامج أو إضافة ميزات دون إذن كتابي من الطرف الأول.</li>
+<li>استخدام البرنامج لأغراض غير مشروعة أو مخالفة للقوانين.</li>
+<li>محاولة اختراق نظام الترخيص أو تعديله، أو نسخ المفاتيح أو استخدامها على أجهزة غير مرخصة.</li>
+<li>الهندسة العكسية أو محاولة استخراج الكود المصدري.</li>
+<li>الإضرار بسمعة البرنامج أو المالك.</li></ul>
+<p class="warn"><b>عند مخالفة أي بند من هذه المادة:</b></p>
+<ul><li>يُلغى الترخيص فورًا دون إشعار.</li>
+<li>يُطالب الطرف الثاني بغرامة تعاقدية قيمتها ضعف سعر الترخيص.</li>
+<li>يحق للطرف الأول المطالبة القضائية بالتعويضات.</li>
+<li>تُحال المخالفة إلى الجهات المختصة.</li></ul></section>
+
+<section class="art"><h2>المادة التاسعة: ملكية البيانات</h2>
+<p>جميع البيانات المدخلة في البرنامج تبقى ملكًا حصريًا للطرف الثاني. يلتزم الطرف الأول بعدم الوصول إليها أو الاطلاع عليها. البيانات محفوظة محليًا على أجهزة الطرف الثاني، ويوفّر البرنامج خيار تشفير النسخ الاحتياطية بكلمة مرور يختارها الطرف الثاني، ولا يحتفظ بها الطرف الأول ولا يستطيع استرجاعها.</p></section>
+
+<section class="art"><h2>المادة العاشرة: النسخ الاحتياطي</h2>
+<p>يلتزم الطرف الثاني (العميل) بالتالي:</p>
+<ul><li>أخذ نسخة احتياطية دورية (كل أسبوع على الأقل) باستخدام: تصدير نسخة JSON (محلية)، أو النسخ السحابي (Google Drive)، أو النسخ على فلاشة USB أو قرص خارجي.</li>
+<li>حفظ النسخ الاحتياطية في أماكن متعددة (محلي + سحابي).</li>
+<li>الاحتفاظ بسجل للنسخ (التاريخ + المكان).</li></ul>
+<p class="warn"><b>تنبيه مهم:</b> فقدان البيانات نتيجة عدم أخذ نسخ احتياطية لا يُعدّ عيبًا في البرنامج، ولا يتحمل الطرف الأول مسؤوليته.</p></section>
+
+<section class="art"><h2>المادة الحادية عشرة: الدعم الفني</h2>
+<p>يقدّم الطرف الأول الدعم الفني المجاني طوال مدة الترخيص عبر واتساب وتلجرام وفيسبوك وماسنجر، يوميًا من الساعة 7:00 صباحًا حتى 7:00 مساءً بتوقيت السودان، عدا يوم الجمعة فيكون الدعم من الساعة 4:00 عصرًا حتى 8:00 مساءً فقط.</p></section>
+
+<section class="art"><h2>المادة الثانية عشرة: النتائج الطبية</h2>
+<p>البرنامج أداة مساعدة لتسجيل النتائج وإصدار التقارير، ولا يغني عن مراجعتها من الكادر المختص. والقيم المرجعية الافتراضية قابلة للتعديل من إعدادات البرنامج، ويلتزم الطرف الثاني بمراجعتها وضبطها بما يلائم كواشفه وأجهزته قبل اعتماد أي تقرير، وهو وحده المسؤول عن صحة النتائج المدخلة والتقارير الصادرة عنه.</p></section>
+
+<section class="art"><h2>المادة الثالثة عشرة: الملكية الفكرية</h2>
+<p>يبقى البرنامج وكوده المصدري واسم "KodNaqi" علامة تجارية مملوكة حصريًا للطرف الأول. لا ينقل هذا العقد أي حق ملكية للطرف الثاني.</p></section>
+
+<section class="art"><h2>المادة الرابعة عشرة: إخلاء المسؤولية</h2>
+<p>يُقدَّم البرنامج "كما هو". الطرف الأول غير مسؤول عن أي أضرار مباشرة أو غير مباشرة، بما في ذلك فقدان البيانات. الطرف الثاني مسؤول مسؤولية كاملة عن أخذ نسخ احتياطية دورية.</p></section>
+
+<section class="art"><h2>المادة الخامسة عشرة: إنهاء العقد</h2>
+<p>يُلغى هذا العقد تلقائيًا في الحالات التالية:</p>
+<ul><li>مخالفة أي بند من بنود العقد.</li>
+<li>عدم سداد رسوم التجديد خلال 30 يومًا من تاريخ الانتهاء.</li>
+<li>استخدام البرنامج في نشاط غير مشروع.</li></ul>
+<p>يحق للطرف الثاني قبل التوقف عن استخدام البرنامج أخذ نسخة كاملة من بياناته، ولا يُعدّ ذلك مخالفة لأي بند من بنود هذا العقد، ثم يتوقف عن استخدام البرنامج ويحذف نسخه.</p></section>
+
+<section class="art"><h2>المادة السادسة عشرة: تسوية النزاعات</h2>
+<p>في حال نشوء أي نزاع بين الطرفين، يتم حلّه وديًا خلال 30 يومًا. في حال تعذّر ذلك، يُحال النزاع إلى المحاكم المختصة في جمهورية السودان.</p></section>
+
+<div class="lastpg">
+<section class="art"><h2>المادة السابعة عشرة: نسخ العقد</h2>
+<p>حُرِّر هذا العقد من نسختين أصليتين، بيد كل طرف نسخة للعمل بمقتضاها.</p></section>
+
+<section class="art"><h2>التوقيعات</h2>
+<div class="sign">
+<div class="sb"><h3>الطرف الأول (المرخِّص)</h3><div>الاسم: السني خالد محمد أحمد السني</div><div>التوقيع:</div><div class="line"></div><div class="stamp">الختم</div><div>التاريخ: ______ / ______ / ____________</div></div>
+<div class="sb"><h3>الطرف الثاني (العميل)</h3><div>الاسم: <span class="f" data-k="owner"></span></div><div>التوقيع:</div><div class="line"></div><div class="stamp">الختم</div><div>التاريخ: ______ / ______ / ____________</div></div>
+</div>
+<div class="wit">
+<div>الشاهد الأول — الاسم: _____________<div class="line"></div></div>
+<div>الشاهد الثاني — الاسم: _____________<div class="line"></div></div>
+</div>
+<p class="note">هذا العقد ساري المفعول من تاريخ التوقيع. يُحفظ نسخة عند كل طرف.</p>
+<div class="foot">KodNaqi Diagnostics © 2026 — السني خالد محمد أحمد السني — kodnaqi@gmail.com — <bdi dir="ltr">+249 111 729 111</bdi></div></section>
+</div>
+</main>
+<script>
+(function () {
+  var D = {};
+  try { D = JSON.parse(localStorage.getItem('kodnaqi_contract_data') || '{}') || {}; } catch (e) { D = {}; }
+  if (/[?&]demo=1/.test(location.search)) {
+    D = { customer: 'معمل تجريبي', phone: '+249 900 000 000', address: 'الخرطوم - السودان', regNumber: '12345', tier: 'S', issued: Date.now(), expires: Date.now() + 365 * 86400000, ownerName: 'اسم تجريبي', contractNo: 'KOD-C-2026-DEMO' };
+  }
+  var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fmt(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    if (isNaN(d)) return '';
+    return String(d.getDate()).padStart(2, '0') + ' ' + M[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function dayName(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    return isNaN(d) ? '' : d.toLocaleDateString('ar', { weekday: 'long' });
+  }
+  var TIER = { B: { dev: '1', usr: '1' }, S: { dev: '3', usr: '5' }, A: { dev: 'غير محدود', usr: 'غير محدود' }, E: { dev: 'غير محدود', usr: 'غير محدود' } };
+  var t = TIER[D.tier] || null;
+  var dur = '';
+  if (D.issued && D.expires && D.expires > D.issued) {
+    var days = Math.round((D.expires - D.issued) / 86400000);
+    if (days >= 364 && days <= 366) { dur = 'سنة كاملة (365 يومًا)'; }
+    else if (days % 30 === 0) {
+      var mo = days / 30;
+      var mt = mo === 1 ? 'شهر واحد' : (mo === 2 ? 'شهران' : (mo <= 10 ? mo + ' أشهر' : mo + ' شهرًا'));
+      dur = days + ' يومًا (' + mt + ')';
+    } else { dur = days + ' يومًا'; }
+  }
+  var V = { contractNo: D.contractNo, issued: fmt(D.issued), expires: fmt(D.expires), day: dayName(D.issued), customer: D.customer, owner: D.ownerName, phone: D.phone, address: D.address, regNumber: D.regNumber, devices: t && t.dev, users: t && t.usr, duration: dur };
+  var nodes = document.querySelectorAll('.f[data-k]');
+  for (var i = 0; i < nodes.length; i++) {
+    var v = V[nodes[i].getAttribute('data-k')];
+    if (v) {
+      nodes[i].textContent = v;
+      var k = nodes[i].getAttribute('data-k');
+      if (k === 'issued' || k === 'expires') nodes[i].setAttribute('dir', 'ltr');
+    }
+  }
+  var rows = document.querySelectorAll('.pkg');
+  for (var j = 0; j < rows.length; j++) {
+    if (rows[j].getAttribute('data-t') === D.tier) {
+      rows[j].className += ' on';
+      rows[j].querySelector('.bx').textContent = '☑';
+    }
+  }
+  var no = String(D.contractNo || '').replace(/[^A-Za-z0-9_\- ]/g, '');
+  if (no) {
+    var st = document.createElement('style');
+    st.textContent = '@page{@bottom-right{content:"Contract No: ' + no + '";font:8pt Tahoma,Arial,sans-serif;color:#555}}';
+    document.head.appendChild(st);
+  }
+})();
+</script>
+</body>
+</html>

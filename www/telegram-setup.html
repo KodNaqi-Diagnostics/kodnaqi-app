@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>إعداد بوت التلجرام</title>
+<style>body{font-family:system-ui;padding:20px;background:#0d3b66;color:#fff;text-align:center;}
+.box{max-width:400px;margin:40px auto;background:#fff;color:#0d3b66;padding:20px;border-radius:12px;text-align:right;}
+input{width:100%;padding:12px;margin-bottom:10px;border:2px solid #cbd5e1;border-radius:8px;box-sizing:border-box;direction:ltr;}
+button{padding:15px;width:100%;font-size:1.1rem;background:#198754;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold;}
+#log{margin-top:15px;padding:10px;border-radius:8px;display:none;text-align:center;}</style>
+</head>
+<body>
+<div class="box">
+  <h2 style="text-align:center;">🤖 إعداد البوت</h2>
+  <label>Bot Token:</label>
+  <input type="text" id="token" placeholder="8550...:AAG...">
+  <label>Chat ID:</label>
+  <input type="text" id="chatId" placeholder="123456789">
+  <button onclick="save()">💾 حفظ الإعدادات</button>
+  <div id="log"></div>
+  <div style="text-align:center;margin-top:20px;font-size:0.9rem;">
+    <a href="admin.html" style="color:#0d3b66;font-weight:bold;">⬅️ العودة للوحة التحكم</a>
+  </div>
+</div>
+<script>
+function save() {
+  const t = document.getElementById('token').value.trim();
+  const c = document.getElementById('chatId').value.trim();
+  const log = document.getElementById('log');
+  if(!t || !c) { alert('املأ الحقلين'); return; }
+  
+  localStorage.setItem('kn_tg_token', t);
+  localStorage.setItem('kn_tg_chat_id', c);
+  log.style.display = 'block';
+  log.style.background = '#d1fae5';
+  log.style.color = '#065f46';
+  log.innerText = '✅ تم الحفظ بنجاح! يمكنك العودة للوحة التحكم.';
+}
+// تحميل القيم المحفوظة
+document.getElementById('token').value = localStorage.getItem('kn_tg_token') || '';
+document.getElementById('chatId').value = localStorage.getItem('kn_tg_chat_id') || '';
+</script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>السني خالد — الملف التعريفي | KodNaqi Diagnostics</title>
+
+<!-- خط Tajawal -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+  --primary: #0d3b66;
+  --secondary: #1e6091;
+  --accent: #c9a227;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; }
+
+body { background: var(--bg); color: var(--text); line-height: 1.7; padding-bottom: 50px; }
+
+.container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+
+/* ═══ Hero Section ═══ */
+.hero {
+  background: linear-gradient(135deg, #0d3b66 0%, #1e6091 100%);
+  color: white; padding: 80px 20px 100px; text-align: center;
+  position: relative; overflow: hidden;
+  border-radius: 0 0 40px 40px;
+  box-shadow: 0 10px 30px rgba(13, 59, 102, 0.3);
+}
+.hero::before {
+  content: ''; position: absolute; top: -50px; right: -50px;
+  width: 300px; height: 300px; background: rgba(201, 162, 39, 0.15);
+  border-radius: 50%; filter: blur(40px);
+}
+.hero::after {
+  content: ''; position: absolute; bottom: -50px; left: -50px;
+  width: 300px; height: 300px; background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%; filter: blur(40px);
+}
+.avatar {
+  width: 130px; height: 130px; background: white; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; border: 4px solid var(--accent);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; z-index: 1;
+}
+.avatar img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; padding: 15px; }
+.hero h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; z-index: 1; position: relative; }
+.hero h2 { font-size: 1.2rem; color: var(--accent); font-weight: 700; margin-bottom: 15px; z-index: 1; position: relative; }
+.hero p { font-size: 1.05rem; max-width: 600px; margin: 0 auto; opacity: 0.9; z-index: 1; position: relative; }
+
+/* ═══ Stats Grid ═══ */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;
+  margin-top: -50px; position: relative; z-index: 2;
+}
+.stat-card {
+  background: var(--card); padding: 20px; border-radius: 16px;
+  text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
+}
+.stat-card .icon { font-size: 2rem; color: var(--secondary); margin-bottom: 10px; }
+.stat-card .value { font-size: 1.8rem; font-weight: 900; color: var(--primary); }
+.stat-card .label { font-size: 0.85rem; color: var(--muted); font-weight: 700; }
+
+/* ═══ Section Styles ═══ */
+.section-card {
+  background: var(--card); border-radius: 20px; padding: 30px;
+  margin-top: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  border: 1px solid var(--border);
+}
+.section-title {
+  font-size: 1.4rem; color: var(--primary); font-weight: 900;
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+}
+.section-title i { color: var(--accent); }
+.bio-text { color: var(--text); font-size: 1.05rem; line-height: 1.9; text-align: justify; }
+
+/* ═══ Features Grid ═══ */
+.features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+.feature-item {
+  background: var(--bg); border: 1px solid var(--border);
+  padding: 20px; border-radius: 12px; display: flex; gap: 15px;
+  transition: transform 0.2s;
+}
+.feature-item:hover { transform: translateY(-3px); border-color: var(--accent); }
+.feature-item i { color: var(--secondary); font-size: 1.8rem; margin-top: 3px; }
+.feature-item h4 { font-size: 1.05rem; color: var(--primary); margin-bottom: 5px; font-weight: 800; }
+.feature-item p { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+
+/* ═══ Skills ═══ */
+.skills-container { display: flex; flex-wrap: wrap; gap: 10px; }
+.skill-badge {
+  background: #f1f5f9; color: var(--primary); padding: 8px 16px;
+  border-radius: 30px; font-size: 0.9rem; font-weight: 700;
+  border: 1px solid var(--border); display: flex; align-items: center; gap: 6px;
+}
+.skill-badge i { color: #10b981; }
+
+/* ═══ Links ═══ */
+.links-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.link-btn {
+  display: flex; align-items: center; gap: 12px; padding: 16px;
+  border-radius: 12px; text-decoration: none; font-weight: 800;
+  transition: 0.2s; border: none; cursor: pointer;
+}
+.link-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-accent { background: var(--accent); color: white; }
+.btn-whatsapp { background: #25D366; color: white; }
+.btn-email { background: #475569; color: white; }
+
+/* ═══ Footer ═══ */
+footer { text-align: center; margin-top: 40px; color: var(--muted); font-size: 0.9rem; padding: 20px; }
+
+/* ═══ Responsive ═══ */
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .features-grid { grid-template-columns: 1fr; }
+  .links-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 1.8rem; }
+  .hero { padding: 60px 15px 80px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero Section -->
+<div class="hero">
+  <div class="avatar">
+    <img src="logo.png" alt="KodNaqi Logo">
+  </div>
+  <h1>السني خالد محمد أحمد السني</h1>
+  <h2>أخصائي أول أمراض الدم وبنك الدم والمناعة</h2>
+  <p>مؤسس ومطور نظام KodNaqi Diagnostics — الجمع بين الخبرة السريرية المتقدمة والهندسة البرمجية لبناء أنظمة معامل طبية بمعايير عالمية.</p>
+</div>
+
+<div class="container">
+  
+  <!-- Stats Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="icon"><i class="fa-solid fa-vials"></i></div>
+      <div class="value">94</div>
+      <div class="label">فحصاً طبيّاً</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon"><i class="fa-solid fa-wifi-slash"></i></div>
+      <div class="value">100%</div>
+      <div class="label">يعمل بدون إنترنت</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="value">AES-256</div>
+      <div class="label">تشفير البيانات</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon"><i class="fa-solid fa-laptop"></i></div>
+      <div class="value">3</div>
+      <div class="label">منصات (ويب/أندرويد/ويندوز)</div>
+    </div>
+  </div>
+
+  <!-- About -->
+  <div class="section-card">
+    <h3 class="section-title"><i class="fa-solid fa-address-card"></i> النبذة التعريفية</h3>
+    <p class="bio-text">
+      نموذج مهني يجمع ببراعة بين الخبرة السريرية المتقدمة في علوم المختبرات الطبية والهندسة البرمجية للأنظمة الطبية. بصفتي المؤسس والمطور الأساسي لنظام <strong>KodNaqi Diagnostics</strong>، أعمل على تطبيق تقنيات البرمجة المتقدمة لبناء أنظمة إدارية معملية ذات كفاءة استثنائية، مصممة بدقة لتلبية المتطلبات الواقعية للمختبرات الطبية وتسهيل عملية إدخال واستخراج النتائج بأعلى درجات الأمان والاعتمادية.
+    </p>
+  </div>
+
+  <!-- System Features -->
+  <div class="section-card">
+    <h3 class="section-title"><i class="fa-solid fa-microscope"></i> ميزات نظام KodNaqi Diagnostics</h3>
+    <div class="features-grid">
+      <div class="feature-item">
+        <i class="fa-solid fa-wifi"></i>
+        <div><h4>عمل أوفلاين 100%</h4><p>يعمل بكفاءة مطلقة دون اتصال بالإنترنت لضمان استمرارية العمل في أي ظرف.</p></div>
+      </div>
+      <div class="feature-item">
+        <i class="fa-solid fa-lock"></i>
+        <div><h4>ترخيص ECDSA محمي</h4><p>نظام ترخيص مركزي مرتبط بـ Firebase، لا يمكن تزويره أو تشغيله على جهاز آخر.</p></div>
+      </div>
+      <div class="feature-item">
+        <i class="fa-solid fa-shield-halved"></i>
+        <div><h4>تشفير AES-256</h4><p>بيانات المرضى والنتائج مشفرة بالكامل لحماية الخصوصية الطبية.</p></div>
+      </div>
+      <div class="feature-item">
+        <i class="fa-solid fa-vials"></i>
+        <div><h4>94 فحصاً بمعايير CLSI</h4><p>قاعدة بيانات معملية شاملة مع تفكيك المكونات والقيم المرجعية العالمية.</p></div>
+      </div>
+      <div class="feature-item">
+        <i class="fa-solid fa-print"></i>
+        <div><h4>طباعة تقارير احترافية</h4><p>تقارير A4 وفواتير حرارية تحمل شعار معملك، ختمك، وتواقيعك بجودة عالية.</p></div>
+      </div>
+      <div class="feature-item">
+        <i class="fa-solid fa-palette"></i>
+        <div><h4>6 ثيمات مخصصة</h4><p>واجهات عصرية قابلة للتغيير (كحلي، زمردي، بنفسجي، قرمزي، وغيرها).</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skills -->
+  <div class="section-card">
+    <h3 class="section-title"><i class="fa-solid fa-stethoscope"></i> الخبرات والكفاءات</h3>
+    <div class="skills-container">
+      <span class="skill-badge"><i class="fa-solid fa-check"></i> تشخيص أمراض الدم السريري</span>
+      <span class="skill-badge"><i class="fa-solid fa-check"></i> إدارة بنوك الدم ونقل الدم</span>
+      <span class="skill-badge"><i class="fa-solid fa-check"></i> الفحوصات المناعية المتقدمة</span>
+      <span class="skill-badge"><i class="fa-solid fa-check"></i> تطوير تطبيقات الويب التقدمية (PWA)</span>
+      <span class="skill-badge"><i class="fa-solid fa-check"></i> قواعد البيانات المحلية (IndexedDB)</span>
+      <span class="skill-badge"><i class="fa-solid fa-check"></i> أمن البيانات والتشفير المحلي</span>
+      <span class="skill-badge"><i class="fa-solid fa-check"></i> دمج السحابة (Firebase)</span>
+    </div>
+  </div>
+
+  <!-- Links & Contact -->
+  <div class="section-card">
+    <h3 class="section-title"><i class="fa-solid fa-paper-plane"></i> الروابط الرسمية والتواصل</h3>
+    <div class="links-grid">
+      <a href="https://KodNaqi-Diagnostics.github.io/kodnaqi-app/" target="_blank" class="link-btn btn-primary">
+        <i class="fa-solid fa-house"></i> الموقع الرسمي (صفحة الهبوط)
+      </a>
+      <a href="https://KodNaqi-Diagnostics.github.io/kodnaqi-app/app.html" target="_blank" class="link-btn btn-accent">
+        <i class="fa-solid fa-rocket"></i> دخول نظام المعمل
+      </a>
+      <a href="https://wa.me/249111729111" target="_blank" class="link-btn btn-whatsapp">
+        <i class="fa-brands fa-whatsapp"></i> تواصل عبر الواتساب
+      </a>
+      <a href="mailto:kodnaqi@gmail.com" class="link-btn btn-email">
+        <i class="fa-solid fa-envelope"></i> إرسال بريد إلكتروني
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    جميع الحقوق محفوظة © 2026 KodNaqi Diagnostics — السني خالد
+  </footer>
+
+</div>
+
+</body>
+</html>

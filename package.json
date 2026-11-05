@@ -27,8 +27,10 @@
     "@capacitor/core": "^8.5.3",
     "@capgo/capacitor-printer": "^8.1.8",
     "@devlas/capacitor-thermal-printer": "^0.8.1",
+    "@tailwindcss/vite": "^4.3.3",
     "@thumbmarkjs/thumbmarkjs": "^1.12.0",
-    "electron-updater": "^6.1.0"
+    "electron-updater": "^6.1.0",
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.0",

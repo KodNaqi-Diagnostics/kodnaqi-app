@@ -234,6 +234,7 @@
           <img src="./logo.png" style="width: 90px; height: 90px; object-fit: contain; border: 3px solid #c9a227; border-radius: 12px; padding: 4px; background: white; display: block; margin: 0 auto;" alt="Logo">
           <h2 style="color: #0d3b66; font-weight: 900; margin: 15px 0 5px;">مرحبًا بك</h2>
           <p style="color: #666; font-size: 0.9rem;">أدخل بيانات معملك لتفعيل التطبيق</p>
+          <p style="color: #c9a227; font-size: 0.75rem; font-weight: 700; margin-top: 5px;">Powered by KodNaqi Diagnostics</p>
         </div>
 
         <!-- كود الجهاز -->
@@ -503,19 +504,33 @@
       } catch(e) {
         return;
       }
-      if (!check.valid) {
+            if (!check.valid) {
         let msg = '❌ مفتاح الترخيص غير صحيح';
         if (check.reason === 'wrong_device') {
           msg = '⚠️ هذا المفتاح مُصدَر لجهاز آخر\n\n' +
-                'المفتاح يخص: ' + (check.expected || '—') + '\n' +
-                'جهازك الحالي: ' + (check.actual || '—') + '\n\n' +
-                'أرسل كود جهازك للدعم.';
+          'المفتاح يخص: ' + (check.expected || '—') + '\n' +
+          'جهازك الحالي: ' + (check.actual || '—') + '\n\n' +
+          'أرسل كود جهازك للدعم.';
         } else if (check.reason === 'signature') {
-          msg = '❌ المفتاح غير أصلي';
+          msg = '❌ المفتاح غير أصلي (توقيع غير صالح)';
         } else if (check.reason === 'format') {
           msg = '❌ صيغة المفتاح غير صحيحة';
+        } else if (check.reason === 'server_revoked' || check.reason === 'server_suspended') {
+          msg = '⛔ تم إلغاء هذا الترخيص من قبل الإدارة.\n\nيرجى التواصل مع الدعم الفني لتفعيل النظام.';
+        } else if (check.reason === 'server_not_found') {
+          msg = '❌ هذا الترخيص غير موجود في السجلات.\nيرجى التأكد من المفتاح أو التواصل مع الدعم.';
+        } else if (check.reason === 'network_unreachable') {
+          msg = '🌐 لا يوجد اتصال بالإنترنت.\n\nيجب تفعيل الترخيص لأول مرة وأنت متصل بالإنترنت، أو التأكد من صحة المفتاح.';
+        } else if (check.reason === 'expired') {
+          msg = '⏰ انتهت صلاحية هذا الترخيص. يرجى التجديد.';
         } else {
-          msg += '\n\nتأكد من إدخاله كاملًا';
+          msg += '\n\nتأكد من إدخاله كاملاً.';
+        }
+
+        if (typeof window.showKNAlert === 'function') {
+          window.showKNAlert('فشل التفعيل', msg, 'error');
+        } else {
+          alert(msg);
         }
         return;
       }

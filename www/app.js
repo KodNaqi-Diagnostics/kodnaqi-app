@@ -320,6 +320,7 @@ async function renderPatients() {
 }
 
 function showAddPatient() {
+  void("showAddPatient called!");
   document.getElementById('patientModalTitle').textContent = 'إضافة مريض جديد';
   document.getElementById('patientId').value = '';
   document.getElementById('pName').value = '';
@@ -348,89 +349,83 @@ async function editPatient(id) {
   new bootstrap.Modal(document.getElementById('patientModal')).show();
 }
 
+  void("savePatient started!");
 async function savePatient() {
-  const id = document.getElementById('patientId').value;
-  const name = document.getElementById('pName').value.trim();
-  const phone = document.getElementById('pPhone').value.trim();
-
-  if (!name) {
-    alert('⚠️ الاسم مطلوب');
-    return;
-  }
-
-  // ✅ منع التكرار: بالاسم الرباعي فقط (4 كلمات)
-  if (!id) {
-    const all = await dbGetAll('patients');
+  try {
+    void("1. بدء الحفظ");
     
-    // استخرج كلمات الاسم الجديد
-    const nameParts = name.split(/\s+/).filter(function(w) { return w.length > 0; });
+    const name = document.getElementById('pName').value.trim();
+    const phone = document.getElementById('pPhone').value.trim();
     
-    // فقط إذا كان الاسم 4 كلمات أو أكثر
-    if (nameParts.length >= 4) {
-      const firstFour = nameParts.slice(0, 4);
-      
-      for (var i = 0; i < all.length; i++) {
-        const p = all[i];
-        const pParts = (p.name || '').split(/\s+/).filter(function(w) { return w.length > 0; });
-        
-        // تخطى الأسماء الأقل من 4 كلمات
-        if (pParts.length < 4) continue;
-        
-        // قارن الأسماء الأربعة الأولى
-        let match = true;
-        for (var j = 0; j < 4; j++) {
-          if (pParts[j] !== firstFour[j]) {
-            match = false;
-            break;
-          }
-        }
-        
-        if (match) {
-          const msg = '⚠️ يوجد مريض مسجل بنفس الاسم الرباعي:\n\n' +
-            '👤 ' + p.name + '\n' +
-            '📋 ' + p.serial + '\n' +
-            '📱 ' + (p.phone || 'لا يوجد') + '\n\n' +
-            'هل تريد فتح ملفه؟';
-          
-          if (confirm(msg)) {
-            closeModal();
-            openPatient(p.id);
-          }
+    if (!name) {
+          alert("⚠️ الاسم مطلوب");
           return;
         }
-      }
-    }
+
+        // ═══ فحص تكرار اسم المريض (ميزة الحماية) ═══
+        try {
+          const allPatients = await dbGetAll('patients');
+          const normalize = (str) => (str || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          const normalizedInput = normalize(name);
+          
+          // البحث عن اسم مطابق تماماً (بعد توحيد المسافات)
+          const existingPatient = allPatients.find(p => normalize(p.name) === normalizedInput);
+          
+          if (existingPatient) {
+            const viewOld = await window.showKNConfirm('مريض مسجل مسبقاً', `المريض "${name}" مسجل مسبقاً برقم (${existingPatient.serial || existingPatient.id}).\n\nهل تريد عرض ملفه القديم بدلاً من إنشاء ملف جديد؟`, 'warning');
+            
+            if (viewOld) {
+              closeModal(); // إغلاق نافذة الإضافة
+              
+              // فتح ملف المريض القديم
+              if (typeof showPatientDetails === 'function') {
+                showPatientDetails(existingPatient.id);
+              } else if (typeof openPatient === 'function') {
+                openPatient(existingPatient.id);
+              } else {
+                if (typeof showPage === 'function') showPage('patients');
+                if (typeof renderPatients === 'function') renderPatients();
+              }
+            }
+            return; // إيقاف عملية الحفظ نهائياً
+          }
+        } catch(e) {
+          console.error('خطأ في فحص تكرار المريض:', e);
+        }
+        // ═══════════════════════════════════════════
+
+        void("2. الاسم: " + name);
+    
+    // توليد رقم تسلسلي للمريض
+    const serial = await getNextSerial('patient');
+    
+    // بيانات المريض
+    const data = {
+      serial: serial,
+      name: name,
+      age: parseInt(document.getElementById('pAge').value) || null,
+      gender: document.getElementById('pGender').value,
+      phone: phone || null,
+      address: document.getElementById('pAddress').value.trim() || null,
+      notes: document.getElementById('pNotes').value.trim() || null,
+      created_at: new Date().toISOString()
+    };
+    
+    void("3. جاري الحفظ في قاعدة البيانات...");
+    
+    // حفظ مباشر بدون serial
+    const id = await dbAdd('patients', data);
+    
+    void("✅ تم الحفظ بنجاح! ID: " + id);
+    
+    // إغلاق النموذج وتحديث القائمة
+    closeModal();
+    await renderPatients();
+    
+  } catch (err) {
+    alert("❌ خطأ: " + err.message);
+    console.error("Save error:", err);
   }
-
-  // البيانات الجديدة
-  const data = {
-    name: name,
-    age: parseInt(document.getElementById('pAge').value) || null,
-    gender: document.getElementById('pGender').value,
-    phone: phone || null,
-    address: document.getElementById('pAddress').value.trim() || null,
-    notes: document.getElementById('pNotes').value.trim() || null,
-    updated_at: new Date().toISOString(),
-  };
-
-  if (id) {
-    data.id = parseInt(id);
-    await dbPut('patients', data);
-    console.log('✅ تم التعديل');
-  } else {
-    data.serial = await getNextSerial('patient');
-    data.created_at = new Date().toISOString();
-    await dbAdd('patients', data);
-    console.log('✅ تمت الإضافة:', data.serial);
-  }
-
-  if (window.backupNow) {
-    setTimeout(function() { window.backupNow(); }, 500);
-  }
-
-  closeModal();
-  await renderPatients();
-  await loadDashboard();
 }
 
 async function deletePatient(id) {
@@ -617,7 +612,7 @@ function confirmReset() {
 
   const confirm2 = prompt('اكتب "حذف" للتأكيد:');
   if (confirm2 !== 'حذف') {
-    alert('تم الإلغاء');
+    void('تم الإلغاء');
     return;
   }
 
@@ -914,4 +909,82 @@ document.addEventListener('keydown', (e) => {
       savePatient();
     }
   }
+});
+
+// توليد رقم تسلسلي بسيط
+async function getNextSerial(type) {
+  const year = new Date().getFullYear();
+  const key = 'kodnaqi_serial_' + type + '_' + year;
+  let current = parseInt(localStorage.getItem(key) || '0', 10);
+  if (isNaN(current)) current = 0;
+  if (type !== 'patient' && type !== 'visit') {
+    current++;
+    localStorage.setItem(key, String(current));
+    return String(current);
+  }
+  const prefix = type === 'patient' ? 'KN-P-' + year + '-' : 'KN-' + year + '-';
+  try {
+    const all = await dbGetAll(type === 'patient' ? 'patients' : 'visits');
+    (all || []).forEach(function (r) {
+      if (r && typeof r.serial === 'string' && r.serial.indexOf(prefix) === 0) {
+        const n = parseInt(r.serial.slice(prefix.length), 10);
+        if (!isNaN(n) && n > current) current = n;
+      }
+    });
+  } catch (e) { console.warn('serial scan failed', e); }
+  current++;
+  localStorage.setItem(key, String(current));
+  return prefix + String(current).padStart(6, '0');
+}
+
+
+async function loadAndRenderTests() {
+    try {
+        const container = document.getElementById('tests-list-container') || document.getElementById('testsContainer');
+        if (!container) return;
+        
+        container.innerHTML = '<div class="loading-spinner">جاري تحميل الفحوصات محلياً...</div>';
+        
+        // جلب التحاليل من قاعدة البيانات المحلية IndexedDB
+        let tests = await dbGetAll('tests');
+        
+        if (!tests || tests.length === 0) {
+            // محاولة انتظار دقيقة لضمان اكتمال الزراعة إن لم تكتمل
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            tests = await dbGetAll('tests');
+        }
+        
+        if (!tests || tests.length === 0) {
+            container.innerHTML = '<p class="text-danger">⚠️ لا توجد فحوصات مخزنة محلياً. يرجى إعادة تشغيل التطبيق.</p>';
+            return;
+        }
+        
+        // بناء وعرض قائمة التحاليل في الواجهة
+        container.innerHTML = '';
+        tests.forEach(test => {
+            container.innerHTML += `
+                <div class="test-card-item" style="padding: 12px; margin-bottom: 8px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 12px; color: #666; background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">${test.code || 'LAB'}</span>
+                            <h4 style="margin: 5px 0 0 0; font-size: 15px; color: #333;">${test.name}</h4>
+                            <small style="color: #007bff;">${test.dept || 'General'} / ${test.sub || ''}</small>
+                        </div>
+                        <div style="text-align: left;">
+                            <span style="font-weight: bold; color: #28a745; font-size: 16px;">${test.price} </span>
+                            <small style="color: #666;">سوداني</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        console.log('✅ تم عرض ' + tests.length + ' فحص بنجاح أوفلاين!');
+    } catch (err) {
+        console.error('❌ خطأ في عرض التحاليل:', err);
+    }
+}
+
+// تشغيل الدالة عند فتح تبويب التحاليل
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(loadAndRenderTests, 500);
 });

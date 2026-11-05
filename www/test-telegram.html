@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>اختبار بوت التلجرام</title>
+<style>body{font-family:system-ui;padding:20px;background:#f8fafc;text-align:center;}
+input{width:100%;padding:12px;margin-bottom:10px;border:2px solid #cbd5e1;border-radius:8px;box-sizing:border-box;direction:ltr;}
+button{padding:15px;width:100%;font-size:1.1rem;background:#0d3b66;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-bottom:10px;}
+#log{margin-top:20px;font-family:monospace;background:#0f172a;color:#a5f3fc;padding:15px;border-radius:8px;text-align:left;white-space:pre-wrap;display:none;line-height:1.6;}</style>
+</head>
+<body>
+<h2>🤖 اختبار بوت التلجرام</h2>
+<input type="text" id="token" placeholder="Bot Token (مثال: 8550...:AAG...)">
+<input type="text" id="chatId" placeholder="Chat ID (مثال: 123456789)">
+<button onclick="test()">🚀 إرسال رسالة اختبار</button>
+<div id="log"></div>
+<script>
+async function test() {
+  const token = document.getElementById('token').value.trim();
+  const chatId = document.getElementById('chatId').value.trim();
+  const log = document.getElementById('log');
+  log.style.display = 'block';
+  
+  if (!token || !chatId) {
+    log.innerText = '❌ يرجى إدخال التوكن ورقم الشات.';
+    return;
+  }
+
+  log.innerText = '⏳ جاري إرسال الرسالة...\n';
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: '🔔 هذه رسالة اختبار من نظام KodNaqi Diagnostics!\nإذا وصلتك هذه الرسالة، فالبوت يعمل بنجاح.',
+        parse_mode: 'HTML'
+      })
+    });
+    
+    const data = await res.json();
+    log.innerText += 'الحالة: ' + res.status + '\n';
+    log.innerText += 'النتيجة: ' + JSON.stringify(data, null, 2);
+    
+    if (data.ok) {
+      log.innerText += '\n\n✅ نجح الإرسال! تحقق من تطبيق التلجرام الآن.';
+    } else {
+      log.innerText += '\n\n❌ فشل الإرسال. تأكد من صحة التوكن ورقم الشات.';
+    }
+  } catch(e) {
+    log.innerText += '❌ خطأ في الشبكة: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>

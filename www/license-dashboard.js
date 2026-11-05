@@ -11,13 +11,13 @@
   const SESSION_KEY = 'kodnaqi_admin_secret';
 
   function getSecret() {
-    try { return sessionStorage.getItem(SESSION_KEY) || ''; } catch (e) { return ''; }
+    try { return localStorage.getItem(SESSION_KEY) || ''; } catch (e) { return ''; }
   }
   function setSecret(s) {
-    try { sessionStorage.setItem(SESSION_KEY, s); } catch (e) {}
+    try { localStorage.setItem(SESSION_KEY, s); } catch (e) {}
   }
   function clearSecret() {
-    try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+    try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
   }
 
   function toast(msg, type) {
@@ -93,17 +93,56 @@
   };
 
   // ═══ البيانات ═══
-  let _licenses = [];
+  window._licenses = [];
 
   window.licRefresh = async function() {
     const data = await licFetch('');
-    _licenses = [];
+    window._licenses = [];
     if (data && typeof data === 'object') {
       Object.keys(data).forEach(function(k) {
-        _licenses.push(Object.assign({ _id: k }, data[k]));
+        window._licenses.push(Object.assign({ _id: k }, data[k]));
       });
     }
+    
+    // ═══ مزامنة سجل العملاء مع Firebase ═══
+    try {
+      const local = JSON.parse(localStorage.getItem('kodnaqi_customers') || '[]');
+      let updated = false;
+      window._licenses.forEach(lic => {
+        const existing = local.find(c => c.id === lic._id);
+        if (!existing) {
+          local.push({
+            id: lic._id,
+            labName: lic.customer,
+            phone: lic.phone || '',
+            manager: lic.manager || '',
+            address: lic.address || '',
+            email: lic.email || '',
+            
+            plan: lic.tier,
+            purchaseDate: lic.issued ? new Date(lic.issued).toISOString() : new Date().toISOString(),
+            devices: (lic.devices || []).map(d => ({ code: d, key: '' }))
+          });
+          updated = true;
+        } else {
+          if (lic.customer && existing.labName !== lic.customer) { existing.labName = lic.customer; updated = true; }
+          if (lic.phone && existing.phone !== lic.phone) { existing.phone = lic.phone; updated = true; }
+          if (lic.manager && existing.manager !== lic.manager) { existing.manager = lic.manager; updated = true; }
+          if (lic.address && existing.address !== lic.address) { existing.address = lic.address; updated = true; }
+          if (lic.email && existing.email !== lic.email) { existing.email = lic.email; updated = true; }
+          if (lic.tier && existing.plan !== lic.tier) { existing.plan = lic.tier; updated = true; }
+        }
+      });
+      if (updated) {
+        localStorage.setItem('kodnaqi_customers', JSON.stringify(local));
+        if (typeof renderCustomers === 'function') renderCustomers();
+      }
+    } catch(e) { console.error('Sync error:', e); }
+    
     licRender();
+    if (typeof window.updateDashboard === 'function') {
+      window.updateDashboard();
+    }
   };
 
   function licStatusOf(lic) {
@@ -128,20 +167,20 @@
     const search = (document.getElementById('licSearch').value || '').trim().toLowerCase();
     let total = 0, active = 0, revoked = 0, expired = 0;
 
-    const html = _licenses.filter(function(lic) {
+    const html = window._licenses.filter(function(lic) {
       if (!search) return true;
       const id = (lic._id || '').toLowerCase();
       const cust = (lic.customer || '').toLowerCase();
       return id.indexOf(search) !== -1 || cust.indexOf(search) !== -1;
     }).map(function(lic) {
       const st = licStatusOf(lic);
+      const devices = Array.isArray(lic.devices) ? lic.devices.join(', ') : '*';
+      const tier = lic.tier || '?';
+      
       total++;
       if (st.key === 'active') active++;
       else if (st.key === 'revoked' || st.key === 'suspended') revoked++;
       else if (st.key === 'expired') expired++;
-
-      const devices = Array.isArray(lic.devices) ? lic.devices.join(', ') : '*';
-      const tier = lic.tier || '?';
 
       return ''
         + '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;">'
@@ -159,8 +198,14 @@
         +   '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
         +     (st.key === 'active'
               ? '<button onclick="licRevoke(\'' + lic._id + '\')" style="padding:6px 12px;background:#dc3545;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">⛔ إلغاء</button>'
-              : '<button onclick="licReactivate(\'' + lic._id + '\')" style="padding:6px 12px;background:#198754;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">✅ إعادة تفعيل</button>')
-        +     (st.key === 'active' ? window.licAddDeviceButtonHTML(lic._id) : '')
+              : '<button onclick="licReactivate(\'' + lic._id + '\')" style="padding:6px 12px;background:#198754;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">✅ إعادة تفعيل</button>'
+                + '<button onclick="licDelete(\'' + lic._id + '\')" style="padding:6px 12px;background:#b91c1c;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🗑️ حذف نهائي</button>')
+        +     (st.key === 'active'
+              ? '<button onclick="licOpenAddDevice(\'' + lic._id + '\')" style="padding:6px 12px;background:#0d3b66;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">➕ إضافة جهاز</button>'
+              : '')
+        +     '<button onclick="printLicenseInvoice(\'' + lic._id + '\')" style="padding:6px 12px;background:#0891b2;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🧾 فاتورة</button>'
+        +     '<button onclick="licEditInfo(\'' + lic._id + '\')" style="padding:6px 12px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">✏️ تعديل</button>'
+        +     '<button onclick="licPrintContract(\'' + lic._id + '\')" style="padding:6px 12px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🖨️ طباعة العقد</button>'
         +     '<button onclick="licCopyId(\'' + lic._id + '\')" style="padding:6px 12px;background:#e2e8f0;color:#334155;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">📋 نسخ المعرّف</button>'
         +   '</div>'
         + '</div>';
@@ -171,6 +216,7 @@
     document.getElementById('licActive').textContent = active;
     document.getElementById('licRevoked').textContent = revoked;
     document.getElementById('licExpired').textContent = expired;
+    if (typeof window.updateDashboard === 'function') window.updateDashboard();
   };
 
   window.licRevoke = async function(id) {
@@ -180,6 +226,7 @@
       const rev = ((cur && cur.rev) || 1) + 1;
       await licPatch(encodeURIComponent(id), { status: 'revoked', rev: rev, updatedAt: Date.now() });
       toast('✅ تم الإلغاء');
+      window.sendTelegramAlert(`⚠️ <b>تم إلغاء ترخيص</b>\n🆔 ${id}`);
       licRefresh();
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   };
@@ -190,6 +237,7 @@
       const rev = ((cur && cur.rev) || 1) + 1;
       await licPatch(encodeURIComponent(id), { status: 'active', rev: rev, updatedAt: Date.now() });
       toast('✅ تم إعادة التفعيل');
+      window.sendTelegramAlert(`✅ <b>تم إعادة تفعيل ترخيص</b>\n🆔 ${id}`);
       licRefresh();
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   };
@@ -220,6 +268,21 @@
     const el = document.getElementById('licNewError');
     if (el) { el.textContent = msg; el.style.color = color || '#dc3545'; }
   }
+
+
+  window.licDelete = async function(id) {
+    if (!confirm('⚠️ هل أنت متأكد من الحذف النهائي للترخيص ' + id + '؟\nلا يمكن التراجع عن هذه العملية!')) return;
+    try {
+      const secret = getSecret();
+      const cfg = window.KODNAQI_FIREBASE;
+      const url = cfg.url + '/' + cfg.licensesPath + '/' + encodeURIComponent(id) + '.json?auth=' + encodeURIComponent(secret);
+      const r = await fetch(url, { method: 'DELETE' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      toast('✅ تم الحذف نهائياً');
+      window.sendTelegramAlert(`🗑️ <b>تم حذف ترخيص نهائياً</b>\n🆔 ${id}`);
+      licRefresh();
+    } catch (e) { toast('❌ ' + e.message, 'error'); }
+  };
 
   // ═══ إدارة حقول الأجهزة الديناميكية ═══
   let _licDeviceCount = 0;
@@ -301,8 +364,11 @@
 
   window.licCreate = async function() {
     const name = (document.getElementById('licNewName').value || '').trim();
-    const phone = (document.getElementById('licNewPhone')?.value || '').trim();
-    const address = (document.getElementById('licNewAddress')?.value || '').trim();
+    const regNumber = (document.getElementById('licNewRegNumber').value || '').trim();
+    const manager = (document.getElementById('licNewManager').value || '').trim();
+    const phone = (document.getElementById('licNewPhone').value || '').trim();
+    const address = (document.getElementById('licNewAddress').value || '').trim();
+    const email = (document.getElementById('licNewEmail').value || '').trim();
     const tier = (document.getElementById('licNewTier').value || 'S').toUpperCase();
     const days = parseInt(document.getElementById('licNewDays').value, 10) || 365;
 
@@ -348,13 +414,16 @@
           status: 'active',
           tier: payload.tier,
           customer: payload.customer,
-          phone: phone || '',
-          address: address || '',
           devices: payload.devices,
           expires: payload.expires,
           issued: payload.issued,
           rev: 1,
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          manager: manager,
+          phone: phone,
+          address: address,
+          email: email,
+          regNumber: regNumber
         })
       });
       if (!r.ok) throw new Error('Firebase HTTP ' + r.status);
@@ -372,6 +441,7 @@
       document.getElementById('licNewResultDays').textContent = days;
 
       toast('✅ تم الإصدار والنشر');
+      window.sendTelegramAlert(`🔔 <b>ترخيص جديد</b>\n🏥 ${name}\n💼 ${tier}\n📱 ${devices.join(', ')}`);
       licRefresh();
     } catch (e) {
       licSetMsg('❌ ' + e.message, '#dc3545');
@@ -834,25 +904,6 @@
   };
 
   // ═══ طباعة العقد ═══
-  window.licPrintContract = async function(licenseId) {
-    try {
-      const cur = await licFetch(encodeURIComponent(licenseId));
-      const contractData = {
-        customer: cur.customer || '',
-        phone: cur.phone || '',
-        address: cur.address || '',
-        tier: cur.tier || 'B',
-        devices: cur.devices || [],
-        expires: cur.expires || 0,
-        issued: cur.issued || Date.now(),
-        licenseId: licenseId
-      };
-      localStorage.setItem('kodnaqi_contract_data', JSON.stringify(contractData));
-      window.open('contract.html', '_blank');
-    } catch (e) {
-      alert('❌ فشل تحضير العقد: ' + e.message);
-    }
-  };
 
   // ═══ زر "إضافة جهاز" يُدرج في بطاقة كل ترخيص ═══
   window.licAddDeviceButtonHTML = function(licenseId) {
@@ -862,10 +913,567 @@
       + '<button onclick="licOpenReplace(\'' + licenseId + '\')" style="padding:6px 12px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">⚠️ نقل كامل</button>'
       + '<button onclick="licTransferWithNewKey(\'' + licenseId + '\')" style="padding:6px 12px;background:#059669;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🔑 نقل + مفتاح جديد</button>'
       + '<button onclick="licPrintContract(\'' + licenseId + '\')" style="padding:6px 12px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🖨️ طباعة العقد</button>'
-      + '<button onclick="licPrintInvoice(\'' + licenseId + '\')" style="padding:6px 12px;background:#0891b2;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🧾 فاتورة</button>'
+      + '<button onclick="printLicenseInvoice(\'' + licenseId + '\')" style="padding:6px 12px;background:#0891b2;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">🧾 فاتورة</button>'
+        + '<button onclick="licEditInfo(\'' + lic._id + '\')" style="padding:6px 12px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">✏️ تعديل</button>'
       + '<button onclick="licSendWhatsApp(\'' + licenseId + '\')" style="padding:6px 12px;background:#25d366;color:#fff;border:none;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">💬 واتساب</button>'
       + '</div>';
   };
 
+
+  // ═══ لوحة التحكم الشاملة ═══
+  let _dashFilter = 'ALL';
+  const TIER_PRICES = { 'B': 150, 'S': 300, 'A': 500, 'E': 1000, 'TRIAL': 0 };
+
+  window.initAndLoadDashboard = function() {
+    if (getSecret() && (!window._licenses || window._licenses.length === 0)) {
+      if (typeof window.licRefresh === 'function') {
+        window.licRefresh().then(function() {
+           window.updateDashboard();
+        }).catch(function(){});
+      }
+    } else {
+      window.updateDashboard();
+    }
+  };
+
+  window.setDashFilter = function(pkg) {
+    _dashFilter = pkg;
+    document.querySelectorAll('#dashFilters .btn').forEach(b => b.classList.remove('btn-primary'));
+    document.querySelectorAll('#dashFilters .btn').forEach(b => b.classList.add('btn-outline-primary'));
+    const btn = document.querySelector(`#dashFilters button[onclick*="'${pkg}'"]`);
+    if(btn) { btn.classList.remove('btn-outline-primary'); btn.classList.add('btn-primary'); }
+    window.updateDashboard();
+  };
+
+  
+  window.updateDashboard = function() {
+    const content = document.getElementById('dashContent');
+    if (!content) return;
+
+    if (!document.getElementById('dashFilters')) {
+      content.innerHTML = `
+        <div id="dashFilters" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:15px;">
+          <button class="btn btn-sm btn-dark" onclick="setDashFilter('ALL')" style="border-radius:20px;">الكل</button>
+          <button class="btn btn-sm btn-outline-warning" onclick="setDashFilter('B')" style="border-radius:20px; border-width:2px;">🥉 أساسية</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="setDashFilter('S')" style="border-radius:20px; border-width:2px;">🥈 قياسية</button>
+          <button class="btn btn-sm btn-outline-success" onclick="setDashFilter('A')" style="border-radius:20px; border-width:2px;">🥇 متقدمة</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="setDashFilter('E')" style="border-radius:20px; border-width:2px;">🏢 مؤسسية</button>
+          <button class="btn btn-sm btn-outline-info" onclick="setDashFilter('TRIAL')" style="border-radius:20px; border-width:2px;">🎁 تجريبية</button>
+        </div>
+        <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+          <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #06b6d4); color:white; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3); border-radius: 12px; border: none;">
+            <div class="stat-value" id="dashTotalActive" style="font-size: 2rem;">0</div>
+            <div class="stat-label" style="opacity: 0.9;">عملاء نشطون</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #34d399); color:white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); border-radius: 12px; border: none;">
+            <div class="stat-value" id="dashTotalDevices" style="font-size: 2rem;">0</div>
+            <div class="stat-label" style="opacity: 0.9;">أجهزة نشطة</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color:white; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); border-radius: 12px; border: none;">
+            <div class="stat-value" id="dashExpiring" style="font-size: 2rem;">0</div>
+            <div class="stat-label" style="opacity: 0.9;">ينتهي قريباً</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa); color:white; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); border-radius: 12px; border: none;">
+            <div class="stat-value" id="dashRevenue" style="font-size: 2rem;">0</div>
+            <div class="stat-label" style="opacity: 0.9;">الأرباح ($)</div>
+          </div>
+        </div>
+        <div id="dashExpiringBox" style="display:none; background:#fff3cd; border-radius:8px; padding:12px; margin-bottom:15px;">
+          <h6 style="color:#856404; font-weight:800; margin:0 0 10px 0;">⚠️ تنبيهات التجديد</h6>
+          <div id="dashExpiringList" style="display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+        <div id="dashLicensesList" style="display:flex; flex-direction:column; gap:10px;"></div>
+      `;
+    }
+
+    let activeCount = 0, totalDevices = 0, expiringCount = 0, revenue = 0;
+    let expiringList = [], filteredList = [];
+    const now = Date.now();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    const licenses = window._licenses || [];
+
+    licenses.forEach(lic => {
+      const st = licStatusOf(lic);
+      if (st.key === 'active') {
+        activeCount++;
+        totalDevices += (lic.devices || []).length;
+        revenue += (TIER_PRICES[lic.tier] || 0);
+        if (lic.expires) {
+          const timeLeft = lic.expires - now;
+          if (timeLeft > 0 && timeLeft < thirtyDays) { expiringCount++; expiringList.push(lic); }
+        }
+      }
+      if (_dashFilter === 'ALL' || lic.tier === _dashFilter) filteredList.push(lic);
+    });
+
+    document.getElementById('dashTotalActive').textContent = activeCount;
+    document.getElementById('dashTotalDevices').textContent = totalDevices;
+    document.getElementById('dashExpiring').textContent = expiringCount;
+    document.getElementById('dashRevenue').textContent = revenue.toLocaleString('en');
+
+    const expBox = document.getElementById('dashExpiringBox');
+    if (expiringList.length > 0) {
+      expBox.style.display = 'block';
+      document.getElementById('dashExpiringList').innerHTML = expiringList.map(lic => {
+        const days = Math.ceil((lic.expires - now) / 86400000);
+        return `<div style="display:flex; justify-content:space-between; background:#fff; padding:8px; border-radius:6px;">
+          <div><strong>${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}</strong> - متبقي ${days} يوم</div>
+          <button onclick="licWhatsAppReminder('${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}', ${lic.expires}, '${lic.phone || ''}')" class="btn btn-sm btn-success" style="font-size:0.75rem;">💬 تذكير</button>
+        </div>`;
+      }).join('');
+    } else expBox.style.display = 'none';
+
+    // ═══ اكتشاف الأجهزة المكررة ═══
+    const activeDevices = {};
+    licenses.forEach(l => {
+      if (licStatusOf(l).key === 'active') {
+        (l.devices || []).forEach(d => {
+          if (!activeDevices[d]) activeDevices[d] = [];
+          activeDevices[d].push(l._id);
+        });
+      }
+    });
+
+    const listEl = document.getElementById('dashLicensesList');
+    if (filteredList.length === 0) {
+      listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">لا توجد تراخيص</div>';
+    } else {
+      filteredList.sort((a, b) => (b.expires || 0) - (a.expires || 0));
+      listEl.innerHTML = filteredList.map(lic => {
+        const st = licStatusOf(lic);
+        const days = lic.expires ? Math.ceil((lic.expires - now) / 86400000) : '∞';
+        
+        let isDuplicate = false;
+        (lic.devices || []).forEach(d => {
+          if (activeDevices[d] && activeDevices[d].length > 1) isDuplicate = true;
+        });
+        
+        const borderStyle = isDuplicate ? 'border: 2px solid #dc3545; background:#fef2f2;' : 'border: 1px solid #e2e8f0;';
+        const duplicateWarning = isDuplicate ? '<div style="color:#dc3545; font-size:0.75rem; font-weight:bold; margin-top:5px;">⚠️ تحذير: هذا الجهاز مرتبط بأكثر من ترخيص نشط!</div>' : '';
+
+        return `<div style="${borderStyle}border-radius:10px;padding:12px; margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <strong style="color:#0d3b66;">${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}</strong>
+            <span style="background:${st.color}22;color:${st.color};padding:3px 8px;border-radius:6px;font-size:0.75rem;">${st.label}</span>
+          </div>
+          <div style="display:flex;gap:10px;font-size:0.8rem;color:#334155;">
+            <span>🎯 ${lic.tier}</span> <span>📱 ${(lic.devices||[]).join(', ')}</span> <span>📅 متبقي ${days} يوم</span>
+          </div>
+          ${duplicateWarning}
+        </div>`;
+      }).join('');
+    }
+  };
+
+
+  
+  window.licWhatsAppReminder = function(customer, expiry, phone) {
+    const days = Math.ceil((expiry - Date.now()) / 86400000);
+    const msg = `مرحباً ${customer}،
+
+نود تذكيركم بأن اشتراككم في نظام KodNaqi Diagnostics ينتهي خلال ${days} يوم.
+
+للتجديد، يرجى التواصل معنا.`;
+    
+    let cleanPhone = (phone || '').toString().replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0')) cleanPhone = '249' + cleanPhone.substring(1);
+    if (cleanPhone.length === 9) cleanPhone = '249' + cleanPhone;
+    
+    const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
+
+
+  
+  window.licSendWhatsApp = function(licenseId) {
+    const lic = (window._licenses || []).find(l => l._id === licenseId);
+    if (!lic) return alert('لم يتم العثور على الترخيص');
+    
+    const msg = `مرحباً ${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}،\n\nنظام KodNaqi Diagnostics يشكرك على ثقتك.\nلأي استفسار أو دعم، تواصل معنا.`;
+    
+    let cleanPhone = (lic.phone || '').toString().replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0')) cleanPhone = '249' + cleanPhone.substring(1);
+    if (cleanPhone.length === 9) cleanPhone = '249' + cleanPhone;
+    
+    const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  };
+
+  
+  window.printLicenseInvoice = function(licenseId) {
+    try {
+      const lic = (window._licenses || []).find(l => l._id === licenseId);
+      if (!lic) {
+        alert('لم يتم العثور على بيانات الترخيص في الذاكرة.');
+        return;
+      }
+
+      const date = new Date().toLocaleDateString('ar-EG');
+      const expiry = lic.expires ? new Date(lic.expires).toLocaleDateString('ar-EG') : '—';
+      const prices = { 'B': 150, 'S': 300, 'A': 500, 'E': 1000, 'TRIAL': 0 };
+      const priceUSD = prices[lic.tier] || 0;
+
+      const htmlContent = `
+        <div style="background:white; padding:20px; border-radius:10px; max-width:600px; width:100%; margin:auto; position:relative; direction:rtl; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+          <h2 style="text-align:center; color:#0d3b66; margin-top:0;">فاتورة ترخيص</h2>
+          <hr style="border-color:#eee;">
+          <p><b>رقم الفاتورة:</b> INV-${lic._id}</p>
+          <p><b>التاريخ:</b> ${date}</p>
+          <p><b>العميل:</b> ${lic.customer} ${lic.regNumber ? '(سجل رقم: ' + lic.regNumber + ')' : ''}</p>
+          ${lic.regNumber ? `<p><b>رقم السجل:</b> ${lic.regNumber}</p>` : ''}
+          <p><b>الباقة:</b> ${lic.tier}</p>
+          <p><b>تاريخ الانتهاء:</b> ${expiry}</p>
+          <p><b>الأجهزة:</b> ${(lic.devices||[]).join(', ')}</p>
+          <hr style="border-color:#eee;">
+          <h3 style="color:#198754;">الإجمالي: $${priceUSD}</h3>
+          <div style="text-align:center; margin-top:20px;">
+            <button onclick="document.getElementById('kn-invoice-modal').remove()" style="padding:10px 20px; background:#dc3545; color:white; border:none; border-radius:5px; margin-left:10px; font-weight:bold;">إغلاق</button>
+            <button onclick="window.print()" style="padding:10px 20px; background:#0d3b66; color:white; border:none; border-radius:5px; font-weight:bold;">طباعة</button>
+          </div>
+        </div>
+      `;
+
+      const existingModal = document.getElementById('kn-invoice-modal');
+      if (existingModal) existingModal.remove();
+
+      const modal = document.createElement('div');
+      modal.id = 'kn-invoice-modal';
+      modal.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:2147483647; display:flex; align-items:center; justify-content:center; padding:20px;';
+      modal.innerHTML = htmlContent;
+      document.body.appendChild(modal);
+
+    } catch (error) {
+      alert('خطأ في إنشاء الفاتورة: ' + error.message);
+    }
+  };
+
+
+
+  // ═══ نافذة تعديل بيانات العميل ═══
+  window.licEditInfo = function(id) {
+    const lic = (window._licenses || []).find(l => l._id === id);
+    if (!lic) return alert('لم يتم العثور على الترخيص');
+
+    const modal = document.createElement('div');
+    modal.id = 'kn-edit-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999999;display:flex;align-items:center;justify-content:center;padding:14px;overflow-y:auto;';
+    
+    modal.innerHTML = `
+      <div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:20px;max-height:90vh;overflow-y:auto;direction:rtl; text-align:right;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h2 style="margin:0;color:#0d3b66;font-size:1.15rem;">✏️ تعديل بيانات العميل</h2>
+          <button onclick="document.getElementById('kn-edit-modal').remove()" style="background:#e2e8f0;border:none;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;">✕</button>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">🏥 اسم المعمل</label>
+          <input type="text" id="editCustomer" class="form-control" value="${lic.customer || ''}">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📜 رقم السجل</label>
+          <input type="text" id="editRegNumber" class="form-control" value="${lic.regNumber || ''}">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">👨‍⚕️ اسم المدير</label>
+          <input type="text" id="editManager" class="form-control" value="${lic.manager || ''}">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📱 رقم الهاتف</label>
+          <input type="tel" id="editPhone" class="form-control" value="${lic.phone || ''}" dir="ltr">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📍 العنوان</label>
+          <input type="text" id="editAddress" class="form-control" value="${lic.address || ''}">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📧 البريد الإلكتروني</label>
+          <input type="email" id="editEmail" class="form-control" value="${lic.email || ''}" dir="ltr">
+        </div>
+        
+        <div id="editError" style="min-height:22px;margin-bottom:10px;text-align:center;font-size:0.9rem;"></div>
+        
+        <button onclick="saveEditedInfo('${id}')" class="btn btn-primary" style="width:100%;padding:12px;font-weight:800;background:#198754;">💾 حفظ التعديلات</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  };
+
+  // ═══ حفظ التعديلات في Firebase ═══
+  window.saveEditedInfo = async function(id) {
+    const errEl = document.getElementById('editError');
+    const customer = document.getElementById('editCustomer').value.trim();
+    const regNumber = document.getElementById('editRegNumber').value.trim();
+    const manager = document.getElementById('editManager').value.trim();
+    const phone = document.getElementById('editPhone').value.trim();
+    const address = document.getElementById('editAddress').value.trim();
+    const email = document.getElementById('editEmail').value.trim();
+
+    if (!customer) {
+      errEl.textContent = '❌ اسم المعمل مطلوب';
+      errEl.style.color = '#dc3545';
+      return;
+    }
+
+    errEl.textContent = '⏳ جاري الحفظ...';
+    errEl.style.color = '#0d3b66';
+
+    try {
+      await licPatch(encodeURIComponent(id), {
+        customer, regNumber, manager, phone, address, email
+      });
+      errEl.textContent = '✅ تم الحفظ بنجاح';
+      errEl.style.color = '#198754';
+      if(window.toast) toast('✅ تم تعديل البيانات بنجاح');
+      window.sendTelegramAlert(`✏️ <b>تم تعديل بيانات عميل</b>\n🏥 ${customer}`);
+      
+      // تحديث البيانات في الذاكرة المحلية
+      const lic = window._licenses.find(l => l._id === id);
+      if (lic) {
+        Object.assign(lic, { customer, regNumber, manager, phone, address, email });
+      }
+
+      setTimeout(() => {
+        document.getElementById('kn-edit-modal').remove();
+        licRefresh();
+      }, 800);
+
+      if (typeof window.sendTelegramAlert === 'function') {
+      }
+    } catch(e) {
+      errEl.textContent = '❌ ' + e.message;
+      errEl.style.color = '#dc3545';
+    }
+  };
+
+
+  window.sendTelegramAlert = async function(msg) {
+    const token = localStorage.getItem('kn_tg_token');
+    const chatId = localStorage.getItem('kn_tg_chat_id');
+    
+    if (!token || !chatId) {
+      console.warn('⚠️ Telegram not configured. Token or Chat ID missing.');
+      return false;
+    }
+    
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'HTML' })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        console.error('❌ Telegram API Error:', data.description);
+        if (typeof toast === 'function') toast('❌ التلجرام: ' + data.description, 'error');
+        return false;
+      }
+      console.log('✅ Telegram message sent');
+      return true;
+    } catch(e) {
+      console.error('❌ Telegram Network Error:', e.message);
+      if (typeof toast === 'function') toast('❌ شبكة التلجرام: ' + e.message, 'error');
+      return false;
+    }
+  };
+
+
+  // ═══ نظام التقييمات (Reviews) ═══
+  window.loadReviews = async function() {
+    const listEl = document.getElementById('reviewsList');
+    if (!listEl) return;
+    
+    listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">⏳ جاري تحميل التقييمات...</div>';
+    
+    try {
+      const secret = getSecret();
+      if (!secret) {
+        listEl.innerHTML = '<div style="text-align:center;color:#dc3545;padding:20px;">❌ يرجى تسجيل الدخول بالـ Secret أولاً.</div>';
+        return;
+      }
+      
+      const cfg = window.KODNAQI_FIREBASE;
+      const url = cfg.url + '/reviews.json?auth=' + encodeURIComponent(secret);
+      
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      
+      if (!data) {
+        listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">لا توجد تقييمات حتى الآن.</div>';
+        return;
+      }
+      
+      const reviews = Object.values(data).sort((a, b) => b.date - a.date);
+      
+      listEl.innerHTML = reviews.map(r => {
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+          starsHtml += `<span style="color: ${i <= r.stars ? '#f59e0b' : '#e2e8f0'}; font-size:1.5rem;">★</span>`;
+        }
+        const date = new Date(r.date).toLocaleDateString('ar-EG');
+        
+        return `
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:15px; margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="font-weight:800; color:#0d3b66;">${r.customer || 'عميل'}</div>
+              <div style="font-size:0.8rem; color:#64748b;">${date}</div>
+            </div>
+            <div style="margin-bottom:8px;">${starsHtml}</div>
+            ${r.text ? `<div style="color:#334155; font-size:0.9rem; line-height:1.6;">"${r.text}"</div>` : ''}
+          </div>
+        `;
+      }).join('');
+      
+    } catch (e) {
+      listEl.innerHTML = `<div style="text-align:center;color:#dc3545;padding:20px;">❌ خطأ: ${e.message}</div>`;
+    }
+  };
+
   console.log('[License Dashboard] loaded');
 })();
+
+// ═══════════════════════════════════════════════════
+// 📊 Dashboard — لوحة التحكم الشاملة
+// ═══════════════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const secret = getSecret();
+    if (!secret) return;
+    
+    const cfg = window.KODNAQI_FIREBASE;
+    const url = cfg.url + '/' + cfg.licensesPath + '.json?auth=' + encodeURIComponent(secret);
+    const r = await fetch(url, { cache: 'no-store' });
+    const data = await r.json();
+    
+    if (!data) {
+      updateDashboardUI({ totalRevenue: 0, activeCustomers: 0, expiringSoon: 0, totalDevices: 0, recent: [], alerts: [] });
+      return;
+    }
+    
+    const licenses = Object.values(data);
+    const now = Date.now();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    
+    let totalRevenue = 0;
+    let activeCustomers = 0;
+    let expiringSoon = 0;
+    let totalDevices = 0;
+    
+    const tierPrices = { B: 1500000, S: 2500000, A: 4000000, E: 4000000, TRIAL: 0 };
+    
+    licenses.forEach(lic => {
+      if (lic.status === 'active') {
+        activeCustomers++;
+        totalRevenue += tierPrices[lic.tier] || 0;
+        if (lic.expires && (lic.expires - now) < thirtyDays && (lic.expires - now) > 0) {
+          expiringSoon++;
+        }
+        if (lic.devices) {
+          totalDevices += lic.devices.length;
+        }
+      }
+    });
+    
+    const recent = licenses
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+      .slice(0, 5);
+    
+    const alerts = licenses
+      .filter(lic => lic.status === 'active' && lic.expires && (lic.expires - now) < thirtyDays && (lic.expires - now) > 0)
+      .sort((a, b) => a.expires - b.expires);
+    
+    updateDashboardUI({ totalRevenue, activeCustomers, expiringSoon, totalDevices, recent, alerts });
+    
+  } catch (e) {
+    console.error('Dashboard error:', e);
+  }
+}
+
+function updateDashboardUI(data) {
+  // تحديث الإحصائيات
+  const el = (id) => document.getElementById(id);
+  if (el('dashTotalRevenue')) el('dashTotalRevenue').textContent = data.totalRevenue.toLocaleString();
+  if (el('dashActiveCustomers')) el('dashActiveCustomers').textContent = data.activeCustomers;
+  if (el('dashExpiringSoon')) el('dashExpiringSoon').textContent = data.expiringSoon;
+  if (el('dashTotalDevices')) el('dashTotalDevices').textContent = data.totalDevices;
+  
+  // آخر التراخيص
+  if (el('dashRecentLicenses')) {
+    if (data.recent.length === 0) {
+      el('dashRecentLicenses').innerHTML = '<p style="color:#64748b;text-align:center;">لا توجد بيانات</p>';
+    } else {
+      el('dashRecentLicenses').innerHTML = data.recent.map(lic => `
+        <div style="padding:12px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-weight:700;color:#0d3b66;">${lic.customer || 'بدون اسم'}</div>
+            <div style="font-size:0.8rem;color:#64748b;">${lic.tier || '?'}</div>
+          </div>
+          <div style="text-align:left;">
+            <div style="font-size:0.8rem;color:${lic.expires > Date.now() ? '#059669' : '#dc2626'};">
+              ${lic.expires ? Math.ceil((lic.expires - Date.now()) / 86400000) + ' يوم' : '—'}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+  
+  // تنبيهات التجديد
+  if (el('dashRenewalAlerts')) {
+    if (data.alerts.length === 0) {
+      el('dashRenewalAlerts').innerHTML = '<p style="color:#059669;text-align:center;">✅ لا توجد تراخيص تنتهي قريباً</p>';
+    } else {
+      el('dashRenewalAlerts').innerHTML = data.alerts.map(lic => `
+        <div style="padding:12px;border-bottom:1px solid #e2e8f0;background:#fef3c7;border-radius:8px;margin-bottom:8px;">
+          <div style="font-weight:700;color:#92400e;">${lic.customer || 'بدون اسم'}</div>
+          <div style="font-size:0.8rem;color:#b45309;">
+            ينتهي خلال ${Math.ceil((lic.expires - Date.now()) / 86400000)} يوم
+          </div>
+          <button onclick="licSendWhatsApp('${lic.id}')" style="margin-top:8px;padding:6px 12px;background:#25d366;color:white;border:none;border-radius:6px;font-size:0.8rem;cursor:pointer;">
+            💬 تذكير واتساب
+          </button>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+// تصدير للاستخدام
+window.loadDashboard = loadDashboard;
+console.log('[Dashboard] Module loaded');
+
+
+  window.licPrintContract = function(licenseId) {
+    try {
+      const cur = (window._licenses || []).find(l => l._id === licenseId);
+      if (!cur) {
+        alert('لم يتم العثور على بيانات الترخيص.');
+        return;
+      }
+
+      const contractData = {
+        customer: cur.customer || '',
+        phone: cur.phone || '',
+        address: cur.address || '',
+        tier: cur.tier || 'B',
+        devices: cur.devices || [],
+        expires: cur.expires || 0,
+        issued: cur.issued || Date.now(),
+        licenseId: licenseId,
+        regNumber: cur.regNumber || '',
+        manager: cur.manager || '',
+        email: cur.email || ''
+      };
+
+      localStorage.setItem('kodnaqi_contract_data', JSON.stringify(contractData));
+      window.open('contract.html', '_blank');
+    } catch (e) {
+      alert('❌ فشل تحضير العقد: ' + e.message);
+    }
+  };

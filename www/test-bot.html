@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>اختبار البوت</title>
+<style>
+body{font-family:system-ui;padding:20px;background:#f8fafc;text-align:center;}
+.box{max-width:500px;margin:20px auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+input{width:100%;padding:10px;margin:5px 0;border:2px solid #cbd5e1;border-radius:6px;box-sizing:border-box;direction:ltr;font-family:monospace;font-size:0.8rem;}
+button{padding:12px 20px;margin:5px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;color:#fff;}
+.btn-blue{background:#0d3b66;}
+.btn-green{background:#198754;}
+.btn-red{background:#dc3545;}
+#log{margin-top:20px;font-family:monospace;background:#0f172a;color:#a5f3fc;padding:15px;border-radius:8px;text-align:left;white-space:pre-wrap;display:none;font-size:0.8rem;line-height:1.6;max-height:400px;overflow-y:auto;}
+.status{padding:8px;border-radius:6px;margin:10px 0;font-weight:bold;}
+.ok{background:#d1fae5;color:#065f46;}
+.warn{background:#fef3c7;color:#92400e;}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>🤖 اختبار بوت تلجرام</h2>
+<div id="status"></div>
+<label>Bot Token:</label>
+<input type="text" id="token" placeholder="8550...:AAG...">
+<label>Chat ID:</label>
+<input type="text" id="chatId" placeholder="123456789">
+<button class="btn-blue" onclick="save()">💾 حفظ الإعدادات</button>
+<button class="btn-green" onclick="test()">📤 إرسال رسالة تجريبية</button>
+<div id="log"></div>
+</div>
+<script>
+function updateStatus() {
+  const t = localStorage.getItem('kn_tg_token');
+  const c = localStorage.getItem('kn_tg_chat_id');
+  const s = document.getElementById('status');
+  if (t && c) {
+    s.className = 'status ok';
+    s.innerText = '✅ الإعدادات محفوظة';
+  } else {
+    s.className = 'status warn';
+    s.innerText = '⚠️ لم يتم إعداد البوت بعد';
+  }
+}
+
+function save() {
+  const t = document.getElementById('token').value.trim();
+  const c = document.getElementById('chatId').value.trim();
+  if (!t || !c) return alert('املأ الحقلين');
+  localStorage.setItem('kn_tg_token', t);
+  localStorage.setItem('kn_tg_chat_id', c);
+  updateStatus();
+  alert('✅ تم الحفظ');
+}
+
+async function test() {
+  const log = document.getElementById('log');
+  log.style.display = 'block';
+  log.innerText = '⏳ جاري الإرسال...\n';
+  
+  const t = localStorage.getItem('kn_tg_token');
+  const c = localStorage.getItem('kn_tg_chat_id');
+  
+  if (!t || !c) {
+    log.innerText += '❌ الإعدادات غير محفوظة. اضغط "حفظ الإعدادات" أولاً.';
+    return;
+  }
+  
+  log.innerText += `📌 Token: ${t.substring(0, 20)}...\n`;
+  log.innerText += `📌 Chat ID: ${c}\n\n`;
+  
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${t}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        chat_id: c, 
+        text: '🔔 <b>رسالة تجريبية</b>\n\nإذا وصلتك هذه الرسالة، فالبوت يعمل بنجاح!\n\nKodNaqi Diagnostics',
+        parse_mode: 'HTML'
+      })
+    });
+    const data = await res.json();
+    log.innerText += `📊 Status Code: ${res.status}\n`;
+    log.innerText += `📋 Response: ${JSON.stringify(data, null, 2)}\n\n`;
+    
+    if (data.ok) {
+      log.innerText += '✅ نجح الإرسال! تحقق من تلجرام الآن.';
+    } else {
+      log.innerText += `❌ فشل: ${data.description}`;
+    }
+  } catch(e) {
+    log.innerText += `❌ خطأ في الشبكة: ${e.message}`;
+  }
+}
+
+// تحميل القيم
+document.getElementById('token').value = localStorage.getItem('kn_tg_token') || '';
+document.getElementById('chatId').value = localStorage.getItem('kn_tg_chat_id') || '';
+updateStatus();
+</script>
+</body>
+</html>

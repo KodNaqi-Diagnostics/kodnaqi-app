@@ -11,9 +11,11 @@
  */
 
 // KodNaqi — Service Worker v26
-const CACHE_NAME = 'kodnaqi-v44';
+const CACHE_NAME = 'kodnaqi-v270';
 
 const ASSETS = [
+  './app.html',
+  './index.html',
   './',
   './index.html',
   './manifest.json',
@@ -31,6 +33,7 @@ const ASSETS = [
   './signatures/tech.png',
   './signatures/doctor.png',
   './encryption.js',
+  './quiet.js',
 ];
 
 self.addEventListener('install', e => {
