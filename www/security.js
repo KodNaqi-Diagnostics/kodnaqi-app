@@ -144,7 +144,22 @@
     }
   } catch (e) {}
 
-    // 1) جسر أندرويد (مستقبلي — APK)
+// ✨ 0) ويندوز (Electron) - الكود الثابت الجديد
+if (window.electronAPI && window.electronAPI.getDeviceCode) {
+  try {
+    const rawCode = await window.electronAPI.getDeviceCode(); // سيعيد مثلاً ABC-DEF
+    if (rawCode) {
+      _cachedCode = rawCode.replace('-', ''); // إزالة الشرطة ليكون 6 حروف (ABCDEF)
+      console.log('[Security] Using native Electron Device Code:', _cachedCode);
+      try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
+      return _cachedCode;
+    }
+  } catch (e) {
+    console.error('[Security] Electron Code failed', e);
+  }
+}
+ 
+   // 1) جسر أندرويد (مستقبلي — APK)
     if (window.AndroidBridge && typeof window.AndroidBridge.getDeviceId === 'function') {
       try {
         const id = window.AndroidBridge.getDeviceId();
