@@ -1,6 +1,9 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, session, dialog } = require('electron'); // تمت إضافة session و dialog هنا لتوحيد الاستدعاء
 const fs = require('fs');
 const path = require('path');
+
+// ✅ 1. إجبار Electron على تفعيل ميزة SharedArrayBuffer (لمنع الشاشة السوداء)
+app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
 
 function getIndexPath() {
   const candidates = [
@@ -41,6 +44,18 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // ✅ 2. إضافة الرؤوس الأمنية (Cross-Origin Isolation) التي تحتاجها مكتبة ThumbmarkJS
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Cross-Origin-Opener-Policy': ['same-origin'],
+        'Cross-Origin-Embedder-Policy': ['require-corp'],
+        'Cross-Origin-Resource-Policy': ['cross-origin']
+      }
+    });
+  });
+
   createWindow();
 
   app.on('activate', () => {
@@ -60,7 +75,8 @@ app.on('window-all-closed', () => {
 // 🔄 التحديث التلقائي لـ Windows
 // ═══════════════════════════════════════════════════
 const { autoUpdater } = require('electron-updater');
-const { dialog } = require('electron');
+// ملاحظة: تم استدعاء dialog في السطر الأول، فلا داعي لتكراره هنا.
+
 autoUpdater.autoDownload = false;
 
 // التحقق من التحديثات عند بدء التشغيل
@@ -69,7 +85,7 @@ app.whenReady().then(() => {
   setInterval(() => {
     autoUpdater.checkForUpdates().catch(function () {});
   }, 4 * 60 * 60 * 1000);
-  
+
   autoUpdater.checkForUpdates().catch(function () {});
 });
 
