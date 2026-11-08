@@ -256,61 +256,45 @@
   // ═══ التحقق (يعتمد على security.js الجديد) ═══
   // ═══ فحص الخادم (Firebase) — غير حاجب عند فشل الاتصال ═══
   async function checkServer(payload) {
-    if (!payload || !payload.id) return { ok: true };
-    if (!window.KodNaqiSecurity || !window.KodNaqiSecurity.checkServerStatus) return { ok: true };
-    
-    const remote = await window.KodNaqiSecurity.checkServerStatus(payload.id);
-    console.log('🔍 [DEBUG] checkServerStatus result:', JSON.stringify(remote));
-    console.log('🔍 [DEBUG] payload.id:', payload.id);
-    console.log('🔍 [DEBUG] FIREBASE config:', JSON.stringify(window.KODNAQI_FIREBASE));
-    
-    // 1. إذا وصلنا للخادم بنجاح
-    if (remote.ok) {
-      if (remote.status === 'revoked' || remote.status === 'suspended') {
-        return { ok: false, valid: false, reason: 'server_' + remote.status };
-      }
-      return { ok: true };
+  if (!payload || !payload.id) return { ok: true };
+  if (!window.KodNaqiSecurity || !window.KodNaqiSecurity.checkServerStatus) return { ok: true };
+
+  const remote = await window.KodNaqiSecurity.checkServerStatus(payload.id);
+  console.log('🔍 [DEBUG] checkServerStatus result:', JSON.stringify(remote));
+
+  if (remote.ok) {
+    if (remote.status === 'revoked' || remote.status === 'suspended') {
+      return { ok: false, valid: false, reason: 'server_' + remote.status };
     }
-    
-    // 2. إذا قال الخادم أن الترخيص غير موجود (محذوف)
-    if (remote.reason === 'not_found') {
-      return { ok: false, valid: false, reason: 'server_not_found' };
-    }
-    if (remote.reason === 'no_config') {
-      return { ok: false, valid: false, reason: 'no_config', details: remote.details };
-    }
-    if (remote.reason && remote.reason.startsWith('network:')) {
-      return { ok: false, valid: false, reason: 'network_error_details', details: remote.reason };
-    }
-    
-    // 3. إذا رفض الخادم القراءة (خطأ في القواعد)
-    if (remote.reason === 'http_401' || remote.reason === 'http_403') {
-      return { ok: false, valid: false, reason: 'server_auth_failed' };
-    }
-    
-    // عرض الخطأ الحقيقي القادم من الشبكة (للتشخيص)
-    if (remote.reason && remote.reason.startsWith('network:')) {
-      return { ok: false, valid: false, reason: 'network_error_details', details: remote.reason };
-    }
-    
-    // 4. إذا فشل الاتصال (بدون إنترنت)
-    // نسمح فقط إذا كان لدينا كاش سابق يثبت أن الترخيص كان سليماً
-    const cached = window.KodNaqiSecurity.getCachedServerStatus(payload.id);
-    if (cached) {
-      if (cached.status === 'revoked' || cached.status === 'suspended') {
-        return { ok: false, valid: false, reason: 'server_' + cached.status };
-      }
-      const age = Date.now() - (cached.serverTime || 0);
-      const grace = (window.KODNAQI_FIREBASE && window.KODNAQI_FIREBASE.gracePeriodMs) || (7 * 24 * 60 * 60 * 1000);
-      if (age > grace) {
-        return { ok: false, valid: false, reason: 'offline_grace_exceeded' };
-      }
-      return { ok: true }; // كاش صالح
-    }
-    
-    // 5. لا يوجد كاش ولا إنترنت -> نرفض (يجب تفعيله أونلاين لأول مرة)
-    return { ok: false, valid: false, reason: 'network_unreachable' };
+    return { ok: true };
   }
+
+  if (remote.reason === 'not_found') {
+    return { ok: false, valid: false, reason: 'server_not_found' };
+  }
+  if (remote.reason === 'no_config') {
+    return { ok: false, valid: false, reason: 'no_config', details: remote.details };
+  }
+  if (remote.reason === 'http_401' || remote.reason === 'http_403') {
+    return { ok: false, valid: false, reason: 'server_auth_failed' };
+  }
+
+  console.warn('⚠️ Network error detected, checking local cache...', remote.reason);
+  
+  const cached = window.KodNaqiSecurity.getCachedServerStatus(payload.id);
+  if (cached) {
+    if (cached.status === 'revoked' || cached.status === 'suspended') {
+      return { ok: false, valid: false, reason: 'server_' + cached.status };
+    }
+    const age = Date.now() - (cached.serverTime || 0);
+    const grace = (window.KODNAQI_FIREBASE && window.KODNAQI_FIREBASE.gracePeriodMs) || (7 * 24 * 60 * 60 * 1000);
+    if (age > grace) {
+      return { ok: false, valid: false, reason: 'offline_grace_exceeded' };
+    }
+    return { ok: true }; 
+  }
+  return { ok: false, valid: false, reason: 'network_unreachable' };
+}
 
   async function verify(key) {
 
