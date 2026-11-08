@@ -132,7 +132,7 @@
   const wrapper = document.createElement('div');
   wrapper.id = 'kodnaqi-eula-dialog';
   wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:2147483647;padding:16px;direction:rtl;';
-  
+
   wrapper.innerHTML = `
     <div style="background:#fff;border-radius:16px;max-width:550px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 25px 80px rgba(0,0,0,0.5);">
       <div style="background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;padding:20px;border-radius:16px 16px 0 0;text-align:center;">
@@ -150,27 +150,23 @@
         <p>البرنامج أداة مساعدة ولا يغني عن المراجعة الطبية المتخصصة. المطور غير مسؤول عن القرارات الطبية المتخذة بناءً على نتائج البرنامج.</p>
         <h3 style="color:#0d3b66;">5. الخصوصية والأمان</h3>
         <p>جميع البيانات تُخزن محليًا على جهازك فقط. لا نجمع أو نشارك بياناتك مع أي طرف ثالث.</p>
+        <h3 style="color:#0d3b66;">6. الدعم الفني</h3>
+        <p>الدعم الفني متاح خلال ساعات العمل عبر: <strong>+249111729111</strong></p>
       </div>
       <div style="padding:20px;border-top:1px solid #e2e8f0;display:flex;gap:12px;">
         <button id="eula-accept" style="flex:1;padding:14px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;">✅ أوافق على الاتفاقية</button>
       </div>
     </div>`;
-    
+
   document.documentElement.appendChild(wrapper);
-  document.getElementById('eula-accept').addEventListener('click', function() { 
-      acceptEULA(); 
-      wrapper.remove(); 
-      location.reload(); 
+  document.getElementById('eula-accept').addEventListener('click', function() {
+      acceptEULA();
+      wrapper.remove();
+      location.reload();
   });
 }
 
-    document.getElementById('eula-decline').addEventListener('click', function() {
-      alert('❌ يجب الموافقة على اتفاقية الاستخدام لاستخدام البرنامج.');
-      // لا نزيل النافذة — المستخدم مجبر على الموافقة
-    });
-  }
-
-  function checkEULA() {
+function checkEULA() {
     if (!hasAcceptedEULA()) {
       showEULADialog();
       return false;
