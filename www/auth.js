@@ -170,13 +170,23 @@ async function login(username, password, rememberMe) {
 // ============ تسجيل الخروج ============
 function logout() {
   if (!confirm('هل تريد تسجيل الخروج؟')) return;
-  
+
   console.log('🚪 تسجيل خروج سريع...');
+
+  // 1. حفظ الترخيص وكود الجهاز احتياطياً (عشان نضمن إنهم مش هيتمسحوا)
+  const savedLicense = localStorage.getItem('kodnaqi_license');
+  const savedDeviceCode = localStorage.getItem('kodnaqi_device_code_v1');
+
+  // 2. مسح الجلسة فقط
   clearSession();
-  
+
+  // 3. إرجاع الترخيص وكود الجهاز لو كانوا موجودين
+  if (savedLicense) localStorage.setItem('kodnaqi_license', savedLicense);
+  if (savedDeviceCode) localStorage.setItem('kodnaqi_device_code_v1', savedDeviceCode);
+
   // اعرض شاشة الدخول فوراً
   showLoginScreen();
-  
+
   // امسح الحقول
   setTimeout(function() {
     var u = document.getElementById('loginUsername');
@@ -185,18 +195,18 @@ function logout() {
     if (u) { u.value = ''; u.focus(); }
     if (p) p.value = '';
     if (r) r.checked = false;
-    
+
     // اخفِ الأزرار والرسائل الخطأ
     var errEl = document.getElementById('loginError');
     if (errEl) errEl.style.display = 'none';
-    
+
     var btn = document.getElementById('loginBtn');
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = 'تسجيل الدخول';
     }
   }, 100);
-  
+
   console.log('✅ تم تسجيل الخروج');
 }
 

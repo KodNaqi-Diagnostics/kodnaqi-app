@@ -139,7 +139,7 @@ function updateAddTestsTotal() {
     total += parseFloat(cb.dataset.price) || 0;
   });
   const el = document.getElementById('addTestsTotal');
-  if (el) el.textContent = total.toLocaleString('ar-EG') + ' SDG';
+  if (el) el.textContent = total.toLocaleString('en-US') + ' SDG';
 }
 
 function filterAddTests() {

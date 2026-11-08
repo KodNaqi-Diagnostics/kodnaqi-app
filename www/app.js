@@ -988,3 +988,129 @@ async function loadAndRenderTests() {
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(loadAndRenderTests, 500);
 });
+
+// ==========================================
+// إدارة الفحوصات (إعادة تعيين وتحديث من ملف)
+// ==========================================
+
+function resetDefaultTests() {
+    if (!confirm("هل أنت متأكد من مسح جميع الفحوصات الحالية وإعادة تعيين الفحوصات الافتراضية؟")) return;
+
+    // جلب الفحوصات الافتراضية من ملف all_tests.json
+    fetch('all_tests.json')
+        .then(response => {
+            if (!response.ok) throw new Error("لم يتم العثور على ملف all_tests.json");
+            return response.json();
+        })
+        .then(data => {
+            if (!window.db) {
+                alert("خطأ: قاعدة البيانات غير متصلة.");
+                return;
+            }
+
+            const transaction = window.db.transaction(['tests'], 'readwrite');
+            const store = transaction.objectStore('tests');
+
+            // مسح الجدول القديم أولاً
+            store.clear().onsuccess = () => {
+                // إضافة الفحوصات الجديدة
+                data.forEach(test => {
+                    delete test.id; // إزالة المعرف القديم ليتم توليد واحد جديد
+                    store.add(test);
+                });
+            };
+
+            transaction.oncomplete = () => {
+                alert("تم إعادة تعيين الفحوصات الافتراضية بنجاح!");
+                location.reload(); // إعادة تحميل الصفحة لتحديث الواجهة
+            };
+            transaction.onerror = (e) => {
+                alert("حدث خطأ أثناء إعادة التعيين: " + e.target.error);
+            };
+        })
+        .catch(err => {
+            alert("خطأ في قراءة ملف الفحوصات: " + err.message);
+        });
+}
+
+function updateTestsFromFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = event => {
+            try {
+                const data = JSON.parse(event.target.result);
+                
+                if (!Array.isArray(data)) {
+                    alert("خطأ: الملف يجب أن يحتوي على مصفوفة (Array) من الفحوصات.");
+                    return;
+                }
+
+                if (!window.db) {
+                    alert("خطأ: قاعدة البيانات غير متصلة.");
+                    return;
+                }
+
+                const transaction = window.db.transaction(['tests'], 'readwrite');
+                const store = transaction.objectStore('tests');
+
+                // مسح الفحوصات القديمة واستبدالها بالجديدة
+                store.clear().onsuccess = () => {
+                    data.forEach(test => {
+                        delete test.id; 
+                        store.add(test);
+                    });
+                };
+
+                transaction.oncomplete = () => {
+                    alert(`تم تحديث ${data.length} فحصاً بنجاح من الملف!`);
+                    location.reload();
+                };
+                transaction.onerror = (err) => {
+                    alert("حدث خطأ أثناء الإضافة: " + err.target.error);
+                };
+
+            } catch (err) {
+                alert("خطأ في قراءة ملف JSON: تأكد من أن الملف سليم. " + err.message);
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+
+// ==========================================
+// إدارة زر الرجوع (Back Button Logic)
+// ==========================================
+history.pushState({ page: "main" }, "Main", "");
+
+window.addEventListener('popstate', function(event) {
+    const modals = document.querySelectorAll('.modal.show, .modal[style*="display: block"]');
+    if (modals.length > 0) {
+        modals.forEach(modal => {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+        });
+        history.pushState({ page: "main" }, "Main", "");
+        return;
+    }
+
+    // (استبدل 'main-dashboard' باسم العنصر الرئيسي في نظامك إذا اختلف)
+    const mainContent = document.getElementById('main-dashboard'); 
+    if (mainContent && mainContent.style.display === 'none') {
+        if(typeof showPage === 'function') showPage('home');
+        history.pushState({ page: "main" }, "Main", "");
+    } else {
+        if (confirm('هل تريد الخروج من التطبيق؟')) {
+            window.close();
+        } else {
+            history.pushState({ page: "main" }, "Main", "");
+        }
+    }
+});

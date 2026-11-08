@@ -1398,7 +1398,7 @@ async function loadDashboard() {
 function updateDashboardUI(data) {
   // تحديث الإحصائيات
   const el = (id) => document.getElementById(id);
-  if (el('dashTotalRevenue')) el('dashTotalRevenue').textContent = data.totalRevenue.toLocaleString();
+  if (el('dashTotalRevenue')) el('dashTotalRevenue').textContent = data.totalRevenue.toLocaleString('en-US');
   if (el('dashActiveCustomers')) el('dashActiveCustomers').textContent = data.activeCustomers;
   if (el('dashExpiringSoon')) el('dashExpiringSoon').textContent = data.expiringSoon;
   if (el('dashTotalDevices')) el('dashTotalDevices').textContent = data.totalDevices;
