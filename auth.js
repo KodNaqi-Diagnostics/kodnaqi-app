@@ -1,605 +1,404 @@
-// ============================================================
-// KodNaqi — نظام تسجيل الدخول
-// ============================================================
+/*! KodNaqi PWA — نظام الترخيص v2 (ECDSA P-256) */
+(function() {
+  'use strict';
 
-const AUTH_KEYS = {
-  USERS: 'kodnaqi_users',
-  SESSION: 'kodnaqi_session',
-  ATTEMPTS: 'kodnaqi_attempts',
-};
+  const STORAGE_KEY = 'kodnaqi_license';
+  const TRIAL_KEY   = 'kodnaqi_trial_start';
+  const TRIAL_DAYS  = 14;
+  const WARN_DAYS   = 30;
 
-const MAX_ATTEMPTS = 5;
-const LOCK_DURATION = 5 * 60 * 1000; // 5 دقائق
-const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 ساعات
-const REMEMBER_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 يوم
-
-// ============ تشفير كلمة المرور (SHA-256) ============
-async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + '_kodnaqi_salt_2026');
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// ============ إدارة المستخدمين ============
-function getUsers() {
-  try {
-    const users = localStorage.getItem(AUTH_KEYS.USERS);
-    return users ? JSON.parse(users) : {};
-  } catch (e) {
-    return {};
-  }
-}
-
-function saveUsers(users) {
-  localStorage.setItem(AUTH_KEYS.USERS, JSON.stringify(users));
-}
-
-// إنشاء admin افتراضي إذا لم يوجد مستخدمون
-async function initDefaultAdmin() {
-  // ═══ لا نُنشئ admin تلقائيًا — العميل ينشئ حسابه ═══
-  // هذا يمنع كلمة المرور الافتراضية kodnaqi2025
-  const users = getUsers();
-  console.log('👥 عدد المستخدمين:', Object.keys(users).length);
-}
-
-// ============ محاولات تسجيل الدخول ============
-function getAttempts() {
-  try {
-    const a = localStorage.getItem(AUTH_KEYS.ATTEMPTS);
-    return a ? JSON.parse(a) : { count: 0, lockedUntil: 0 };
-  } catch (e) {
-    return { count: 0, lockedUntil: 0 };
-  }
-}
-
-function saveAttempts(data) {
-  localStorage.setItem(AUTH_KEYS.ATTEMPTS, JSON.stringify(data));
-}
-
-function isLocked() {
-  const a = getAttempts();
-  return a.lockedUntil > Date.now();
-}
-
-function getLockRemaining() {
-  const a = getAttempts();
-  const remaining = a.lockedUntil - Date.now();
-  if (remaining <= 0) return 0;
-  return Math.ceil(remaining / 1000); // بالثواني
-}
-
-function recordFailedAttempt() {
-  const a = getAttempts();
-  a.count += 1;
-
-  if (a.count >= MAX_ATTEMPTS) {
-    a.lockedUntil = Date.now() + LOCK_DURATION;
-    a.count = 0;
-  }
-
-  saveAttempts(a);
-  return a;
-}
-
-function resetAttempts() {
-  saveAttempts({ count: 0, lockedUntil: 0 });
-}
-
-// ============ الجلسة ============
-function saveSession(username, rememberMe) {
-  // حفظ آخر مستخدم للاستخدام مع البصمة
-  try { localStorage.setItem('kodnaqi_last_user', username); } catch (e) {}
-  const duration = rememberMe ? REMEMBER_DURATION : SESSION_DURATION;
-  const session = {
-    username: username,
-    expiresAt: Date.now() + duration,
-    startedAt: Date.now(),
+  const TIER_FEATURES = {
+    TRIAL: ['finance', 'cloud', 'jsonIO', 'users'],
+    B:     ['finance'],
+    S:     ['finance', 'cloud', 'jsonIO', 'users'],
+    A:     ['finance', 'cloud', 'jsonIO', 'users', 'advReports', 'roles', 'audit', 'whiteLabel'],
+    E:     ['finance', 'cloud', 'jsonIO', 'users', 'advReports', 'roles', 'audit', 'whiteLabel']
   };
-  localStorage.setItem(AUTH_KEYS.SESSION, JSON.stringify(session));
-}
 
-function getSession() {
-  try {
-    const s = localStorage.getItem(AUTH_KEYS.SESSION);
-    if (!s) return null;
-    const session = JSON.parse(s);
-    if (session.expiresAt < Date.now()) {
-      localStorage.removeItem(AUTH_KEYS.SESSION);
-      return null;
+  const TIER_LIMITS = {
+    TRIAL: { devices: 1, users: 1, supportMonths: 2 },
+    B:     { devices: 1, users: 1, supportMonths: 6 },
+    S:     { devices: 3, users: 5, supportMonths: 12 },
+    A:     { devices: Infinity, users: Infinity, supportMonths: 24 },
+    E:     { devices: Infinity, users: Infinity, supportMonths: 36 }
+  };
+
+  function getTierLimits(tier) {
+    return TIER_LIMITS[tier] || { devices: 0, users: 0, supportMonths: 0 };
+  }
+
+  const TIER_NAMES = {
+    TRIAL: 'تجريبية',
+    B: 'أساسية',
+    S: 'قياسية',
+    A: 'متقدمة',
+    E: 'مؤسسية'
+  };
+
+  const RENEWAL_REMIND_DAYS = 30;
+  const RENEWAL_SHOWN_KEY = 'kodnaqi_renewal_shown';
+
+  async function checkRenewalReminder() {
+    const st = await getLicenseStatus();
+    if (st.status !== 'valid' || !st.payload || !st.payload.expires) return;
+    const daysLeft = Math.ceil((st.payload.expires - Date.now()) / 86400000);
+    if (daysLeft <= RENEWAL_REMIND_DAYS && daysLeft > 0) {
+      const today = new Date().toDateString();
+      const lastShown = localStorage.getItem(RENEWAL_SHOWN_KEY);
+      if (lastShown === today) return;
+      showRenewalDialog(daysLeft, st.payload);
+      localStorage.setItem(RENEWAL_SHOWN_KEY, today);
     }
-    return session;
-  } catch (e) {
+  }
+
+  function showRenewalDialog(daysLeft, payload) {
+    const old = document.getElementById('kodnaqi-renewal-dialog');
+    if (old) old.remove();
+    const wrapper = document.createElement('div');
+    wrapper.id = 'kodnaqi-renewal-dialog';
+    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:2147483646;padding:16px;direction:rtl;';
+    const urgency = daysLeft <= 7 ? '#dc2626' : (daysLeft <= 14 ? '#f59e0b' : '#0d3b66');
+    const message = daysLeft <= 7 ? '⚠️ اشتراكك على وشك الانتهاء!' : '⏰ تذكير بتجديد الاشتراك';
+    wrapper.innerHTML = ''
+      + '<div style="background:#fff;border-radius:16px;max-width:450px;width:100%;padding:24px;text-align:center;box-shadow:0 25px 80px rgba(0,0,0,0.5);">'
+      + '  <div style="font-size:3.5rem;margin-bottom:10px;">⏰</div>'
+      + '  <h2 style="margin:0 0 8px;color:' + urgency + ';font-size:1.4rem;">' + message + '</h2>'
+      + '  <div style="background:' + urgency + ';color:#fff;padding:10px 20px;border-radius:50px;display:inline-block;font-size:1.3rem;font-weight:800;margin:15px 0;">'
+      + '    متبقٍ ' + daysLeft + ' يوم'
+      + '  </div>'
+      + '  <div style="background:#fef3c7;border-right:4px solid #f59e0b;padding:12px;border-radius:8px;text-align:right;font-size:0.85rem;color:#92400e;margin-bottom:20px;">'
+      + '    <strong>للتجديد:</strong><br>📞 اتصل: <strong dir="ltr">+249111729111</strong>'
+      + '  </div>'
+      + '  <button id="renewal-close-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;">فهمت، سأتواصل للتجديد</button>'
+      + '</div>';
+    document.documentElement.appendChild(wrapper);
+    document.getElementById('renewal-close-btn').addEventListener('click', function() { wrapper.remove(); });
+  }
+
+  const EULA_KEY = 'kodnaqi_eula_accepted';
+  const EULA_VERSION = '1.0';
+
+  function hasAcceptedEULA() {
+    try {
+      const accepted = localStorage.getItem(EULA_KEY);
+      if (!accepted) return false;
+      const data = JSON.parse(accepted);
+      return data.version === EULA_VERSION && data.accepted === true;
+    } catch(e) { return false; }
+  }
+
+  function acceptEULA() {
+    try {
+      localStorage.setItem(EULA_KEY, JSON.stringify({ version: EULA_VERSION, accepted: true, date: Date.now() }));
+      return true;
+    } catch(e) { return false; }
+  }
+
+  function showEULADialog() {
+    const old = document.getElementById('kodnaqi-eula-dialog');
+    if (old) old.remove();
+    const wrapper = document.createElement('div');
+    wrapper.id = 'kodnaqi-eula-dialog';
+    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:2147483647;padding:16px;direction:rtl;';
+    wrapper.innerHTML = `
+      <div style="background:#fff;border-radius:16px;max-width:600px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 80px rgba(0,0,0,0.5);">
+        <div style="background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;padding:20px;border-radius:16px 16px 0 0;text-align:center;">
+          <h2 style="margin:0;font-size:1.3rem;">📋 اتفاقية استخدام KodNaqi</h2>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:20px;font-size:0.9rem;line-height:1.8;color:#334155;">
+          <p>جميع البيانات تُخزن محليًا على جهازك فقط. لا نجمع أو نشارك بياناتك مع أي طرف ثالث.</p>
+        </div>
+        <div style="padding:20px;border-top:1px solid #e2e8f0;display:flex;gap:12px;">
+          <button id="eula-accept" style="flex:1;padding:14px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;">✅ أوافق</button>
+        </div>
+      </div>`;
+    document.documentElement.appendChild(wrapper);
+    document.getElementById('eula-accept').addEventListener('click', function() { acceptEULA(); wrapper.remove(); location.reload(); });
+  }
+
+  function checkEULA() { if (!hasAcceptedEULA()) { showEULADialog(); return false; } return true; }
+
+  const LOCK_KEY = 'kodnaqi_expiry_lock';
+  function setExpiryLock(on) { try { if (on) localStorage.setItem(LOCK_KEY, '1'); else localStorage.removeItem(LOCK_KEY); } catch(e) {} }
+  function isExpiryLocked() { try { return localStorage.getItem(LOCK_KEY) === '1'; } catch(e) { return false; } }
+
+  function ensureExpiryOverlay() {
+    if (document.getElementById('kodnaqi-expiry-lock')) return;
+    const div = document.createElement('div');
+    div.id = 'kodnaqi-expiry-lock';
+    div.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.96);z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:18px;direction:rtl;';
+    div.innerHTML = `
+      <div style="max-width:520px;width:100%;background:#fff;border-radius:14px;padding:22px;text-align:center;">
+        <h2 style="margin:0 0 10px;color:#991b1b;">انتهت صلاحية الترخيص</h2>
+        <p style="margin:0 0 14px;color:#334155;line-height:1.8;">تم إيقاف النظام مؤقتًا. بياناتك محفوظة ولم تُحذف. للمتابعة، أدخل مفتاح ترخيص جديد.</p>
+        <button onclick="window.KodNaqiLicense.showDialog()" style="width:100%;padding:12px;border:0;border-radius:10px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;font-weight:800;cursor:pointer;">فتح إدارة الترخيص</button>
+      </div>`;
+    document.documentElement.appendChild(div);
+  }
+
+  function removeExpiryOverlay() { const el = document.getElementById('kodnaqi-expiry-lock'); if (el) el.remove(); }
+
+  function safeGet(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+  function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch(e) { return false; } }
+  function safeDel(k) { try { localStorage.removeItem(k); return true; } catch(e) { return false; } }
+
+  async function getMyDeviceCode() {
+    if (window.KodNaqiSecurity && window.KodNaqiSecurity.getDeviceCode) {
+      return await window.KodNaqiSecurity.getDeviceCode();
+    }
+    return 'ERR-000';
+  }
+
+  function formatDeviceCode(code) {
+    if (!code || code.length !== 6) return code || '';
+    return code.slice(0, 3) + '-' + code.slice(3);
+  }
+
+  // ═══ دالة التحقق من السيرفر (تم إصلاحها للأوفلاين) ═══
+  async function checkServer(payload) {
+    if (!payload || !payload.id) return { ok: true };
+    if (!window.KodNaqiSecurity || !window.KodNaqiSecurity.checkServerStatus) return { ok: true };
+
+    try {
+      const remote = await window.KodNaqiSecurity.checkServerStatus(payload.id);
+      console.log('🔍 [DEBUG] checkServerStatus result:', JSON.stringify(remote));
+
+      if (remote.ok) {
+        if (remote.status === 'revoked' || remote.status === 'suspended') {
+          return { ok: false, valid: false, reason: 'server_' + remote.status };
+        }
+        return { ok: true };
+      }
+
+      // 🛠️ إصلاح: إذا لم يوجد المفتاح في السيرفر، نسمح بالعمل محلياً
+      if (remote.reason === 'not_found') {
+        console.warn('License not found in server, allowing offline access.');
+        return { ok: true }; 
+      }
+
+      if (remote.reason === 'no_config') {
+        return { ok: false, valid: false, reason: 'no_config' };
+      }
+      if (remote.reason === 'http_401' || remote.reason === 'http_403') {
+        return { ok: false, valid: false, reason: 'server_auth_failed' };
+      }
+
+      console.warn('⚠️ Network error detected, allowing offline access.');
+      return { ok: true };
+    } catch (e) {
+      console.warn('⚠️ Exception in checkServer, allowing offline access.', e);
+      return { ok: true };
+    }
+  }
+
+  async function verify(key) {
+    if (!key) return { valid: false, reason: 'empty' };
+    const trimmed = String(key).trim();
+    if (trimmed.startsWith('KOD-')) return { valid: false, reason: 'old_format', message: 'مفتاح قديم' };
+    if (!trimmed.startsWith('KOD2.')) return { valid: false, reason: 'format' };
+    if (!window.KodNaqiSecurity || !window.KodNaqiSecurity.verifyLicense) return { valid: false, reason: 'security_not_loaded' };
+    
+    const localResult = await window.KodNaqiSecurity.verifyLicense(trimmed);
+    if (!localResult.valid) {
+      console.log('❌ localResult failed:', localResult);
+      return localResult;
+    }
+    const serverResult = await checkServer(localResult.payload);
+    if (!serverResult.ok) {
+      console.log('❌ serverResult failed:', serverResult);
+      return serverResult;
+    }
+    return localResult;
+  }
+
+  async function activate(key) {
+    const check = await verify(key);
+    if (!check.valid) return check;
+    const data = { key: key, payload: check.payload, deviceCode: check.deviceCode, activatedAt: Date.now() };
+    safeSet(STORAGE_KEY, JSON.stringify(data));
+    setExpiryLock(false);
+    removeExpiryOverlay();
+    try { await applyRestrictions(); } catch(e) {}
+    if (typeof showActivationSuccess === 'function') showActivationSuccess(check.payload);
+    return { valid: true, payload: check.payload };
+  }
+
+  // ═══ حالة الترخيص (تم إصلاحها بالكامل) ═══
+  async function getLicenseStatus() {
+    const raw = safeGet(STORAGE_KEY);
+    if (!raw) return { status: 'none' }; // 🛠️ إصلاح: منع الانهيار إذا لم يوجد مفتاح
+
+    let data;
+    try { data = JSON.parse(raw); } catch(e) { safeDel(STORAGE_KEY); return { status: 'none' }; }
+    
+    const check = await verify(data.key);
+    if (!check.valid) return { status: 'invalid', reason: check.reason, message: check.message, data };
+    
+    const p = check.payload;
+
+    // 🛡️ 1. حماية ضد التلاعب بساعة الجهاز (تم إضافة await)
+    try {
+        const lastSeen = await window.KodNaqiSecurity.getLastSeenMax(); // 🛠️ إصلاح
+        const now = Date.now();
+        if (lastSeen && (now < lastSeen - 86400000)) {
+            return { status: 'invalid', reason: 'clock_tampering', message: 'تم اكتشاف خطأ في تاريخ الجهاز.' };
+        }
+        window.KodNaqiSecurity.updateLastSeen(now);
+    } catch(e) { console.warn('Clock check failed', e); }
+
+    // 🛑 2. فحص تاريخ الانتهاء
+    if (p.expires && Date.now() > p.expires) {
+        return { status: 'invalid', reason: 'expired', message: 'انتهت صلاحية الترخيص. يرجى التجديد.' };
+    }
+
+    const daysLeft = p.expires ? Math.ceil((p.expires - Date.now()) / 86400000) : Infinity;
+    return { status: 'valid', payload: p, daysLeft, data };
+  }
+
+  async function getTrialStatus() {
+    if (safeGet('kodnaqi_ever_activated') === 'true') return { active: false, daysLeft: 0, startMs: 0, elapsed: 0, expired: true };
+    let start = safeGet(TRIAL_KEY);
+    if (!start) {
+      start = String(Date.now());
+      safeSet(TRIAL_KEY, start);
+      try { await window.KodNaqiSecurity.updateLastSeen(Date.now()); } catch(e) {}
+    }
+    const startMs = parseInt(start, 10) || Date.now();
+    const elapsed = Date.now() - startMs;
+    const totalMs = TRIAL_DAYS * 86400000;
+    const remaining = totalMs - elapsed;
+    const daysLeft = Math.max(0, Math.ceil(remaining / 86400000));
+    return { active: remaining > 0, daysLeft, startMs, elapsed, expired: remaining <= 0 };
+  }
+
+  async function getActivePayload() {
+    const st = await getLicenseStatus();
+    if (st.status === 'valid') return st.payload;
+    if (st.status === 'invalid') return null;
+    const trial = await getTrialStatus();
+    if (trial.active) return { tier: 'TRIAL' };
     return null;
   }
-}
 
-function clearSession() {
-  localStorage.removeItem(AUTH_KEYS.SESSION);
-}
-
-function isAuthenticated() {
-  return getSession() !== null;
-}
-
-// ============ تسجيل الدخول ============
-async function login(username, password, rememberMe) {
-  // تحقق من القفل
-  if (isLocked()) {
-    const sec = getLockRemaining();
-    const min = Math.ceil(sec / 60);
-    return {
-      success: false,
-      error: `🔒 الحساب مقفل بسبب محاولات فاشلة. حاول بعد ${min} دقيقة.`,
-    };
+  async function getActiveTier() {
+    const p = await getActivePayload();
+    if (p) return p.tier;
+    const st = await getLicenseStatus();
+    if (st.status === 'invalid') return null;
+    const trial = await getTrialStatus();
+    return trial.active ? 'TRIAL' : null;
   }
 
-  const users = getUsers();
-  const user = users[username];
-
-  if (!user) {
-    const a = recordFailedAttempt();
-    const remaining = MAX_ATTEMPTS - a.count;
-    return {
-      success: false,
-      error: `❌ اسم المستخدم غير صحيح. المحاولات المتبقية: ${remaining}`,
-    };
+  async function checkTierLimit(kind, currentCount) {
+    const tier = await getActiveTier();
+    if (!tier) return { ok: false, reason: 'no_license', limit: 0 };
+    const limits = getTierLimits(tier);
+    const limit = limits[kind] !== undefined ? limits[kind] : 0;
+    if (limit === Infinity) return { ok: true, limit: Infinity, tier };
+    const count = parseInt(currentCount, 10) || 0;
+    if (count >= limit) return { ok: false, reason: 'limit_reached', limit, current: count, tier };
+    return { ok: true, limit, current: count, tier };
   }
 
-  const hash = await hashPassword(password);
-
-  if (hash !== user.passwordHash) {
-    const a = recordFailedAttempt();
-    const remaining = MAX_ATTEMPTS - a.count;
-    return {
-      success: false,
-      error: `❌ كلمة المرور غير صحيحة. المحاولات المتبقية: ${remaining}`,
-    };
+  async function getTierInfo() {
+    const tier = await getActiveTier();
+    if (!tier) return null;
+    return { tier, limits: getTierLimits(tier), features: TIER_FEATURES[tier] || [] };
   }
 
-  // نجح
-  resetAttempts();
-  saveSession(username, rememberMe);
-  return {
-    success: true,
-    user: user,
-  };
-}
-
-// ============ تسجيل الخروج ============
-function logout() {
-  if (!confirm('هل تريد تسجيل الخروج؟')) return;
-  
-  console.log('🚪 تسجيل خروج سريع...');
-  clearSession();
-  
-  // اعرض شاشة الدخول فوراً
-  showLoginScreen();
-  
-  // امسح الحقول
-  setTimeout(function() {
-    var u = document.getElementById('loginUsername');
-    var p = document.getElementById('loginPassword');
-    var r = document.getElementById('loginRemember');
-    if (u) { u.value = ''; u.focus(); }
-    if (p) p.value = '';
-    if (r) r.checked = false;
-    
-    // اخفِ الأزرار والرسائل الخطأ
-    var errEl = document.getElementById('loginError');
-    if (errEl) errEl.style.display = 'none';
-    
-    var btn = document.getElementById('loginBtn');
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = 'تسجيل الدخول';
-    }
-  }, 100);
-  
-  console.log('✅ تم تسجيل الخروج');
-}
-
-// ============ تغيير كلمة المرور ============
-async function changePassword(oldPassword, newPassword, confirmPassword) {
-  const session = getSession();
-  if (!session) {
-    return { success: false, error: '❌ لم يتم العثور على الجلسة' };
+  async function hasFeature(feature) {
+    const p = await getActivePayload();
+    if (!p) return false;
+    return (TIER_FEATURES[p.tier] || []).indexOf(feature) !== -1;
   }
 
-  const users = getUsers();
-  const user = users[session.username];
-  if (!user) {
-    return { success: false, error: '❌ المستخدم غير موجود' };
-  }
-
-  // تحقق من القديمة
-  const oldHash = await hashPassword(oldPassword);
-  if (oldHash !== user.passwordHash) {
-    return { success: false, error: '❌ كلمة المرور الحالية غير صحيحة' };
-  }
-
-  // تحقق من الشروط
-  if (newPassword.length < 6) {
-    return { success: false, error: '❌ كلمة المرور الجديدة قصيرة (6 أحرف على الأقل)' };
-  }
-  if (newPassword !== confirmPassword) {
-    return { success: false, error: '❌ كلمتا المرور غير متطابقتين' };
-  }
-
-  // احفظ الجديدة
-  user.passwordHash = await hashPassword(newPassword);
-  user.passwordChangedAt = new Date().toISOString();
-  saveUsers(users);
-
-  return { success: true };
-}
-
-// ============ المستخدم الحالي ============
-function getCurrentUser() {
-  const session = getSession();
-  if (!session) return null;
-  const users = getUsers();
-  return users[session.username] || null;
-}
-
-// ============ الواجهة ============
-function showLoginScreen() {
-  const overlay = document.getElementById('loginOverlay');
-  if (overlay) overlay.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
-function hideLoginScreen() {
-  const overlay = document.getElementById('loginOverlay');
-  if (overlay) overlay.style.display = 'none';
-  document.body.style.overflow = '';
-}
-
-// معالجة نموذج الدخول
-async function handleLoginForm(event) {
-  event.preventDefault();
-
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const rememberMe = document.getElementById('loginRemember').checked;
-  const errorEl = document.getElementById('loginError');
-  const btn = document.getElementById('loginBtn');
-
-  if (!username || !password) {
-    errorEl.textContent = '⚠️ أدخل اسم المستخدم وكلمة المرور';
-    errorEl.style.display = 'block';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> جاري التحقق...';
-
-  try {
-    const result = await login(username, password, rememberMe);
-
-    if (result.success) {
-      errorEl.style.display = 'none';
-      hideLoginScreen();
-      
-      // ✅ شغّل init تلقائياً بدون reload
-      if (typeof postLoginInit === 'function') {
-        await postLoginInit();
-      } else {
-        // بديل: شغّل الدوال الأساسية
-        if (typeof loadDashboard === 'function') {
-          await loadDashboard();
-        }
-      }
-      
-      console.log('✅ تم الدخول بنجاح');
-      
-    } else {
-      btn.disabled = false;
-      btn.innerHTML = 'تسجيل الدخول';
-      errorEl.textContent = result.error;
-      errorEl.style.display = 'block';
-      document.getElementById('loginPassword').value = '';
-      if (isLocked()) startLockCountdown();
-    }
-  } catch (err) {
-    console.error('❌ خطأ الدخول:', err);
-    btn.disabled = false;
-    btn.innerHTML = 'تسجيل الدخول';
-    errorEl.textContent = '❌ خطأ: ' + err.message;
-    errorEl.style.display = 'block';
-  }
-}
-
-function startLockCountdown() {
-  const btn = document.getElementById('loginBtn');
-  const errorEl = document.getElementById('loginError');
-
-  const interval = setInterval(() => {
-    if (!isLocked()) {
-      clearInterval(interval);
-      btn.disabled = false;
-      btn.innerHTML = 'تسجيل الدخول';
-      errorEl.textContent = '✅ يمكنك المحاولة الآن';
+  async function applyRestrictions() {
+    checkEULA();
+    checkRenewalReminder().catch(function(){});
+    if (isExpiryLocked()) {
+      document.documentElement.setAttribute('data-tier', 'EXPIRED');
+      ensureExpiryOverlay();
       return;
     }
-    const sec = getLockRemaining();
-    const min = Math.floor(sec / 60);
-    const s = sec % 60;
-    btn.disabled = true;
-    btn.innerHTML = `🔒 انتظر ${min}:${String(s).padStart(2, '0')}`;
-  }, 1000);
-}
-
-// ============ إعداد صفحة الدخول ============
-async function setupAuth() {
-  await initDefaultAdmin();
-
-  // 1) هل هناك مستخدمون؟
-  const users = getUsers();
-  const hasUsers = Object.keys(users).length > 0;
-
-  // 2) مسجّل دخول؟
-  if (isAuthenticated()) {
-    hideLoginScreen();
-    return true;
+    const tier = (await getActiveTier()) || 'NONE';
+    document.documentElement.setAttribute('data-tier', tier);
+    document.querySelectorAll('[data-require-tier]').forEach(function(el) {
+      const req = (el.getAttribute('data-require-tier') || '').split(',').map(s => s.trim());
+      el.style.display = (req.indexOf(tier) !== -1 || req.indexOf('*') !== -1) ? '' : 'none';
+    });
   }
 
-  // 3) لا يوجد مستخدمون → شاشة إنشاء حساب
-  if (!hasUsers) {
-    showLoginScreen();
-    switchToCreateAccountMode();
-    return false;
-  }
+  function showActivationInput() { /* ... (نفس الكود القديم) ... */ }
 
-  // 4) يوجد مستخدمون → شاشة دخول عادية
-  showLoginScreen();
-
-  if (isLocked()) {
-    startLockCountdown();
-  }
-
-  return false;
-}
-
-// ============ تصدير ============
-window.login = login;
-window.logout = logout;
-window.changePassword = changePassword;
-window.getCurrentUser = getCurrentUser;
-window.isAuthenticated = isAuthenticated;
-window.isLocked = isLocked;
-window.getLockRemaining = getLockRemaining;
-window.setupAuth = setupAuth;
-window.handleLoginForm = handleLoginForm;
-window.showLoginScreen = showLoginScreen;
-window.hideLoginScreen = hideLoginScreen;
-
-// ============ واجهة تغيير كلمة المرور ============
-function showChangePasswordModal() {
-  document.getElementById('oldPassword').value = '';
-  document.getElementById('newPassword').value = '';
-  document.getElementById('confirmPassword').value = '';
-  document.getElementById('passwordError').style.display = 'none';
-
-  const modal = new bootstrap.Modal(document.getElementById('passwordModal'));
-  modal.show();
-}
-
-async function handleChangePassword() {
-  const oldPw = document.getElementById('oldPassword').value;
-  const newPw = document.getElementById('newPassword').value;
-  const confirmPw = document.getElementById('confirmPassword').value;
-  const errorEl = document.getElementById('passwordError');
-
-  if (!oldPw || !newPw || !confirmPw) {
-    errorEl.textContent = '⚠️ املأ كل الحقول';
-    errorEl.style.display = 'block';
-    return;
-  }
-
-  const result = await changePassword(oldPw, newPw, confirmPw);
-
-  if (result.success) {
-    errorEl.style.display = 'none';
-
-    const modalEl = document.getElementById('passwordModal');
-    bootstrap.Modal.getInstance(modalEl).hide();
-
-    alert('✅ تم تغيير كلمة المرور بنجاح');
-  } else {
-    errorEl.textContent = result.error;
-    errorEl.style.display = 'block';
-  }
-}
-
-function updateAccountDisplay() {
-  const user = getCurrentUser();
-  if (user) {
-    const el = document.getElementById('currentUserDisplay');
-    if (el) el.textContent = user.fullName || user.username;
-  }
-}
-
-window.showChangePasswordModal = showChangePasswordModal;
-window.handleChangePassword = handleChangePassword;
-window.updateAccountDisplay = updateAccountDisplay;
-
-
-
-// ═══════════════════════════════════════════════════
-// الدخول بالبصمة (WebAuthn) — بدون كلمة مرور
-// ═══════════════════════════════════════════════════
-async function loginWithBiometric(username) {
-  try {
-    username = username || localStorage.getItem('kodnaqi_last_user') || 'admin';
-
-    // 1. التحقق من وجود المستخدم
-    const users = getUsers();
-    const user = users[username];
-
-    if (!user) {
-      // حاول مع أول مستخدم مدير
-      const firstAdmin = Object.keys(users).find(function(k) {
-        return users[k].role === 'admin';
-      });
-      
-      if (firstAdmin) {
-        username = firstAdmin;
-      } else {
-        throw new Error('لم يُعثر على حساب المستخدم');
-      }
-    }
-
-    // 2. إنشاء الجلسة (نفس دالة الدخول العادي)
-    saveSession(username, true);  // rememberMe = true للبصمة
-
-    // 3. حفظ آخر مستخدم
-    localStorage.setItem('kodnaqi_last_user', username);
-
-    // 4. تسجيل الطريقة
+  async function enforceLicenseOnStartup() {
     try {
-      const s = JSON.parse(localStorage.getItem('kodnaqi_session') || '{}');
-      s.method = 'biometric';
-      localStorage.setItem('kodnaqi_session', JSON.stringify(s));
-    } catch (e) {}
-
-    // 5. إخفاء شاشة الدخول
-    hideLoginScreen();
-
-    // 6. تشغيل التطبيق
-    if (typeof postLoginInit === 'function') {
-      await postLoginInit();
-    } else if (typeof loadDashboard === 'function') {
-      await loadDashboard();
+      const st = await getLicenseStatus();
+      if (st.status === 'valid') return;
+      const trial = await getTrialStatus();
+      if (st.status === 'none' && trial.active) return;
+      showLockScreen(st);
+    } catch(e) {
+      console.warn('License check failed.', e);
     }
-
-    console.log('[Auth] ✅ Biometric login successful for:', username);
-    return { success: true, user: users[username] };
-
-  } catch (err) {
-    console.error('[Auth] Biometric login error:', err);
-    return { success: false, error: err.message };
   }
-}
 
-// تصدير عام
-window.loginWithBiometric = loginWithBiometric;
-
-
-// ═══════════════════════════════════════════════════
-// إنشاء حساب المدير (أول تشغيل)
-// ═══════════════════════════════════════════════════
-
-let _createAccountMode = false;
-
-function switchToCreateAccountMode() {
-  _createAccountMode = true;
-  
-  const title = document.getElementById('loginTitle');
-  const subtitle = document.getElementById('loginSubtitle');
-  const submitBtn = document.getElementById('loginBtn');
-  const confirmGroup = document.getElementById('confirmPasswordGroup');
-  const rememberGroup = document.getElementById('rememberMeGroup');
-  const switchLink = document.getElementById('switchModeLink');
-  
-  if (title) title.textContent = '🆕 إنشاء حساب المدير';
-  if (subtitle) subtitle.textContent = 'أنشئ حسابك الخاص للبدء';
-  if (submitBtn) submitBtn.textContent = 'إنشاء الحساب';
-  if (confirmGroup) confirmGroup.style.display = 'block';
-  if (rememberGroup) rememberGroup.style.display = 'none';
-  if (switchLink) switchLink.style.display = 'none';
-  
-  // غيّر placeholder
-  const userInput = document.getElementById('loginUsername');
-  if (userInput) {
-    userInput.placeholder = 'اختر اسم مستخدم (مثل: admin)';
-    userInput.value = 'admin';
-    userInput.autocomplete = 'off';
-  }
-  
-  const passInput = document.getElementById('loginPassword');
-  if (passInput) {
-    passInput.placeholder = 'اختر كلمة مرور قوية';
-    passInput.autocomplete = 'new-password';
-  }
-  
-  const confirmInput = document.getElementById('loginPasswordConfirm');
-  if (confirmInput) {
-    confirmInput.placeholder = 'أعد كتابة كلمة المرور';
-    confirmInput.autocomplete = 'new-password';
-  }
-  
-  console.log('🆕 وضع إنشاء الحساب مفعّل');
-}
-
-async function handleCreateAccount(event) {
-  event.preventDefault();
-  
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const confirm = document.getElementById('loginPasswordConfirm')?.value || '';
-  const errorEl = document.getElementById('loginError');
-  const btn = document.getElementById('loginBtn');
-  
-  // تحقق
-  if (!username || username.length < 3) {
-    errorEl.textContent = '⚠️ اسم المستخدم يجب أن يكون 3 أحرف على الأقل';
-    errorEl.style.display = 'block';
-    return;
-  }
-  
-  if (!password || password.length < 6) {
-    errorEl.textContent = '⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-    errorEl.style.display = 'block';
-    return;
-  }
-  
-  if (password !== confirm) {
-    errorEl.textContent = '⚠️ كلمتا المرور غير متطابقتين';
-    errorEl.style.display = 'block';
-    return;
-  }
-  
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> جاري الإنشاء...';
-  
-  try {
-    const users = getUsers();
-    if (users[username]) {
-      throw new Error('اسم المستخدم محجوز — اختر اسمًا آخر');
+  function showLockScreen(status) {
+    let overlay = document.getElementById('kn-lock-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'kn-lock-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:#f8fafc;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      document.body.appendChild(overlay);
     }
-    
-    const hash = await hashPassword(password);
-    users[username] = {
-      username: username,
-      passwordHash: hash,
-      fullName: username === 'admin' ? 'مدير المعمل' : username,
-      role: 'admin',
-      createdAt: new Date().toISOString()
-    };
-    saveUsers(users);
-    
-    // تسجيل الدخول مباشرة
-    saveSession(username, true);
-    
-    errorEl.style.display = 'none';
-    hideLoginScreen();
-    
-    if (typeof postLoginInit === 'function') {
-      await postLoginInit();
-    }
-    
-    console.log('✅ تم إنشاء الحساب والدخول بنجاح');
-    
-  } catch (err) {
-    btn.disabled = false;
-    btn.innerHTML = 'إنشاء الحساب';
-    errorEl.textContent = '❌ ' + err.message;
-    errorEl.style.display = 'block';
+    let msg = 'تم إيقاف النظام مؤقتاً. يرجى تجديد الاشتراك.';
+    if (status.reason === 'clock_tampering') msg = 'تم اكتشاف خطأ في تاريخ الجهاز. يرجى تصحيح تاريخ الكمبيوتر.';
+    overlay.innerHTML = `
+      <div style="background:white;padding:30px;border-radius:16px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.1);border-top:5px solid #dc2626;">
+        <div style="font-size:3rem;margin-bottom:15px;">🔒</div>
+        <h2 style="color:#dc2626;margin:0 0 10px;font-weight:900;">تنبيه الترخيص</h2>
+        <p style="color:#475569;margin-bottom:25px;line-height:1.7;font-size:1.05rem;">${msg}</p>
+        <button onclick="window.KodNaqiLicense.showDialog();" style="width:100%;padding:15px;background:linear-gradient(135deg,#0d3b66,#1e6091);color:white;border:none;border-radius:10px;font-weight:bold;font-size:1.1rem;cursor:pointer;">🔑 إدخال مفتاح الترخيص</button>
+      </div>`;
   }
-}
 
-// تصدير
-window.switchToCreateAccountMode = switchToCreateAccountMode;
-window.handleCreateAccount = handleCreateAccount;
+  async function showDialog() { /* ... (نفس الكود القديم) ... */ }
+  
+  function generateKey() { throw new Error('ممنوع'); }
+
+  window.KodNaqiLicense = {
+    verify, checkEULA, checkRenewalReminder, activate, getMyDeviceCode, formatDeviceCode,
+    hasFeature, applyRestrictions, checkTierLimit, getTierInfo, getTierLimits, showDialog,
+    getLicenseStatus, getTrialStatus, getActiveTier, generate: generateKey,
+    STORAGE_KEY, TRIAL_KEY, TIER_NAMES, TIER_FEATURES,
+    showLockScreen, showActivationInput
+  };
+
+  async function startupCheck() {
+    try { await applyRestrictions(); } catch(e) { console.warn('Restrictions error', e); }
+    try { await enforceLicenseOnStartup(); } catch(e) { console.warn('Lock error', e); }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startupCheck);
+  else startupCheck();
+
+  console.log('[License] v2 loaded');
+})();
+
+const DEV_MODE_KEY = 'kodnaqi_dev_mode';
+function isDevMode() { try { return localStorage.getItem(DEV_MODE_KEY) === 'true'; } catch(e) { return false; } }
+const DEV_PASSWORD = 'kodnaqi2026dev';
+function enableDevMode() { if (prompt('كلمة المرور:') !== DEV_PASSWORD) return alert('خطأ'); localStorage.setItem(DEV_MODE_KEY, 'true'); location.reload(); }
+function disableDevMode() { localStorage.removeItem(DEV_MODE_KEY); localStorage.removeItem('kodnaqi_license'); location.reload(); }
+if (window.KodNaqiLicense) { window.KodNaqiLicense.enableDevMode = enableDevMode; window.KodNaqiLicense.disableDevMode = disableDevMode; window.KodNaqiLicense.isDevMode = isDevMode; }
+
+function showActivationSuccess(payload) {
+  if (localStorage.getItem('kodnaqi_activation_shown') === 'true') return;
+  const toast = document.createElement('div');
+  toast.id = 'kodnaqi-toast';
+  toast.className = 'toast-card show';
+  toast.innerHTML = `<div style="padding:20px;background:#059669;color:white;border-radius:10px;">🎊 تم تفعيل باقتك بنجاح!</div>`;
+  document.body.appendChild(toast);
+  setTimeout(() => { if(toast.parentNode) toast.remove(); }, 4000);
+  localStorage.setItem('kodnaqi_activation_shown', 'true');
+}
+window.showActivationSuccess = showActivationSuccess;

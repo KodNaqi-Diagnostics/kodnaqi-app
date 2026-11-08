@@ -836,7 +836,6 @@ body {
 <script src="cloud.js"></script>
 <script src="app.js"></script>
 <script src="fix_serials.js"></script>
-<script src="fix_blood_group_ref.js"></script>
 
 <script>
 if ('serviceWorker' in navigator) {
@@ -987,7 +986,6 @@ function ensureHtml2Canvas() {
   </div>
 </div>
 
-<script src="lib/thumbmark.min.js"></script>
 <script src="firebase-config.js"></script>
 <script src="security.js"></script>
 <!-- security-dev.js معطل في الإصدار النهائي -- <script src="security-dev.js"></script> -->
@@ -1759,6 +1757,92 @@ window.saveRanges = async function() {
 };
 </script>
 
+<script>
+// ==========================================
+// 1. إصلاح الدوال المفقودة (الفحوصات)
+// ==========================================
+window.resetDefaultTests = function() {
+    if (!confirm("هل أنت متأكد من مسح الفحوصات الحالية وإعادة الافتراضية؟")) return;
+    fetch('all_tests.json')
+        .then(res => res.json())
+        .then(data => {
+            if (!window.db) { alert("خطأ: قاعدة البيانات غير متصلة."); return; }
+            const tx = window.db.transaction(['tests'], 'readwrite');
+            const store = tx.objectStore('tests');
+            store.clear().onsuccess = () => {
+                data.forEach(test => { delete test.id; store.add(test); });
+            };
+            tx.oncomplete = () => { alert("تمت إعادة التعيين بنجاح!"); location.reload(); };
+        })
+        .catch(err => alert("خطأ في قراءة الملف: " + err));
+};
+
+window.updateTestsFromFile = function() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = event => {
+            try {
+                const data = JSON.parse(event.target.result);
+                if (!Array.isArray(data)) { alert("الملف يجب أن يحتوي على مصفوفة."); return; }
+                if (!window.db) { alert("قاعدة البيانات غير متصلة."); return; }
+
+                const tx = window.db.transaction(['tests'], 'readwrite');
+                const store = tx.objectStore('tests');
+                store.clear().onsuccess = () => {
+                    data.forEach(test => { delete test.id; store.add(test); });
+                };
+                tx.oncomplete = () => { alert("تم التحديث بنجاح!"); location.reload(); };
+            } catch(err) { alert("خطأ في قراءة الملف: " + err); }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+};
+
+// ==========================================
+// 2. إصلاح زر الرجوع (Back Button) - للأندرويد والويندوز
+// ==========================================
+// نضيف حالة للتاريخ لمنع الخروج المفاجئ
+history.pushState({ page: "app_root" }, "", "");
+
+window.addEventListener('popstate', function(event) {
+    // أ) إذا كانت هناك نافذة منبثقة (Modal) مفتوحة، أغلقها
+    const modals = document.querySelectorAll('.modal.show, .modal[style*="display: block"]');
+    if (modals.length > 0) {
+        modals.forEach(m => { m.classList.remove('show'); m.style.display = 'none'; });
+        history.pushState({ page: "app_root" }, "", "");
+        return;
+    }
+
+    // ب) إذا كنا في قسم فرعي، ارجع للرئيسية
+    // (هذا الكود يبحث عن زر الرئيسية في الشريط السفلي ويضغط عليه برمجياً)
+    const homeBtn = document.querySelector('a[href="#home"], [onclick*="home"], .nav-item:first-child');
+    const isHome = document.querySelector('.tab-pane.active#home, #home.active'); // قد تحتاج لتعديل هذا حسب كود التنقل لديك
+
+    if (homeBtn && !isHome) {
+        homeBtn.click(); 
+        history.pushState({ page: "app_root" }, "", "");
+    } else {
+        // ج) إذا كنا في الرئيسية، اسأل عن الخروج
+        if (confirm("هل تريد إغلاق التطبيق؟")) {
+            window.close(); // للويندوز
+        } else {
+            history.pushState({ page: "app_root" }, "", "");
+        }
+    }
+});
+
+// منع الانتقال لصفحة الهبوط
+window.addEventListener('beforeunload', function (e) {
+    // إلغاء الحدث الافتراضي
+});
+</script>
+</div>
 </body>
 
 </html>
@@ -1887,3 +1971,42 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+</div> <!-- إغلاق الحاوية الرئيسية المفقودة -->
+
+<script>
+// 🛠️ إضافة دوال الفحوصات المفقودة
+window.resetDefaultTests = function() {
+    if (!confirm('هل أنت متأكد من إعادة الفحوصات الافتراضية؟')) return;
+    fetch('all_tests.json').then(r => r.json()).then(data => {
+        if (!window.db) { alert('قاعدة البيانات غير متصلة.'); return; }
+        const tx = window.db.transaction(['tests'], 'readwrite');
+        const store = tx.objectStore('tests');
+        store.clear().onsuccess = () => { data.forEach(t => { delete t.id; store.add(t); }); };
+        tx.oncomplete = () => { alert('تمت إعادة التعيين بنجاح!'); location.reload(); };
+    }).catch(e => alert('خطأ: ' + e));
+};
+
+window.updateTestsFromFile = function() {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json';
+    input.onchange = e => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (!window.db) { alert('قاعدة البيانات غير متصلة.'); return; }
+                const tx = window.db.transaction(['tests'], 'readwrite');
+                const store = tx.objectStore('tests');
+                store.clear().onsuccess = () => { data.forEach(t => { delete t.id; store.add(t); }); };
+                tx.oncomplete = () => { alert('تم التحديث بنجاح!'); location.reload(); };
+            } catch (err) { alert('ملف غير صالح: ' + err); }
+        };
+        reader.readAsText(e.target.files[0]);
+    };
+    input.click();
+};
+</script>
+
+</body>
+</html>
