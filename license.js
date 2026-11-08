@@ -127,49 +127,42 @@
   }
 
   function showEULADialog() {
-    // إزالة أي نافذة سابقة
-    const old = document.getElementById('kodnaqi-eula-dialog');
-    if (old) old.remove();
-
-    const wrapper = document.createElement('div');
-    wrapper.id = 'kodnaqi-eula-dialog';
-    wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:2147483647;padding:16px;direction:rtl;';
-
-    wrapper.innerHTML = ''
-      + '<div style="background:#fff;border-radius:16px;max-width:600px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 80px rgba(0,0,0,0.5);">'
-      + '  <div style="background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;padding:20px;border-radius:16px 16px 0 0;text-align:center;">'
-      + '    <h2 style="margin:0;font-size:1.3rem;">📋 اتفاقية استخدام KodNaqi</h2>'
-      + '    <div style="font-size:0.8rem;opacity:0.9;margin-top:5px;">الإصدار ' + EULA_VERSION + '</div>'
-      + '  </div>'
-      + '  <div style="flex:1;overflow-y:auto;padding:20px;font-size:0.9rem;line-height:1.8;color:#334155;">'
-      + '    <h3 style="color:#0d3b66;margin-top:0;">1. الترخيص والاستخدام</h3>'
-      + '    <p>هذا البرنامج مرخص لك كمستخدم نهائي للمعامل الطبية. لا يجوز إعادة البيع أو التوزيع أو النسخ بدون إذن كتابي من المطور.</p>'
-      + '    <h3 style="color:#0d3b66;">2. الملكية الفكرية</h3>'
-      + '    <p>جميع حقوق الملكية الفكرية للبرنامج محفوظة للمطور. البيانات المدخلة من قبلك هي ملكك وحدك.</p>'
-      + '    <h3 style="color:#0d3b66;">3. الاشتراك والتجديد</h3>'
-      + '    <p>الاشتراك سنوي ويتضمن التحديثات والدعم الفني. عند انتهاء الاشتراك، يتوقف البرنامج عن العمل حتى يتم التجديد.</p>'
-      + '    <h3 style="color:#0d3b66;">4. حدود المسؤولية</h3>'
-      + '    <p>البرنامج أداة مساعدة ولا يغني عن المراجعة الطبية المتخصصة. المطور غير مسؤول عن القرارات الطبية المتخذة بناءً على نتائج البرنامج.</p>'
-      + '    <h3 style="color:#0d3b66;">5. الخصوصية والأمان</h3>'
-      + '    <p>جميع البيانات تُخزن محليًا على جهازك فقط. لا نجمع أو نشارك بياناتك مع أي طرف ثالث.</p>'
-      + '    <h3 style="color:#0d3b66;">6. الدعم الفني</h3>'
-      + '    <p>الدعم الفني متاح خلال ساعات العمل عبر: <strong>+249111729111</strong></p>'
-      + '  </div>'
-      + '  <div style="padding:20px;border-top:1px solid #e2e8f0;display:flex;gap:12px;">'
-      + '    <button id="eula-accept" style="flex:1;padding:14px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;">✅ أوافق على الاتفاقية</button>'
-      + '    <button id="eula-decline" style="flex:1;padding:14px;background:#e2e8f0;color:#64748b;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;">❌ أرفض</button>'
-      + '  </div>'
-      + '</div>';
-
-    document.documentElement.appendChild(wrapper);
-
-    // أحداث الأزرار
-    document.getElementById('eula-accept').addEventListener('click', function() {
-      acceptEULA();
-      wrapper.remove();
-      // إعادة تحميل لتطبيق القيود
-      location.reload();
-    });
+  const old = document.getElementById('kodnaqi-eula-dialog');
+  if (old) old.remove();
+  const wrapper = document.createElement('div');
+  wrapper.id = 'kodnaqi-eula-dialog';
+  wrapper.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.85);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:2147483647;padding:16px;direction:rtl;';
+  
+  wrapper.innerHTML = `
+    <div style="background:#fff;border-radius:16px;max-width:550px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 25px 80px rgba(0,0,0,0.5);">
+      <div style="background:linear-gradient(135deg,#0d3b66,#1e6091);color:#fff;padding:20px;border-radius:16px 16px 0 0;text-align:center;">
+        <h2 style="margin:0;font-size:1.3rem;">📋 اتفاقية استخدام KodNaqi</h2>
+        <div style="font-size:0.8rem;opacity:0.9;margin-top:5px;">الإصدار 1.0</div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:20px;font-size:0.9rem;line-height:1.8;color:#334155;text-align:right;">
+        <h3 style="color:#0d3b66;margin-top:0;">1. الترخيص والاستخدام</h3>
+        <p>هذا البرنامج مرخص لك كمستخدم نهائي للمعامل الطبية. لا يجوز إعادة البيع أو التوزيع أو النسخ بدون إذن كتابي من المطور.</p>
+        <h3 style="color:#0d3b66;">2. الملكية الفكرية</h3>
+        <p>جميع حقوق الملكية الفكرية للبرنامج محفوظة للمطور. البيانات المدخلة من قبلك هي ملكك وحدك.</p>
+        <h3 style="color:#0d3b66;">3. الاشتراك والتجديد</h3>
+        <p>الاشتراك سنوي ويتضمن التحديثات والدعم الفني. عند انتهاء الاشتراك، يتوقف البرنامج عن العمل حتى يتم التجديد.</p>
+        <h3 style="color:#0d3b66;">4. حدود المسؤولية</h3>
+        <p>البرنامج أداة مساعدة ولا يغني عن المراجعة الطبية المتخصصة. المطور غير مسؤول عن القرارات الطبية المتخذة بناءً على نتائج البرنامج.</p>
+        <h3 style="color:#0d3b66;">5. الخصوصية والأمان</h3>
+        <p>جميع البيانات تُخزن محليًا على جهازك فقط. لا نجمع أو نشارك بياناتك مع أي طرف ثالث.</p>
+      </div>
+      <div style="padding:20px;border-top:1px solid #e2e8f0;display:flex;gap:12px;">
+        <button id="eula-accept" style="flex:1;padding:14px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;">✅ أوافق على الاتفاقية</button>
+      </div>
+    </div>`;
+    
+  document.documentElement.appendChild(wrapper);
+  document.getElementById('eula-accept').addEventListener('click', function() { 
+      acceptEULA(); 
+      wrapper.remove(); 
+      location.reload(); 
+  });
+}
 
     document.getElementById('eula-decline').addEventListener('click', function() {
       alert('❌ يجب الموافقة على اتفاقية الاستخدام لاستخدام البرنامج.');

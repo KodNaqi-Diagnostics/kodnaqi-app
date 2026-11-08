@@ -402,3 +402,4 @@ function showActivationSuccess(payload) {
   localStorage.setItem('kodnaqi_activation_shown', 'true');
 }
 window.showActivationSuccess = showActivationSuccess;
+window.logout = logout;

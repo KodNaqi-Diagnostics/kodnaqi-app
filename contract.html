@@ -1,69 +1,87 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
-<title>عقد ترخيص استخدام برنامج — KodNaqi Diagnostics</title>
-<link rel="stylesheet" href="lib/cairo.css">
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#e5e7eb;color:#111;font-family:"Cairo",Tahoma,Arial,sans-serif;font-size:11.5pt;line-height:1.8;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.toolbar{position:sticky;top:0;z-index:10;background:#0d3b66;color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:11pt}
-.toolbar button{background:#fff;color:#0d3b66;border:0;border-radius:8px;padding:8px 16px;font:inherit;font-weight:700;cursor:pointer}
-.sheet{width:min(210mm,100%);margin:12px auto;background:#fff;padding:16mm 15mm;box-shadow:0 2px 12px rgba(0,0,0,.2)}
-.head{text-align:center;border-bottom:2px solid #0d3b66;padding-bottom:8px;margin-bottom:10px}
-.logo{height:54px;display:block;margin:0 auto 4px}
-.head h1{margin:0;font-size:19pt;color:#0d3b66}
-.sub{margin:2px 0 6px;color:#475569;font-size:10.5pt}
-.meta{display:flex;justify-content:space-between;font-size:10.5pt}
-.intro{margin:8px 0}
-.f{font-weight:700;border-bottom:1px dotted #9aa3af;padding:0 4px}
-.f:empty::after{content:"……………………………";color:#9aa3af;font-weight:400}
-.parties{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
-.box{border:1px solid #9fb3c8;border-radius:6px;padding:8px 10px}
-.box h3{margin:0 0 4px;font-size:11.5pt;color:#0d3b66}
-.box div{font-size:10.5pt}
-.art{margin:10px 0}
-.art h2{font-size:12.5pt;margin:0 0 4px;color:#0d3b66;border-bottom:1px solid #c7d2e0;padding-bottom:2px}
-.art p,.art li{margin:2px 0;text-align:justify}
-.art ul,.art ol{margin:2px 0;padding-inline-start:22px}
-.kv,.pk{width:100%;border-collapse:collapse;font-size:10.5pt;margin:4px 0}
-.kv td,.pk td{border:1px solid #cfd8e3;padding:3px 8px}
-.kv td:first-child{background:#f3f6fa;width:40%}
-.pk .bx{width:8%;text-align:center;font-size:13pt}
-.pk tr.on{background:#e8f5ee;font-weight:700}
-.warn{margin-top:6px;color:#7f1d1d}
-.sign{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
-.sb{border:1px solid #9fb3c8;border-radius:6px;padding:8px 10px}
-.sb h3{margin:0 0 4px;font-size:11.5pt;color:#0d3b66}
-.line{border-bottom:1px solid #111;height:15mm;margin:6px 0}
-.stamp{border:1px dashed #9aa3af;height:20mm;margin:4px 0;display:flex;align-items:center;justify-content:center;color:#9aa3af;font-size:9pt}
-.wit{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;font-size:10.5pt}
-.note{margin-top:10px;font-size:10pt;color:#334155}
-.foot{margin-top:8px;border-top:1px solid #c7d2e0;padding-top:6px;text-align:center;font-size:9.5pt;color:#475569}
-.head{position:relative}
-.qrbox{background:#fff}
-.qr-top{position:absolute;left:0;top:0;width:24mm;height:24mm}
-.qr-sig{width:34mm;height:34mm;flex:none}
-.qrbox img,.qrbox canvas{width:100%!important;height:100%!important;image-rendering:pixelated}
-.vbox{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:9.5pt;color:#334155}
-.unsigned .qrbox,.unsigned .vbox{display:none}
-.unsigned .head::before{content:"⚠️ نسخة غير موقَّعة رقميًا — لا يُعتمد على هذا العقد";display:block;background:#b91c1c;color:#fff;text-align:center;padding:5px;font-weight:700;margin-bottom:6px;font-size:10.5pt}
-@page{size:A4;margin:18mm 16mm 20mm 16mm}
-@page{@bottom-center{content:"صفحة " counter(page) " من " counter(pages);font:9pt Tahoma,Arial,sans-serif;color:#555}}
-@media print{
- body{background:#fff}
- .toolbar{display:none}
- .sheet{width:auto;margin:0;padding:0;box-shadow:none}
- .art,.sign,.parties,.head,.wit,.lastpg{break-inside:avoid;page-break-inside:avoid}
- .art h2{break-after:avoid;page-break-after:avoid}
-}
-@media (max-width:560px){.parties,.sign,.wit{grid-template-columns:1fr}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عقد الاستخدام - KodNaqi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-surface: #1e293b;
+            --primary: #0d3b66;
+            --accent: #c9a227;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.8;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--primary), #1e6091);
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .header h1 { font-size: 1.8rem; color: white; font-weight: 800; }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 30px;
+            background: var(--bg-surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            flex-grow: 1;
+            width: 90%;
+        }
+        .content h2, .content h3 {
+            color: var(--accent);
+            margin: 25px 0 15px;
+            font-size: 1.3rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+        .content p, .content div { margin-bottom: 15px; color: var(--text-muted); font-size: 1.05rem; }
+        .content ul { margin-right: 20px; margin-bottom: 15px; color: var(--text-muted); }
+        .content li { margin-bottom: 8px; }
+        
+        .btn-back {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 30px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            transition: 0.3s;
+            text-align: center;
+        }
+        .btn-back:hover { background: #1e6091; transform: translateY(-2px); }
+        
+        .footer { text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border); margin-top: auto; }
+    </style>
 </head>
 <body>
-<div class="toolbar"><span>عقد ترخيص — ورقة A4</span><a id="vlink" href="#" target="_blank" style="display:none;color:#fff;font-size:10pt">🔎 فتح صفحة التحقق (اختبار)</a><button onclick="window.print()">🖨️ طباعة العقد</button></div>
+
+    <div class="header">
+        <h1>عقد الاستخدام</h1>
+        <p style="color: #cbd5e1; margin-top: 5px;">آخر تحديث: أكتوبر 2026</p>
+    </div>
+
+    <div class="container">
+        <div class="content">
+            <div class="toolbar"><span>عقد ترخيص — ورقة A4</span><a id="vlink" href="#" target="_blank" style="display:none;color:#fff;font-size:10pt">🔎 فتح صفحة التحقق (اختبار)</a><button onclick="window.print()">🖨️ طباعة العقد</button></div>
 <main class="sheet">
 <header class="head">
 <div class="qrbox qr-top"></div>
@@ -208,78 +226,18 @@ body{margin:0;background:#e5e7eb;color:#111;font-family:"Cairo",Tahoma,Arial,san
 <div class="foot">KodNaqi Diagnostics © 2026 — السني خالد محمد أحمد السني — kodnaqi@gmail.com — <bdi dir="ltr">+249 111 729 111</bdi></div></section>
 </div>
 </main>
-<script src="lib/qrcode.min.js"></script>
-<script>
-(function () {
-  var D = {};
-  try { D = JSON.parse(localStorage.getItem('kodnaqi_contract_data') || '{}') || {}; } catch (e) { D = {}; }
-  var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  function fmt(ts) {
-    if (!ts) return '';
-    var d = new Date(ts);
-    if (isNaN(d)) return '';
-    return String(d.getDate()).padStart(2, '0') + ' ' + M[d.getMonth()] + ' ' + d.getFullYear();
-  }
-  function dayName(ts) {
-    if (!ts) return '';
-    var d = new Date(ts);
-    return isNaN(d) ? '' : d.toLocaleDateString('ar', { weekday: 'long' });
-  }
-  var TIER = { B: { dev: '1', usr: '1' }, S: { dev: '3', usr: '5' }, A: { dev: 'غير محدود', usr: 'غير محدود' }, E: { dev: 'غير محدود', usr: 'غير محدود' } };
-  var t = TIER[D.tier] || null;
-  var dur = '';
-  if (D.issued && D.expires && D.expires > D.issued) {
-    var days = Math.round((D.expires - D.issued) / 86400000);
-    if (days >= 364 && days <= 366) { dur = 'سنة كاملة (365 يومًا)'; }
-    else if (days % 30 === 0) {
-      var mo = days / 30;
-      var mt = mo === 1 ? 'شهر واحد' : (mo === 2 ? 'شهران' : (mo <= 10 ? mo + ' أشهر' : mo + ' شهرًا'));
-      dur = days + ' يومًا (' + mt + ')';
-    } else { dur = days + ' يومًا'; }
-  }
-  var amt = { total: '', h1: '', h2: '' };
-  var a = parseInt(D.amount, 10) || 0;
-  if (a > 0) {
-    var ff = function (n) { return n.toLocaleString('en-US'); };
-    amt.total = ff(a); amt.h1 = ff(Math.floor(a / 2)); amt.h2 = ff(a - Math.floor(a / 2));
-  }
-  var V = { contractNo: D.contractNo, issued: fmt(D.issued), expires: fmt(D.expires), day: dayName(D.issued), customer: D.customer, owner: D.ownerName, phone: D.phone, address: D.address, regNumber: D.regNumber, devices: t && t.dev, users: t && t.usr, duration: dur, amountTotal: amt.total, amountHalf1: amt.h1, amountHalf2: amt.h2 };
-  var nodes = document.querySelectorAll('.f[data-k]');
-  for (var i = 0; i < nodes.length; i++) {
-    var v = V[nodes[i].getAttribute('data-k')];
-    if (v) {
-      nodes[i].textContent = v;
-      var k = nodes[i].getAttribute('data-k');
-      if (k === 'issued' || k === 'expires') nodes[i].setAttribute('dir', 'ltr');
-    }
-  }
-  var rows = document.querySelectorAll('.pkg');
-  for (var j = 0; j < rows.length; j++) {
-    if (rows[j].getAttribute('data-t') === D.tier) {
-      rows[j].className += ' on';
-      rows[j].querySelector('.bx').textContent = '☑';
-    }
-  }
-  var VERIFY_BASE = 'https://kodnaqi-diagnostics.github.io/kodnaqi-app/verify.html';
-  var fp = '';
-  if (D.token && /^KODC1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(D.token)) {
-    fp = ' | ID ' + D.token.split('.')[2].slice(0, 10);
-    var boxes = document.querySelectorAll('.qrbox');
-    for (var q = 0; q < boxes.length; q++) {
-      try { new QRCode(boxes[q], { text: VERIFY_BASE + '#' + D.token, width: 420, height: 420, correctLevel: QRCode.CorrectLevel.L }); } catch (e) { boxes[q].textContent = ''; }
-    }
-    var lk = document.getElementById('vlink');
-    if (lk) { lk.href = new URL('verify.html', location.href).href + '#' + D.token; lk.style.display = ''; }
-  } else {
-    document.body.className += ' unsigned';
-  }
-  var no = String(D.contractNo || '').replace(/[^A-Za-z0-9_\- ]/g, '');
-  if (no) {
-    var st = document.createElement('style');
-    st.textContent = '@page{@bottom-right{content:"Contract No: ' + no + fp + '";font:8pt Tahoma,Arial,sans-serif;color:#555}}';
-    document.head.appendChild(st);
-  }
-})();
-</script>
+
+
+        </div>
+
+        <div style="text-align: center;">
+            <a href="app.html" class="btn-back">← العودة للتطبيق</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        نظام KodNaqi Diagnostics © 2026 - جميع الحقوق محفوظة
+    </div>
+
 </body>
 </html>
