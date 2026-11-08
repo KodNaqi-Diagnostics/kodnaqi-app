@@ -32,10 +32,13 @@ jobs:
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
-      - name: Upload EXE
-        uses: actions/upload-artifact@v4
-        with:
-          name: KodNaqi-Setup-EXE
-          path: dist/*.exe
-          if-no-files-found: error
+   - name: Upload EXE and Update Files
+  uses: actions/upload-artifact@v4
+  with:
+    name: KodNaqi-Setup-EXE
+    path: |
+      dist/*.exe
+      dist/*.yml
+      dist/*.blockmap
+       if-no-files-found: error
           retention-days: 14
