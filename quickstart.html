@@ -59,8 +59,7 @@
 
   <!-- 🛠️ زر الرجوع هنا (داخل البطاقة) -->
   <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-    <a href="landing.html" style="display: inline-block; padding: 12px 30px; background-color: var(--kn-primary); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1.05rem; box-shadow: 0 4px 10px rgba(13, 59, 102, 0.3); transition: 0.3s;">
-      ← العودة للصفحة الرئيسية
+    <a href="javascript:void(0)" onclick="if(window.history.length > 1) { window.history.back(); } else { window.location.href='app.html'; }" class="btn-back">← العودة للصفحة السابقة</a>  ← العودة للصفحة الرئيسية
     </a>
   </div>
 
