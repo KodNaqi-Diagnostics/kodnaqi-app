@@ -1,0 +1,55 @@
+/* KodNaqi UI v1 — تنسيق شاشات الدخول والتفعيل والاتفاقية.
+   ملف مستقل: احذف سطر ربطه من app.html ليعود الشكل القديم. */
+:root{--kn-navy:#13294b;--kn-o1:#ffb23f;--kn-o2:#f57c00;--kn-line:#e3e8f0}
+
+#loginOverlay,#kn-setup-wizard,#kodnaqi-eula-dialog{font-family:'Cairo',system-ui,sans-serif!important}
+#loginOverlay *,#kn-setup-wizard *,#kodnaqi-eula-dialog *{font-family:inherit}
+
+/* الخلفية */
+#loginOverlay,#kn-setup-wizard{background:linear-gradient(150deg,#16223d 0%,#243456 52%,#3b4a6e 100%)!important}
+
+/* البطاقات */
+#loginOverlay>div,#kn-setup-wizard>div,#kodnaqi-eula-dialog>div{
+  border-radius:28px!important;
+  box-shadow:0 40px 80px -24px rgba(8,15,35,.65),0 18px 36px -18px rgba(8,15,35,.5)!important}
+#kodnaqi-eula-dialog>div{overflow:hidden!important}
+
+/* خانات الدخول (تسمية عائمة: مظهر فقط) */
+#loginOverlay .floating-group input{
+  background:#fff!important;border:1.5px solid var(--kn-line)!important;border-radius:16px!important;
+  box-shadow:0 8px 18px -10px rgba(15,28,51,.35)!important;transition:border-color .2s,box-shadow .2s}
+#loginOverlay .floating-group input:focus{
+  border-color:var(--kn-o2)!important;outline:none!important;
+  box-shadow:0 0 0 4px rgba(245,124,0,.16),0 12px 24px -12px rgba(15,28,51,.4)!important}
+
+/* خانات التفعيل */
+#kn-setup-wizard input[type="text"],#kn-setup-wizard input[type="tel"],#kn-setup-wizard input[type="email"]{
+  background:#fff!important;border:1.5px solid var(--kn-line)!important;border-radius:16px!important;
+  padding:14px 16px!important;font-size:1rem!important;box-sizing:border-box;
+  box-shadow:0 8px 18px -10px rgba(15,28,51,.35)!important;transition:border-color .2s,box-shadow .2s}
+#kn-setup-wizard input[type="text"]:focus,#kn-setup-wizard input[type="tel"]:focus,#kn-setup-wizard input[type="email"]:focus{
+  border-color:var(--kn-o2)!important;outline:none!important;
+  box-shadow:0 0 0 4px rgba(245,124,0,.16),0 12px 24px -12px rgba(15,28,51,.4)!important}
+#kn-setup-wizard ::placeholder{color:#9aa7b8!important;opacity:1}
+#kn-setup-wizard label{color:var(--kn-navy)!important;font-weight:700!important;font-size:.95rem!important}
+
+/* كود الجهاز والمفتاح: خط ثابت العرض وواضح */
+#kn-wiz-key,#kn-device-code{font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace!important}
+#kn-device-code{letter-spacing:5px!important;border-radius:14px!important;box-shadow:inset 0 2px 6px rgba(15,28,51,.12)!important}
+#kn-wiz-key{letter-spacing:1.5px!important}
+#kn-setup-wizard [style*="#fef3c7"]{border:1px solid #f5c26b!important;border-radius:20px!important;box-shadow:0 14px 28px -16px rgba(245,124,0,.55)!important}
+#kn-copy-devcode,#kn-send-devcode{border-radius:14px!important;padding:11px!important;font-weight:700!important;box-shadow:0 8px 16px -8px rgba(15,28,51,.45)!important}
+
+/* الأزرار الرئيسية: حبة برتقالية */
+#loginBtn,#kn-wiz-submit,#eula-accept{
+  border:none!important;border-radius:999px!important;color:#fff!important;font-weight:800!important;min-height:54px;cursor:pointer;
+  background:linear-gradient(135deg,var(--kn-o1),var(--kn-o2))!important;
+  box-shadow:0 16px 26px -12px rgba(245,124,0,.7)!important;transition:transform .15s,box-shadow .15s}
+#loginBtn:active,#kn-wiz-submit:active,#eula-accept:active{transform:translateY(1px);box-shadow:0 8px 16px -10px rgba(245,124,0,.7)!important}
+#loginBtn:disabled{opacity:.65;filter:grayscale(.4);cursor:not-allowed}
+
+/* الاتفاقية */
+#kodnaqi-eula-dialog h2{color:#fff!important;font-weight:800!important;font-size:1.35rem!important}
+#kodnaqi-eula-dialog h3{font-size:1.05rem!important;font-weight:800!important;margin:1.1rem 0 .3rem!important}
+#kodnaqi-eula-dialog h3:first-child{margin-top:0!important}
+#kodnaqi-eula-dialog p{font-size:.98rem!important;line-height:1.95!important;color:#334155!important;margin:0 0 .6rem!important}
