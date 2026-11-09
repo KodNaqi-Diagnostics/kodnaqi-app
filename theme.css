@@ -1236,24 +1236,23 @@ select.form-select {
   padding-left: 2.25rem !important;
 }
 
-/* تصميم العناوين العائمة - نسخة مصححة */
+/* تصميم العناوين العائمة - النسخة النهائية */
 .floating-group {
   position: relative;
-  margin-bottom: 22px;
-  text-align: right;
+  margin-bottom: 20px;
 }
 
 .floating-group input {
   width: 100%;
-  padding: 22px 14px 8px 14px; /* مساحة علوية للنص */
-  border: 2px solid #dde3eb;
+  padding: 22px 14px 8px 14px; 
+  border: 2px solid #cbd5e1;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 15px;
   font-family: inherit;
   outline: none;
-  background: transparent; /* يجب أن يكون شفافاً لكي تظهر خلفية النص */
-  transition: 0.3s;
+  background: #ffffff; /* لون أبيض صريح */
   box-sizing: border-box;
+  transition: 0.3s;
 }
 
 .floating-group input:focus {
@@ -1265,20 +1264,20 @@ select.form-select {
   position: absolute;
   right: 14px;
   top: 50%;
-  transform: translateY(-50%); /* يجعله في المنتصف تماماً */
-  background: #fff; /* هذه الخلفية هي التي تخفي الخط تحته */
+  transform: translateY(-50%);
+  background-color: #ffffff; /* هذه الخلفية هي التي ستخفي الخط */
   padding: 0 6px;
-  color: #666;
-  font-size: 14px;
-  transition: 0.2s ease-out;
+  color: #64748b;
+  font-size: 15px;
   pointer-events: none;
+  transition: 0.2s ease-out;
+  z-index: 10; /* لضمان ظهورها فوق الخط */
 }
 
-/* السحر هنا: عندما يكون الحقل في وضع التركيز أو يحتوي على نص */
+/* عندما يكون الحقل في وضع التركيز أو به نص، يصعد النص للأعلى */
 .floating-group input:focus ~ label,
 .floating-group input:not(:placeholder-shown) ~ label {
-  top: 0; /* يصعد إلى الحد العلوي */
-  transform: translateY(-50%); /* يثبت على الخط بالضبط */
+  top: 0; 
   font-size: 12px;
   color: #0d6efd;
   font-weight: 700;

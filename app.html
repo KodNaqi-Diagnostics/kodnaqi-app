@@ -2013,17 +2013,58 @@ window.updateTestsFromFile = function() {
 };
 </script>
 <script>
-// 🛠️ دالة احتياطية لضمان عمل زر الخروج 100%
-window.logout = function() {
-    if (!confirm('هل تريد تسجيل الخروج؟')) return;
+window.logout = async function() {
+    // استدعاء النافذة المخصصة الأنيقة
+    const isConfirmed = await window.showKNConfirm();
+    if (!isConfirmed) return;
     
-    // مسح الجلسة فقط
+    console.log('🚪 تسجيل خروج...');
+    // مسح الجلسة
     localStorage.removeItem('kodnaqi_session');
     localStorage.removeItem('kodnaqi_current_user');
     sessionStorage.clear();
     
-    // إعادة تحميل الصفحة لتعود لشاشة الدخول
+    // إعادة تحميل الصفحة للعودة لشاشة الدخول
     location.reload();
+};
+</script>
+<!-- نافذة تأكيد مخصصة -->
+<div id="knConfirmOverlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(5px); z-index:10000000; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#fff; border-radius:16px; max-width:380px; width:100%; padding:30px; text-align:center; box-shadow:0 20px 40px rgba(0,0,0,0.2); transform: scale(0.9); transition:0.3s;" id="knConfirmBox">
+        <div style="font-size:3rem; margin-bottom:15px;">🚪</div>
+        <h3 style="color:#0d3b66; margin-bottom:10px; font-size:1.3rem;">تأكيد الخروج</h3>
+        <p style="color:#475569; margin-bottom:25px; font-size:1rem;">هل أنت متأكد أنك تريد تسجيل الخروج من النظام؟</p>
+        <div style="display:flex; gap:10px;">
+            <button onclick="resolveConfirm(true)" style="flex:1; padding:12px; background:#ef4444; color:#fff; border:none; border-radius:8px; font-weight:bold; font-size:1rem; cursor:pointer; transition:0.3s;">نعم، خروج</button>
+            <button onclick="resolveConfirm(false)" style="flex:1; padding:12px; background:#e2e8f0; color:#334155; border:none; border-radius:8px; font-weight:bold; font-size:1rem; cursor:pointer; transition:0.3s;">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// دالة إنشاء نافذة التأكيد
+let _confirmResolver = null;
+window.showKNConfirm = function() {
+    return new Promise((resolve) => {
+        _confirmResolver = resolve;
+        const overlay = document.getElementById('knConfirmOverlay');
+        const box = document.getElementById('knConfirmBox');
+        overlay.style.display = 'flex';
+        setTimeout(() => { box.style.transform = 'scale(1)'; }, 10);
+    });
+};
+
+window.resolveConfirm = function(result) {
+    const overlay = document.getElementById('knConfirmOverlay');
+    const box = document.getElementById('knConfirmBox');
+    box.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        if (_confirmResolver) {
+            _confirmResolver(result);
+            _confirmResolver = null;
+        }
+    }, 200);
 };
 </script>
 </body>
