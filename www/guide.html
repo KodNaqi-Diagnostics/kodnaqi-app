@@ -1,145 +1,457 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دليل التدريب - KodNaqi</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css">
-    <style>
-        body { font-family: 'Cairo', sans-serif; padding: 20px; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .header h1 { color: var(--kn-primary); font-weight: 900; }
-        .header p { color: var(--kn-text-muted); }
-        .btn-back { background: var(--kn-primary); color: white; padding: 10px 25px; border-radius: 50px; text-decoration: none; font-weight: bold; display: inline-block; margin-bottom: 20px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دليل التدريب الرسمي — KodNaqi Diagnostics</title>
+  <link href="lib/bootstrap.rtl.min.css" rel="stylesheet">
+  <!-- خط Tajawal الأصلي بكافة الأوزان -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="lib/bootstrap-icons.css" rel="stylesheet">
+  <link href="brand.css" rel="stylesheet">
+  <link href="theme.css" rel="stylesheet">
+  
+  <style>
+    :root {
+      --kn-primary: #0d3b66;
+      --kn-primary-dark: #082844;
+      --kn-primary-light: #1e6091;
+      --kn-accent: #c9a227;
+      --kn-bg-soft: #f8f9fa;
+      --kn-border: #dee2e6;
+    }
+    
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background-color: var(--kn-bg-soft);
+      color: #333;
+      line-height: 1.8;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .doc {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 15px;
+    }
+    
+    .doc-content {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(13, 59, 102, 0.08);
+      padding: 40px;
+      border-top: 5px solid var(--kn-primary);
+    }
+    
+    .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--kn-border);
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .brand-logo {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+    }
+    
+    .brand-text h1 {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: var(--kn-primary);
+      margin: 0;
+    }
+    
+    .brand-text p {
+      font-size: 0.95rem;
+      color: var(--kn-primary-light);
+      margin: 0;
+      font-weight: 700;
+    }
+    
+    .doc-meta {
+      text-align: left;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    
+    .doc-title {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+    
+    .doc-title h2 {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--kn-primary);
+    }
+    
+    .subtitle {
+      font-size: 1.1rem;
+      color: #555;
+      margin-top: 5px;
+      font-weight: 500;
+    }
+    
+    .gold-line {
+      width: 80px;
+      height: 4px;
+      background: var(--kn-accent);
+      margin: 15px auto 0;
+      border-radius: 2px;
+    }
+    
+    .tip {
+      background: rgba(30, 96, 145, 0.08);
+      border-right: 4px solid var(--kn-primary-light);
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      font-size: 0.98rem;
+    }
+    
+    .lesson {
+      background: #fff;
+      border: 1px solid var(--kn-border);
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+    
+    .lesson h3 {
+      font-size: 1.35rem;
+      color: var(--kn-primary);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      border-bottom: 1px dashed var(--kn-border);
+      padding-bottom: 12px;
+    }
+    
+    .lesson-num {
+      background: var(--kn-primary);
+      color: white;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    
+    .lesson h4 {
+      font-size: 1.05rem;
+      color: var(--kn-primary-light);
+      font-weight: 700;
+      margin-top: 15px;
+    }
+    
+    .step-list {
+      padding-right: 20px;
+    }
+    
+    .step-list li {
+      margin-bottom: 12px;
+    }
+    
+    .keyboard {
+      background: #e9ecef;
+      border: 1px solid #ced4da;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: #495057;
+      display: inline-block;
+      direction: ltr;
+    }
+    
+    /* تنسيق الصور لتكون متجاوبة وجميلة */
+    .lesson-img {
+      width: 100%;
+      max-height: 450px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 1px solid var(--kn-border);
+      background: #fdfdfd;
+      padding: 5px;
+      margin: 15px 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+    
+    .warning {
+      background: #fff3cd;
+      border-right: 4px solid #ffc107;
+      color: #856404;
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 576px) {
+      .doc {
+        margin: 10px auto;
+        padding: 0 8px;
+      }
+      .doc-content {
+        padding: 20px 15px;
+        border-radius: 12px;
+      }
+      .doc-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .doc-meta {
+        text-align: center;
+      }
+      .doc-title h2 {
+        font-size: 1.5rem;
+      }
+      .lesson {
+        padding: 18px 12px;
+      }
+      .step-list {
+        padding-right: 15px;
+      }
+    }
+  </style>
+  <meta name="theme-color" content="#0d3b66">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <a href="app.html" class="btn-back">← العودة للتطبيق</a>
-            <h1>📚 دليل التدريب الشامل</h1>
-            <p>تعلم كيفية استخدام نظام KodNaqi Diagnostics خطوة بخطوة</p>
-        </div>
-        <div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson1-activation.png" class="card-img-top" alt="​الدرس1 Activation" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس1 Activation</h5>
-            </div>
-        </div>
+<div class="doc">
+<div class="doc-content">
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div class="brand-block">
+      <img src="logo.png" alt="KodNaqi" class="brand-logo">
+      <div class="brand-text">
+        <h1>KodNaqi</h1>
+        <p>Diagnostics</p>
+      </div>
     </div>
+    <div class="doc-meta">
+      <div>دليل التدريب الرسمي</div>
+      <div>الإصدار 1.0</div>
+    </div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="doc-title">
+    <h2>🎬 دليل التدريب الرسمي</h2>
+    <div class="subtitle">10 دروس لإتقان استخدام النظام كاملًا</div>
+    <div class="gold-line"></div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="tip">
+    <strong>📖 عن هذا الدليل:</strong><br>
+    هذا الدليل مُصمّم لتدريب فريق معملك خلال ساعتين. كل درس يحتوي على خطوات واضحة وصور توضيحية لضمان الاستيعاب الكامل.
+  </div>
+
+  <!-- LESSON 1 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">1</span> تشغيل النظام أول مرة</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>تفعيل التطبيق وإنشاء حساب المدير الأساسي.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>افتح التطبيق:</strong> اضغط على أيقونة KodNaqi من الشاشة الرئيسية لهاتفك.</li>
+      <li><strong>شاشة الترحيب والتفاصيل:</strong> أدخل كود الجهاز، ومفتاح الترخيص، وبيانات المعمل.</li>
+      <li><strong>إدخال بيانات المعمل:</strong> اسم المعمل، الهاتف، العنوان، وشعار المعمل (Logo).</li>
+      <li><strong>إنشاء حساب المدير (Admin):</strong> أدخل اسم المستخدم وكلمة المرور وتأكيدها.</li>
+    </ol>
+    <img src="lesson1-activation.png" alt="تشغيل النظام أول مرة" class="lesson-img">
+    <div class="warning">
+      ⚠️ <strong>مهم جدًا:</strong> احفظ كلمة مرور حساب المدير في مكان آمن لكونها مسؤولة عن الصلاحيات العليا.
+    </div>
+  </div>
+
+  <!-- LESSON 2 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">2</span> إضافة مريض جديد وإنشاء زيارة</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>تسجيل بيانات المريض وتحديد الفحوصات المطلوبة وإنشاء زيارة طبية جديدة.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>الانتقال لشاشة الاستقبال:</strong> من القائمة الرئيسية اختر "إضافة زيارة / مريض".</li>
+      <li><strong>إدخال البيانات الشخصية:</strong> أدخل اسم المريض، العمر، الجنس، ورقم الهاتف.</li>
+      <li><strong>اختيار الفحوصات:</strong> حدد الفحوصات المطلوبة من قائمة الفحوصات المتاحة أو البحث المباشر.</li>
+      <li><strong>حفظ الزيارة:</strong> اضغط على "حفظ وإنشاء زيارة" للحصول على رقم الزيارة وسند الاستلام.</li>
+    </ol>
+    <img src="lesson2-add-patient.png" alt="إضافة مريض جديد وإنشاء زيارة" class="lesson-img">
+  </div>
+
+  <!-- LESSON 3 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">3</span> إدخال نتائج الفحوصات المعملية</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>تسجيل وتدقيق نتائج التحاليل الطبية وإصدار النتيجة النهائية.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>فتح شاشة النتائج:</strong> من لوحة التحكم، اختر "إدخال النتائج".</li>
+      <li><strong>البحث عن المريض:</strong> ابحث برقم الزيارة أو باسم المريض.</li>
+      <li><strong>كتابة النتائج:</strong> أدخل القِيم العددية أو النصية لكل فحص، مع ملاحظة المعدلات الطبيعية (Normal Ranges) المعتمدة تلقائياً.</li>
+      <li><strong>اعتماد النتيجة:</strong> اضغط على "حفظ واعتماد النتيجة".</li>
+    </ol>
+    <img src="lesson3-enter-results.png" alt="إدخال نتائج الفحوصات المعملية" class="lesson-img">
+  </div>
+
+  <!-- LESSON 4 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">4</span> معاينة وطباعة التقرير الطبي</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>توليد تقرير طباعة احترافي بتنسيق المعمل وإصدار ملف PDF أو الطباعة المباشرة.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>فتح شاشة الطباعة:</strong> بعد اعتماد النتيجة، اضغط على زر "معاينة التقرير / طباعة".</li>
+      <li><strong>مراجعة التنسيق:</strong> التأكد من ظهور شعار المعمل، البيانات الشخصية، وشريط الترويسة والتذييل بصورة سليمة.</li>
+      <li><strong>الطباعة أو التصدير:</strong> اختر "طباعة مستند" أو "حفظ كـ PDF".</li>
+    </ol>
+    <img src="lesson4-print-report.png" alt="معاينة وطباعة التقرير الطبي" class="lesson-img">
+  </div>
+
+  <!-- LESSON 5 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">5</span> إدارة الموردين والمالية والمدفوعات</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>متابعة المتحصلات اليومية، الخزينة، وتصفيات الحسابات المتبقية.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>الخزينة والمالية:</strong> التوجه إلى قسم "المالية والحسابات".</li>
+      <li><strong>تسجيل الدفعات:</strong> تسجيل المبالغ المدفوعة والمتبقية لكل زيارة مريض.</li>
+      <li><strong>عرض التقرير المالي اليومي:</strong> استخراج الإجمالي اليومي للمبيعات والمقبوضات النقدية.</li>
+    </ol>
+    <img src="lesson5-financial-summary.png" alt="إدارة الموردين والمالية والمدفوعات" class="lesson-img">
+  </div>
+
+  <!-- LESSON 6 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">6</span> إرسال الإشعارات والنتائج عبر واتساب (WhatsApp)</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>تفعيل الإرسال الآلي لإشعارات الاستلام وتنبيهات جاهزية النتائج للعملاء والمرضى.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>إعداد الرابط والخدمة:</strong> التوجه إلى قسم "إعدادات واتساب" في القائمة الجانبية.</li>
+      <li><strong>ربط رقم المعمل:</strong> مسح رمز الاستجابة السريعة (QR Code) أو تفعيل معرف الخدمة المعتمد.</li>
+      <li><strong>إرسال إشعار الزيارة:</strong> عند تسجيل زيارة جديدة، اضغط على زر "إرسال إشعار واتساب" ليتم إرسال تفاصيل الزيارة ورابط المتابعة تلقائياً.</li>
+      <li><strong>إرسال التقرير الطبي:</strong> بعد اعتماد النتائج، اضغط على زر "إرسال التقرير عبر واتساب" ليصل المستند بصيغة PDF مباشرة إلى مريضك.</li>
+    </ol>
+    <img src="lesson6-whatsapp-integration.png" alt="إرسال الإشعارات والنتائج عبر واتساب" class="lesson-img">
+  </div>
+
+  <!-- LESSON 7 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">7</span> النسخ الاحتياطي واسترجاع البيانات (Offline & Cloud)</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>تأمين قاعدة بيانات المعمل وحمايتها من الفقدان والقدرة على استرجاعها بضغطة زر.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>فتح شاشة النسخ الاحتياطي:</strong> من القائمة الرئيسية، اختر "إدارة البيانات والنسخ الاحتياطي".</li>
+      <li><strong>إنشاء نسخة محلية (Offline Backup):</strong> اضغط على "تصدير نسخة احتياطية" لحفظ قاعدة البيانات محلياً على الجهاز بصيغة مفرغة وتاريخ محدد.</li>
+      <li><strong>استرجاع البيانات:</strong> عند الحاجة لنقل البيانات أو استعادتها، اضغط على "استيراد نسخة احتياطية" وحدد الملف المطلوب ثم وافق على عملية التحديث.</li>
+    </ol>
+    <img src="lesson7-backup-restore.png" alt="النسخ الاحتياطي واسترجاع البيانات" class="lesson-img">
+    <div class="warning">
+      ⚠️ <strong>تنبيه أمني:</strong> يُنصح بحفظ نسخة احتياطية بشكل يومي أو أسبوعي في مكان آمن لضمان سلامة بيانات المرضى.
+    </div>
+  </div>
+
+  <!-- LESSON 8 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">8</span> إدارة الصلاحيات والموظفين</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>إضافة موظفي المعمل (استقبال، فنيين، محاسبين) وتحديد مستويات الوصول لكل مستخدم.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>الدخول بحساب المدير (Admin):</strong> احرص على تسجيل الدخول بحساب المدير الرئيسي.</li>
+      <li><strong>إضافة موظف جديد:</strong> انتقل إلى "إدارة المستخدمين" واضغط "إضافة مستخدم جديد".</li>
+      <li><strong>تحديد البيانات والدور:</strong> أدخل اسم الموظف، اسم المستخدم، كلمة المرور، واختر الدور (مثلاً: فني معمل، موظف استقبال، أو مدير).</li>
+      <li><strong>حفظ الصلاحيات:</strong> قم بتأكيد الحساب ليتمكن الموظف من تسجيل الدخول بصلاحياته المحددة فقط.</li>
+    </ol>
+    <img src="lesson8-user-permissions.png" alt="إدارة الصلاحيات والموظفين" class="lesson-img">
+  </div>
+
+  <!-- LESSON 9 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">9</span> تخصيص الفحوصات والأسعار والمعدلات الطبيعية</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>إضافة فحوصات جديدة، تعديل قوائم الأسعار، وضبط النطاقات الطبيعية (Normal Ranges) طبقاً لأجهزة المعمل.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>شاشة إدارة الفحوصات:</strong> من الإعدادات اختر "إدارة دليل الفحوصات".</li>
+      <li><strong>التعديل أو الإضافة:</strong> ابحث عن الفحص المطلوب أو اضغط "إضافة فحص جديد".</li>
+      <li><strong>ضبط المعدلات الطبيعية (Reference Ranges):</strong> أدخل النطاق الطبيعي لكل فحص (حسب الجنس والعمر إن وجد) والوحدات المستخدمة (<span class="keyboard">mg/dL</span>, <span class="keyboard">g/dL</span>...).</li>
+      <li><strong>تحديث السعر:</strong> حدد سعر الفحص الافتراضي ثم اضغط "حفظ التغييرات".</li>
+    </ol>
+    <img src="lesson9-test-catalog.png" alt="تخصيص الفحوصات والأسعار والمعدلات الطبيعية" class="lesson-img">
+  </div>
+
+  <!-- LESSON 10 -->
+  <div class="lesson">
+    <h3><span class="lesson-num">10</span> الوضع الليلي (Dark Mode) وتخصيص المظهر</h3>
+    <h4>🎯 الهدف:</h4>
+    <p>التبديل بين الثيم الفاتح والليلي واختيار الألوان واللغة المناسبة لتجربة استخدام مريحة.</p>
+    <h4>📋 الخطوات:</h4>
+    <ol class="step-list">
+      <li><strong>زر التبديل السريع:</strong> اضغط على أيقونة الشمس/القمر في أعلى شاشة النظام للتحويل المباشر بين الوضع الفاتح والوضع الليلي (Dark Mode).</li>
+      <li><strong>تبديل اللغة:</strong> يمكنك تغيير لغة الواجهة بين (العربية / الإنجليزية) بنقرة واحدة من الترويسة العلوية.</li>
+      <li><strong>حفظ التفضيلات:</strong> يحفظ النظام خياراتك التفضيلية تلقائياً لكل جهاز تستخدمه.</li>
+    </ol>
+    <img src="lesson10-darkmode-theme.png" alt="الوضع الليلي وتخصيص المظهر" class="lesson-img">
+  </div>
+
+  <!-- SECTION: FAQ (الأسئلة الشائعة) -->
+  <div class="lesson" style="border-top: 4px solid var(--kn-accent);">
+    <h3>
+      <span class="lesson-num" style="background: var(--kn-accent);">?</span>
+      الأسئلة الشائعة وحل المشكلات (FAQ)
+    </h3>
     
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson2-add-patient.png" class="card-img-top" alt="​الدرس2 Add Patient" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس2 Add Patient</h5>
-            </div>
-        </div>
+    <div style="margin-bottom: 20px;">
+      <h4 style="color: var(--kn-primary);">❓ ماذا أفعل إذا نسيت كلمة مرور حساب المدير (Admin)؟</h4>
+      <p>يمكن استعادة أو إعادة تعيين الصلاحيات عبر ملف الصيانة الرئيسي أو من خلال حساب الدعم الفني المرتبط بكود الجهاز الخاص بالمعمل.</p>
     </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson3-enter-results.png" class="card-img-top" alt="​الدرس3 Enter Results" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس3 Enter Results</h5>
-            </div>
-        </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="color: var(--kn-primary);">❓ هل يعمل النظام بدون اتصال بالإنترنت (Offline First)؟</h4>
+      <p>نعم، النظام مصمم للعمل محلياً بكامل الكفاءة دون الحاجة لإنترنت مستمر، ويتم مزامنة البيانات وإرسال إشعارات واتساب عند توفر الاتصال.</p>
     </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson4-print-report.png" class="card-img-top" alt="​الدرس4 Print Report" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس4 Print Report</h5>
-            </div>
-        </div>
+
+    <div style="margin-bottom: 20px;">
+      <h4 style="color: var(--kn-primary);">❓ كيف تظهر بيانات وشعار المعمل بدقة في التقارير الطبية؟</h4>
+      <p>تأكد من إكمال بيانات المعمل ورفع شعار المعمل (Logo) بدقة في إعدادات الدرس الأول، لكي تظهر تلقائياً في ترويسة وتذييل تقارير الـ PDF.</p>
     </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson5-financial-summary.png" class="card-img-top" alt="​الدرس5 Financial Summary" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس5 Financial Summary</h5>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson6-whatsapp-integration.png" class="card-img-top" alt="​الدرس6 Whatsapp Integration" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس6 Whatsapp Integration</h5>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson7-backup-restore.png" class="card-img-top" alt="​الدرس7 Backup Restore" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس7 Backup Restore</h5>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson8-user-permissions.png" class="card-img-top" alt="​الدرس8 User Permissions" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس8 User Permissions</h5>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson9-test-catalog.png" class="card-img-top" alt="​الدرس9 Test Catalog" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس9 Test Catalog</h5>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​lesson10-darkmode-theme.png" class="card-img-top" alt="​الدرس10 Darkmode Theme" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">​الدرس10 Darkmode Theme</h5>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="screenshot-1.png" class="card-img-top" alt="Screenshot 1" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">Screenshot 1</h5>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="screenshot-2.png" class="card-img-top" alt="Screenshot 2" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">Screenshot 2</h5>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100" style="border-radius: 15px; overflow: hidden; background: var(--kn-surface); border: 1px solid var(--kn-border);">
-            <img src="​faq-support.png" class="card-img-top" alt="الأسئلة الشائعة (FAQ)" style="object-fit: cover; max-height: 400px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
-            <div class="card-body text-center">
-                <h5 class="card-title" style="color: var(--kn-text); font-weight: 700;">الأسئلة الشائعة (FAQ)</h5>
-            </div>
-        </div>
-    </div>
-    </div>
-    </div>
+
+    <img src="faq-support.png" alt="الأسئلة الشائعة والدعم" class="lesson-img">
+  </div>
+
+  <!-- ختام المستند -->
+  <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--kn-border); color: #6c757d; font-size: 0.9rem;">
+    دليل التدريب الرسمي لنظام <strong>KodNaqi Diagnostics</strong><br>
+    إشراف وتطوير: م. السني خالد محمدأحمد السني &copy; 2026
+  </div>
+
+</div>
+</div>
 </body>
 </html>

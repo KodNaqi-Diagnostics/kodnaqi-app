@@ -11,7 +11,7 @@
  */
 
 // KodNaqi — Service Worker v26
-const CACHE_NAME = 'kodnaqi-v293';
+const CACHE_NAME = 'kodnaqi-v296';
 
 const ASSETS = [
   './app.html',
