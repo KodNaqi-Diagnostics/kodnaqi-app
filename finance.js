@@ -18,10 +18,10 @@ async function renderFinance() {
   const net = collected - totalExpenses;
 
   // اعرض البطاقات
-  document.getElementById('finCollected').textContent = collected.toLocaleString('ar-EG') + ' SDG';
-  document.getElementById('finDue').textContent = due.toLocaleString('ar-EG') + ' SDG';
-  document.getElementById('finExpenses').textContent = totalExpenses.toLocaleString('ar-EG') + ' SDG';
-  document.getElementById('finNet').textContent = net.toLocaleString('ar-EG') + ' SDG';
+  document.getElementById('finCollected').textContent = collected.toLocaleString('en-US') + ' SDG';
+  document.getElementById('finDue').textContent = due.toLocaleString('en-US') + ' SDG';
+  document.getElementById('finExpenses').textContent = totalExpenses.toLocaleString('en-US') + ' SDG';
+  document.getElementById('finNet').textContent = net.toLocaleString('en-US') + ' SDG';
 
   // أحدث الفواتير
   const recent = [...allVisits].sort((a, b) => b.id - a.id).slice(0, 15);
@@ -44,8 +44,8 @@ async function renderFinance() {
           </div>
           <div class="small fw-bold">${escapeHtml(patient ? patient.name : 'مريض محذوف')}</div>
           <div class="small">
-            <span class="text-success">${(v.paid || 0).toLocaleString('ar-EG')} مدفوع</span>
-            ${v.remaining > 0 ? ` — <span class="${remainingClass}">${v.remaining.toLocaleString('ar-EG')} متبقي</span>` : ' — <span class="text-success">✓</span>'}
+            <span class="text-success">${(v.paid || 0).toLocaleString('en-US')} مدفوع</span>
+            ${v.remaining > 0 ? ` — <span class="${remainingClass}">${v.remaining.toLocaleString('en-US')} متبقي</span>` : ' — <span class="text-success">✓</span>'}
           </div>
         </div>
       `;
@@ -69,7 +69,7 @@ async function renderFinance() {
             <div class="small text-muted">${escapeHtml(e.description || '')} — ${e.date}</div>
           </div>
           <div class="text-end">
-            <div class="text-danger fw-bold">${(e.amount || 0).toLocaleString('ar-EG')} SDG</div>
+            <div class="text-danger fw-bold">${(e.amount || 0).toLocaleString('en-US')} SDG</div>
             <button class="btn btn-sm btn-link text-danger p-0" onclick="deleteExpense(${e.id})">×</button>
           </div>
         </div>
@@ -167,14 +167,14 @@ async function renderStats() {
   document.getElementById('statsVisits').textContent = visits.length;
 
   const totalRevenue = visits.reduce((s, v) => s + (v.paid || 0), 0);
-  document.getElementById('statsRevenue').textContent = totalRevenue.toLocaleString('ar-EG');
+  document.getElementById('statsRevenue').textContent = totalRevenue.toLocaleString('en-US');
 
   // هذا الشهر
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthVisits = visits.filter(v => new Date(v.date) >= monthStart);
   const monthRevenue = monthVisits.reduce((s, v) => s + (v.paid || 0), 0);
-  document.getElementById('statsMonth').textContent = monthRevenue.toLocaleString('ar-EG');
+  document.getElementById('statsMonth').textContent = monthRevenue.toLocaleString('en-US');
 
   // آخر 7 أيام
   const days = [];

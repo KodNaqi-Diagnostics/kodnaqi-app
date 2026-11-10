@@ -396,13 +396,25 @@
     if (!check.should) return;
 
     const msg = check.reason === 'never'
-      ? '📦 لم تأخذ نسخة احتياطية بعد\n\nهل تريد أخذ نسخة الآن؟'
-      : '📦 آخر نسخة احتياطية منذ ' + check.daysSince + ' يوم\n\nهل تريد تحديثها الآن؟';
+      ? '📦 لم تأخذ نسخة احتياطية بعد. هل تريد أخذ نسخة الآن؟'
+      : '📦 آخر نسخة احتياطية منذ ' + check.daysSince + ' يوم. هل تريد تحديثها الآن؟';
 
-    if (confirm(msg)) {
-      exportToFile();
+    // استخدام النافذة المخصصة الجميلة بدلاً من confirm الافتراضية
+    if (typeof window.showKNConfirm === 'function') {
+      window.showKNConfirm('تذكير النسخ الاحتياطي', msg, 'warning').then(function(isConfirmed) {
+        if (isConfirmed) {
+          exportToFile();
+        } else {
+          localStorage.setItem('kodnaqi_reminder_dismissed', new Date().toDateString());
+        }
+      });
     } else {
-      localStorage.setItem('kodnaqi_reminder_dismissed', new Date().toDateString());
+      // خطة بديلة في حال لم يتم تحميل النافذة المخصصة
+      if (confirm(msg)) {
+        exportToFile();
+      } else {
+        localStorage.setItem('kodnaqi_reminder_dismissed', new Date().toDateString());
+      }
     }
   }
 

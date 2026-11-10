@@ -155,7 +155,7 @@ function toggleTestSelection(testId, checkbox) {
   });
 
   document.getElementById('selectedCount').textContent = currentVisitTests.length;
-  document.getElementById('visitTotal').textContent = total.toLocaleString('ar-EG') + ' SDG';
+  document.getElementById('visitTotal').textContent = total.toLocaleString('en-US') + ' SDG';
 }
 
 // ============ الانتقال لإدخال النتائج ============
@@ -339,7 +339,7 @@ async function showVisitResults(visitId) {
       <h6 class="fw-bold mb-2">الفاتورة</h6>
       <div class="d-flex justify-content-between mb-1">
         <span>المجموع:</span>
-        <strong>${visit.subtotal.toLocaleString('ar-EG')} SDG</strong>
+        <strong>${visit.subtotal.toLocaleString('en-US')} SDG</strong>
       </div>
       <div class="mb-2">
         <label class="form-label small">الخصم (حد أقصى 50%)</label>
@@ -354,7 +354,7 @@ async function showVisitResults(visitId) {
       </div>
       <div class="d-flex justify-content-between mb-2 border-top pt-2">
         <strong>الإجمالي:</strong>
-        <strong class="text-primary" id="visitTotalDisplay">${visit.total.toLocaleString('ar-EG')} SDG</strong>
+        <strong class="text-primary" id="visitTotalDisplay">${visit.total.toLocaleString('en-US')} SDG</strong>
       </div>
       <div class="mb-2">
         <label class="form-label small">المدفوع</label>
@@ -363,7 +363,7 @@ async function showVisitResults(visitId) {
       </div>
       <div class="d-flex justify-content-between mb-3">
         <span>المتبقي:</span>
-        <strong class="text-danger" id="visitRemainingDisplay">${visit.remaining.toLocaleString('ar-EG')} SDG</strong>
+        <strong class="text-danger" id="visitRemainingDisplay">${visit.remaining.toLocaleString('en-US')} SDG</strong>
       </div>
       <div class="mb-3">
         <label class="form-label small">ملاحظات</label>
@@ -422,14 +422,14 @@ function updateVisitTotal(visitId) {
     if (discount > maxDisc) {
       finalDisc = maxDisc;
       document.getElementById('visitDiscount').value = maxDisc;
-      alert(`⚠️ الحد الأقصى للخصم 50% = ${maxDisc.toLocaleString('ar-EG')} SDG`);
+      alert(`⚠️ الحد الأقصى للخصم 50% = ${maxDisc.toLocaleString('en-US')} SDG`);
     }
 
     const total = visit.subtotal - finalDisc;
     const remaining = total - paid;
 
-    document.getElementById('visitTotalDisplay').textContent = total.toLocaleString('ar-EG') + ' SDG';
-    document.getElementById('visitRemainingDisplay').textContent = remaining.toLocaleString('ar-EG') + ' SDG';
+    document.getElementById('visitTotalDisplay').textContent = total.toLocaleString('en-US') + ' SDG';
+    document.getElementById('visitRemainingDisplay').textContent = remaining.toLocaleString('en-US') + ' SDG';
 
     document.getElementById('reasonBox').style.display = finalDisc > 0 ? '' : 'none';
   });
@@ -447,7 +447,7 @@ async function saveVisitResults(visitId) {
 
   const maxDisc = visit.subtotal * 0.5;
   if (discount > maxDisc) {
-    alert(`❌ الحد الأقصى للخصم 50% = ${maxDisc.toLocaleString('ar-EG')} SDG`);
+    alert(`❌ الحد الأقصى للخصم 50% = ${maxDisc.toLocaleString('en-US')} SDG`);
     return;
   }
 
@@ -458,7 +458,7 @@ async function saveVisitResults(visitId) {
 
   const total = visit.subtotal - discount;
   if (paid > total) {
-    alert(`❌ المدفوع لا يمكن أن يتجاوز الإجمالي (${total.toLocaleString('ar-EG')} SDG)`);
+    alert(`❌ المدفوع لا يمكن أن يتجاوز الإجمالي (${total.toLocaleString('en-US')} SDG)`);
     return;
   }
 

@@ -374,12 +374,12 @@ window.generateInvoice = async function(visitId) {
     visitTests.forEach(function(vt) {
       if (seen[vt.test_id]) return; seen[vt.test_id] = true;
       var t = testMap[vt.test_id]; var price = parseFloat(vt.price || (t ? t.price : 0)) || 0; total += price;
-      itemsHtml += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;"><span>' + (t ? (t.name_ar || t.name) : '—') + '</span><span>' + price.toLocaleString() + ' SDG</span></div>';
+      itemsHtml += '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:11px;"><span>' + (t ? (t.name_ar || t.name) : '—') + '</span><span>' + price.toLocaleString('en-US') + ' SDG</span></div>';
     });
     var paid = parseFloat(visit.paid || 0) || 0, discount = parseFloat(visit.discount || 0) || 0;
     var net = total - discount, remaining = net - paid;
     var brand = {}; try { brand = JSON.parse(localStorage.getItem('kodnaqi_brand_v1') || '{}'); } catch(e) {}
-    var dateStr = new Date(visit.date || Date.now()).toLocaleString('ar-EG');
+    var dateStr = new Date(visit.date || Date.now()).toLocaleString('en-US');
     
     var html = '<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>فاتورة</title><style>@page{size:58mm auto;margin:2mm}body{font-family:Tahoma,sans-serif;margin:0;padding:5px;width:54mm;font-size:10px;color:#000;} .center{text-align:center;} .hr{border-top:1px dashed #000;margin:4px 0;} .row{display:flex;justify-content:space-between;} .total{font-weight:bold;font-size:12px;} .logo{max-height:40px;}</style></head><body>';
     if (brand.logoData) html += '<div class="center"><img src="' + brand.logoData + '" class="logo"></div>';
@@ -388,11 +388,11 @@ window.generateInvoice = async function(visitId) {
     if (patient.age) html += '<div class="row"><span>Age:</span><span>' + patient.age + '</span></div>';
     if (patient.phone) html += '<div class="row"><span>Phone:</span><span>' + patient.phone + '</span></div>';
     html += '<div class="hr"></div>' + itemsHtml + '<div class="hr"></div>';
-    html += '<div class="row"><span>Subtotal:</span><span>' + total.toLocaleString() + ' SDG</span></div>';
-    if (discount > 0) html += '<div class="row"><span>Discount:</span><span>-' + discount.toLocaleString() + ' SDG</span></div>';
-    html += '<div class="row total"><span>TOTAL:</span><span>' + net.toLocaleString() + ' SDG</span></div><div class="row"><span>Paid:</span><span>' + paid.toLocaleString() + ' SDG</span></div>';
-    if (remaining > 0) html += '<div class="row" style="color:#dc2626;"><span>Remaining:</span><span>' + remaining.toLocaleString() + ' SDG</span></div>';
-    else if (remaining < 0) html += '<div class="row" style="color:#059669;"><span>Change:</span><span>' + Math.abs(remaining).toLocaleString() + ' SDG</span></div>';
+    html += '<div class="row"><span>Subtotal:</span><span>' + total.toLocaleString('en-US') + ' SDG</span></div>';
+    if (discount > 0) html += '<div class="row"><span>Discount:</span><span>-' + discount.toLocaleString('en-US') + ' SDG</span></div>';
+    html += '<div class="row total"><span>TOTAL:</span><span>' + net.toLocaleString('en-US') + ' SDG</span></div><div class="row"><span>Paid:</span><span>' + paid.toLocaleString('en-US') + ' SDG</span></div>';
+    if (remaining > 0) html += '<div class="row" style="color:#dc2626;"><span>Remaining:</span><span>' + remaining.toLocaleString('en-US') + ' SDG</span></div>';
+    else if (remaining < 0) html += '<div class="row" style="color:#059669;"><span>Change:</span><span>' + Math.abs(remaining).toLocaleString('en-US') + ' SDG</span></div>';
     else html += '<div class="center" style="color:#059669;font-weight:bold;">PAID IN FULL ✓</div>';
     html += '<div class="hr"></div><div class="center" style="font-size:8px;">Thank you 🌟</div></body></html>';
     

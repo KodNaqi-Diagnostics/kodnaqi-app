@@ -2226,5 +2226,20 @@ window.resolveConfirm = function(result) {
     }, 300);
 };
 </script>
+
+<script>
+// إخفاء زر البصمة في الويندوز وإظهاره في الأندرويد والويب
+document.addEventListener('DOMContentLoaded', function() {
+    const biometricBtn = document.getElementById('biometricLoginBtn');
+    if (biometricBtn) {
+        // إذا كان التطبيق يعمل على ويندوز (Electron)
+        if (window.electronAPI) {
+            biometricBtn.style.display = 'none'; // إخفاء
+        } else {
+            biometricBtn.style.display = 'block'; // إظهار للأندرويد والويب
+        }
+    }
+});
+</script>
 </body>
 </html>
