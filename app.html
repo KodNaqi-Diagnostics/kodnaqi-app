@@ -2241,5 +2241,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<script>
+// ==========================================
+// إدارة الثيمات والوضع الليلي
+// ==========================================
+window.KNTheme = {
+    set: function(themeName) {
+        document.body.setAttribute('data-theme', themeName);
+        localStorage.setItem('kodnaqi_theme', themeName);
+    }
+};
+
+function toggleDarkMode() {
+    const body = document.body;
+    const btn = document.getElementById('themeToggleBtn');
+    
+    body.classList.toggle('dark-mode');
+    const isDark = body.classList.contains('dark-mode');
+    
+    localStorage.setItem('kodnaqi_dark_mode', isDark);
+    if (btn) btn.innerHTML = isDark ? '☀️ إيقاف' : '🌙 تشغيل';
+}
+
+// تشغيل الإعدادات عند فتح التطبيق
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. استرجاع الثيم المختار (الافتراضي كحلي)
+    const savedTheme = localStorage.getItem('kodnaqi_theme') || 'navy';
+    document.body.setAttribute('data-theme', savedTheme);
+
+    // 2. استرجاع الوضع الليلي
+    const isDark = localStorage.getItem('kodnaqi_dark_mode') === 'true';
+    const btn = document.getElementById('themeToggleBtn');
+    if (isDark) {
+        document.body.classList.add('dark-mode');
+        if (btn) btn.innerHTML = '☀️ إيقاف';
+    }
+});
+</script>
 </body>
 </html>

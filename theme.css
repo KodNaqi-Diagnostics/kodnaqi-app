@@ -7,50 +7,52 @@
    المتغيرات — Light Mode (افتراضي)
    ═══════════════════════════════════════════════════ */
 :root {
-  /* الهوية القابلة للتغيير */
   --kn-primary: #0d3b66;
   --kn-primary-dark: #082844;
   --kn-primary-light: #1e6091;
   --kn-accent: #c9a227;
   --kn-accent-light: #e5c668;
-  
-  /* الخلفيات */
+
   --kn-bg: #eef1f5;
   --kn-surface: #ffffff;
   --kn-surface-alt: #f8fafc;
   --kn-surface-hover: #f1f5f9;
-  
-  /* النصوص */
+
   --kn-text: #212529;
   --kn-text-muted: #6c757d;
   --kn-text-inverse: #ffffff;
-  
-  /* الحدود */
+
   --kn-border: #e4e6eb;
   --kn-border-hover: #cbd5e1;
-  
-  /* الظلال */
+
   --kn-shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
   --kn-shadow: 0 5px 15px rgba(0,0,0,0.08);
   --kn-shadow-lg: 0 12px 45px rgba(13, 59, 102, 0.14);
-  
-  /* الحالة */
+
   --kn-success: #198754;
   --kn-warning: #ffc107;
   --kn-danger: #dc3545;
   --kn-info: #0dcaf0;
-  
-  /* الأشكال */
+
   --kn-radius: 12px;
   --kn-radius-sm: 8px;
   --kn-radius-lg: 20px;
-  
-  /* الانتقالات */
+
   --kn-transition: 0.25s ease;
 }
 
 /* ═══════════════════════════════════════════════════
-   Dark Mode
+   الثيمات الستة (الألوان الديناميكية)
+   ═══════════════════════════════════════════════════ */
+body[data-theme="navy"] { --kn-primary: #0d3b66; --kn-accent: #c9a227; }
+body[data-theme="emerald"] { --kn-primary: #059669; --kn-accent: #f59e0b; }
+body[data-theme="purple"] { --kn-primary: #7e22ce; --kn-accent: #a855f7; }
+body[data-theme="crimson"] { --kn-primary: #be123c; --kn-accent: #e11d48; }
+body[data-theme="teal"] { --kn-primary: #0f766e; --kn-accent: #14b8a6; }
+body[data-theme="midnight"] { --kn-primary: #1e293b; --kn-accent: #64748b; }
+
+/* ═══════════════════════════════════════════════════
+   الوضع الليلي — Dark Mode (المتغيرات الأساسية)
    ═══════════════════════════════════════════════════ */
 body.dark-mode,
 html[data-theme="dark"] {
@@ -58,17 +60,27 @@ html[data-theme="dark"] {
   --kn-surface: #1e293b;
   --kn-surface-alt: #334155;
   --kn-surface-hover: #475569;
-  
+
   --kn-text: #f1f5f9;
   --kn-text-muted: #94a3b8;
   --kn-text-inverse: #0f172a;
-  
+
   --kn-border: #334155;
   --kn-border-hover: #475569;
-  
+
   --kn-shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
   --kn-shadow: 0 5px 15px rgba(0,0,0,0.4);
   --kn-shadow-lg: 0 12px 45px rgba(0,0,0,0.6);
+
+  /* متغيرات brand.css للوضع الداكن */
+  --kn-navy: #7eb8e8;
+  --kn-navy-dark: #a5cdf0;
+  --kn-navy-light: #5fa3d9;
+  --kn-gold: #e5c668;
+  --kn-gold-light: #f4dc94;
+  --kn-cream: #334155;
+  --kn-light: #334155;
+  --kn-muted: #94a3b8;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -76,7 +88,7 @@ html[data-theme="dark"] {
    ═══════════════════════════════════════════════════ */
 * {
   box-sizing: border-box;
-  transition: background-color var(--kn-transition), 
+  transition: background-color var(--kn-transition),
               color var(--kn-transition),
               border-color var(--kn-transition);
 }
@@ -88,12 +100,12 @@ body {
   padding: 20px;
   font-family: 'Cairo', sans-serif;
   line-height: 1.85;
-  font-size: clamp(14px, 1.6vw, 16px); /* خط مرن */
+  font-size: clamp(14px, 1.6vw, 16px);
   min-height: 100vh;
 }
 
 /* ═══════════════════════════════════════════════════
-   الحاويات الرئيسية — Responsive
+   الحاويات الرئيسية
    ═══════════════════════════════════════════════════ */
 .doc {
   max-width: 850px;
@@ -106,9 +118,7 @@ body {
   position: relative;
 }
 
-.doc-content {
-  padding: clamp(20px, 5vw, 55px);
-}
+.doc-content { padding: clamp(20px, 5vw, 55px); }
 
 /* ═══════════════════════════════════════════════════
    الهيدر
@@ -124,11 +134,7 @@ body {
   gap: 15px;
 }
 
-.brand-block {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
+.brand-block { display: flex; align-items: center; gap: 14px; }
 
 .brand-logo {
   width: clamp(48px, 8vw, 62px);
@@ -140,6 +146,12 @@ body {
   object-fit: cover;
 }
 
+body.dark-mode .brand-logo,
+html[data-theme="dark"] .brand-logo {
+  border-color: var(--kn-accent) !important;
+  background: var(--kn-surface) !important;
+}
+
 .brand-text h1 {
   margin: 0;
   color: var(--kn-primary);
@@ -147,10 +159,7 @@ body {
   font-size: clamp(1.2rem, 3vw, 1.5rem);
   letter-spacing: -0.5px;
 }
-
-body.dark-mode .brand-text h1 {
-  color: var(--kn-accent);
-}
+body.dark-mode .brand-text h1 { color: var(--kn-accent); }
 
 .brand-text p {
   margin: 2px 0 0;
@@ -160,27 +169,25 @@ body.dark-mode .brand-text h1 {
   letter-spacing: 2.5px;
 }
 
-.doc-meta {
-  text-align: left;
-  font-size: clamp(0.75rem, 1.5vw, 0.82rem);
-  color: var(--kn-text-muted);
+body.dark-mode .brand-text h1,
+body.dark-mode .brand-text p,
+body.dark-mode h4,
+body.dark-mode .doc-title h2,
+html[data-theme="dark"] .brand-text h1,
+html[data-theme="dark"] .brand-text p,
+html[data-theme="dark"] h4,
+html[data-theme="dark"] .doc-title h2 {
+  color: var(--kn-accent) !important;
 }
 
-.doc-meta .label {
-  font-weight: 700;
-  color: var(--kn-primary);
-}
-
-body.dark-mode .doc-meta .label {
-  color: var(--kn-accent);
-}
+.doc-meta { text-align: left; font-size: clamp(0.75rem, 1.5vw, 0.82rem); color: var(--kn-text-muted); }
+.doc-meta .label { font-weight: 700; color: var(--kn-primary); }
+body.dark-mode .doc-meta .label { color: var(--kn-accent); }
 
 /* ═══════════════════════════════════════════════════
    العناوين
    ═══════════════════════════════════════════════════ */
-h1, h2, h3, h4, h5, h6 {
-  color: var(--kn-text);
-}
+h1, h2, h3, h4, h5, h6 { color: var(--kn-text); }
 
 h4 {
   color: var(--kn-primary);
@@ -191,13 +198,10 @@ h4 {
   padding-right: 14px;
   border-right: 4px solid var(--kn-accent);
 }
-
-body.dark-mode h4 {
-  color: var(--kn-accent);
-}
+body.dark-mode h4 { color: var(--kn-accent); }
 
 /* ═══════════════════════════════════════════════════
-   البطاقات
+   البطاقات والحقول
    ═══════════════════════════════════════════════════ */
 .card {
   background: var(--kn-surface);
@@ -205,14 +209,8 @@ body.dark-mode h4 {
   border-radius: var(--kn-radius);
   color: var(--kn-text);
 }
+.card-body { color: var(--kn-text); }
 
-.card-body {
-  color: var(--kn-text);
-}
-
-/* ═══════════════════════════════════════════════════
-   الحقول
-   ═══════════════════════════════════════════════════ */
 .field, input.form-control, select.form-select, textarea.form-control {
   background: var(--kn-surface-alt);
   color: var(--kn-text);
@@ -226,24 +224,43 @@ input.form-control:focus, select.form-select:focus, textarea.form-control:focus 
   box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.1);
 }
 
+select.form-select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: left .75rem center !important;
+  background-size: 16px 12px !important;
+  padding-left: 2.25rem !important;
+}
+
 /* ═══════════════════════════════════════════════════
    الجداول
    ═══════════════════════════════════════════════════ */
-table {
-  color: var(--kn-text);
-}
+table { color: var(--kn-text); }
+table th { background: var(--kn-primary); color: var(--kn-text-inverse); }
+table td { border-color: var(--kn-border); }
+body.dark-mode table tr:hover { background: var(--kn-surface-hover); }
 
-table th {
-  background: var(--kn-primary);
-  color: var(--kn-text-inverse);
+html[data-theme="dark"] table, html[data-theme="dark"] .table,
+body.dark-mode table, body.dark-mode .table {
+  --bs-table-bg: transparent !important;
+  --bs-table-color: var(--kn-text) !important;
+  --bs-table-border-color: var(--kn-border) !important;
+  --bs-table-hover-bg: var(--kn-surface-hover) !important;
+  --bs-table-hover-color: var(--kn-text) !important;
+  color: var(--kn-text) !important;
+  background: transparent !important;
 }
-
-table td {
-  border-color: var(--kn-border);
+html[data-theme="dark"] table td, html[data-theme="dark"] table th,
+body.dark-mode table td, body.dark-mode table th {
+  color: var(--kn-text) !important;
+  background: transparent !important;
+  border-color: var(--kn-border) !important;
 }
-
-body.dark-mode table tr:hover {
-  background: var(--kn-surface-hover);
+html[data-theme="dark"] table th, body.dark-mode table th {
+  background: var(--kn-primary) !important;
+  color: white !important;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -261,15 +278,14 @@ body.dark-mode table tr:hover {
   font-size: clamp(0.7rem, 1.4vw, 0.78rem);
   color: var(--kn-text-muted);
 }
-
-.doc-footer .copyright {
-  font-weight: 700;
-  color: var(--kn-primary);
-}
-
-body.dark-mode .doc-footer .copyright {
-  color: var(--kn-accent);
-}
+.doc-footer .copyright { font-weight: 700; color: var(--kn-primary); }
+body.dark-mode .doc-footer .copyright { color: var(--kn-accent); }
+body.dark-mode .doc-footer .copyright,
+html[data-theme="dark"] .doc-footer .copyright { color: var(--kn-accent) !important; }
+body.dark-mode .doc-footer,
+html[data-theme="dark"] .doc-footer { border-top-color: var(--kn-accent) !important; }
+body.dark-mode .doc-footer a,
+html[data-theme="dark"] .doc-footer a { color: var(--kn-accent) !important; }
 
 /* ═══════════════════════════════════════════════════
    الأزرار
@@ -279,134 +295,106 @@ body.dark-mode .doc-footer .copyright {
   font-weight: 600;
   transition: all var(--kn-transition);
 }
+.btn-primary { background: var(--kn-primary); border-color: var(--kn-primary); }
+.btn-primary:hover { background: var(--kn-primary-dark); border-color: var(--kn-primary-dark); }
 
-.btn-primary {
-  background: var(--kn-primary);
-  border-color: var(--kn-primary);
+body.dark-mode .btn-primary,
+html[data-theme="dark"] .btn-primary {
+  background: var(--kn-primary) !important;
+  border-color: var(--kn-primary) !important;
+  color: white !important;
 }
-
-.btn-primary:hover {
-  background: var(--kn-primary-dark);
-  border-color: var(--kn-primary-dark);
+body.dark-mode .btn-outline-primary,
+html[data-theme="dark"] .btn-outline-primary {
+  color: var(--kn-accent) !important;
+  border-color: var(--kn-accent) !important;
 }
 
 /* ═══════════════════════════════════════════════════
-   زر تبديل الوضع الليلي
+   زر الوضع الليلي
    ═══════════════════════════════════════════════════ */
 .kn-theme-toggle {
   position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 9999;
-  width: 48px;
-  height: 48px;
+  top: 12px !important;
+  right: 12px !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: 36px !important;
+  height: 36px !important;
   border-radius: 50%;
-  border: none;
-  background: var(--kn-surface);
-  color: var(--kn-primary);
-  box-shadow: var(--kn-shadow);
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: white;
   cursor: pointer;
-  font-size: 1.3rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--kn-transition);
+  transition: all 0.25s ease;
+  z-index: 10000;
+  padding: 0;
+  line-height: 1;
 }
-
-.kn-theme-toggle:hover {
-  transform: scale(1.1) rotate(15deg);
-  box-shadow: var(--kn-shadow-lg);
+.kn-theme-toggle:hover, .kn-theme-toggle:active {
+  transform: scale(1.1);
+  background: rgba(255,255,255,0.25);
 }
-
 body.dark-mode .kn-theme-toggle {
-  background: var(--kn-surface);
+  background: rgba(0,0,0,0.3);
+  border-color: rgba(255,255,255,0.2);
   color: var(--kn-accent);
 }
-
-/* ═══════════════════════════════════════════════════
-   ⚡ Responsive — الموبايل (< 576px)
-   ═══════════════════════════════════════════════════ */
-@media (max-width: 575.98px) {
-  body { padding: 8px; }
-  
-  .doc {
-    border-radius: 0;
-    border-top-width: 5px;
-  }
-  
-  .doc-content { padding: 20px 16px; }
-  
-  .doc-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  
-  .brand-block { width: 100%; }
-  
-  .doc-meta {
-    text-align: right;
-    width: 100%;
-  }
-  
-  .doc-footer {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  /* الجداول العمودية */
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* الأزرار كاملة العرض */
-  .btn-block-sm {
-    width: 100% !important;
-    margin-bottom: 8px;
-  }
-  
-  /* إخفاء/تصغير بعض العناصر */
-  .hide-mobile { display: none !important; }
-  
-  /* الصفوف عمودية */
-  .row-mobile-stack {
-    flex-direction: column !important;
-  }
-  
-  .row-mobile-stack > [class*="col-"] {
-    width: 100% !important;
+@media (min-width: 992px) {
+  .kn-theme-toggle {
+    top: 15px !important;
+    right: 15px !important;
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1.1rem;
   }
 }
 
 /* ═══════════════════════════════════════════════════
-   🖥️ Responsive — التابلت (576px - 991px)
+   ⚡ Responsive
    ═══════════════════════════════════════════════════ */
+@media (max-width: 575.98px) {
+  body { padding: 4px !important; }
+  .doc { border-radius: 0 !important; border-top-width: 5px; }
+  .doc-content { padding: 15px 12px !important; }
+  .doc-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .brand-block { width: 100%; }
+  .doc-meta { text-align: right; width: 100%; }
+  .doc-footer { flex-direction: column; text-align: center; }
+  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .btn-block-sm { width: 100% !important; margin-bottom: 8px; }
+  .hide-mobile { display: none !important; }
+  .row-mobile-stack { flex-direction: column !important; }
+  .row-mobile-stack > [class*="col-"] { width: 100% !important; }
+  .card { padding: 12px !important; }
+  .card-body { padding: 12px !important; }
+  h1 { font-size: 1.3rem !important; }
+  h2 { font-size: 1.2rem !important; }
+  h3 { font-size: 1.1rem !important; }
+  h4 { font-size: 1rem !important; }
+  table, .table { font-size: 0.8rem !important; }
+  table th, table td { padding: 6px 8px !important; }
+  .btn { font-size: 0.85rem !important; padding: 8px 12px !important; }
+  .btn-lg { font-size: 0.95rem !important; padding: 10px 15px !important; }
+  .price-card { padding: 18px 14px !important; }
+  .price-tag { font-size: 1.6rem !important; }
+}
+
 @media (min-width: 576px) and (max-width: 991.98px) {
-  body { padding: 15px; }
-  
+  body { padding: 12px !important; }
   .doc { max-width: 750px; }
-  
-  .doc-content { padding: 35px 30px; }
-  
+  .doc-content { padding: 25px 20px !important; }
   .hide-tablet { display: none !important; }
 }
 
-/* ═══════════════════════════════════════════════════
-   💻 Responsive — الكمبيوتر (≥ 992px)
-   ═══════════════════════════════════════════════════ */
 @media (min-width: 992px) {
   .doc { max-width: 850px; }
-  
-  .kn-theme-toggle {
-    top: 25px;
-    left: 25px;
-    width: 52px;
-    height: 52px;
-    font-size: 1.5rem;
-  }
-  
-  /* الحواف المرئية تظهر */
   .show-desktop { display: block !important; }
   .hide-desktop { display: none !important; }
 }
@@ -420,16 +408,14 @@ body.dark-mode .kn-theme-toggle {
   .doc-content { padding: 25px 35px; }
   .kn-theme-toggle { display: none !important; }
   .no-print { display: none !important; }
+  #btn-floating-print, .btn-floating-print { display: none !important; }
 }
 
 /* ═══════════════════════════════════════════════════
-   ♿ تقليل الحركة (لذوي الاحتياجات)
+   ♿ تقليل الحركة
    ═══════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-    animation: none !important;
-  }
+  * { transition: none !important; animation: none !important; }
 }
 
 /* ═══════════════════════════════════════════════════
@@ -447,28 +433,15 @@ body.dark-mode .kn-theme-toggle {
 }
 
 /* ═══════════════════════════════════════════════════
-   🌙 Dark Mode — إصلاحات شاملة لكل الملفات
+   🌙 إصلاحات شاملة للوضع الليلي
    ═══════════════════════════════════════════════════ */
-
-/* النصوص داخل الصفحات */
-body.dark-mode,
-html[data-theme="dark"] body {
-  color: var(--kn-text);
-}
-
-/* إصلاح العناوين داخل الخطوات */
 body.dark-mode .step-body h5,
-body.dark-mode .step-body strong {
-  color: var(--kn-accent) !important;
-}
+body.dark-mode .step-body strong { color: var(--kn-accent) !important; }
 
 body.dark-mode .step-body p,
 body.dark-mode .step-body li,
-body.dark-mode .step-body {
-  color: var(--kn-text) !important;
-}
+body.dark-mode .step-body { color: var(--kn-text) !important; }
 
-/* الخطوات — الخلفية */
 body.dark-mode .step {
   background: var(--kn-surface-alt) !important;
   color: var(--kn-text);
@@ -479,164 +452,81 @@ body.dark-mode .step-num {
   background: linear-gradient(135deg, var(--kn-primary), var(--kn-primary-light)) !important;
 }
 
-/* صناديق التلميحات */
 body.dark-mode .tip-box {
   background: linear-gradient(135deg, #3f2d0e, #422006) !important;
   border-color: var(--kn-accent) !important;
   color: var(--kn-text);
 }
+body.dark-mode .tip-box h5 { color: var(--kn-accent) !important; }
+body.dark-mode .tip-box p, body.dark-mode .tip-box li { color: #fef9c3 !important; }
 
-body.dark-mode .tip-box h5 {
-  color: var(--kn-accent) !important;
-}
-
-body.dark-mode .tip-box p,
-body.dark-mode .tip-box li {
-  color: #fef9c3 !important;
-}
-
-/* Hints */
 body.dark-mode .hint {
   background: #3f1212 !important;
   color: #fecaca !important;
   border-right-color: var(--kn-danger);
 }
 
-/* عناوين h3 */
 body.dark-mode h3 {
   color: var(--kn-text) !important;
   border-right-color: var(--kn-accent);
 }
+body.dark-mode h3 i { color: var(--kn-accent) !important; }
 
-body.dark-mode h3 i {
-  color: var(--kn-accent) !important;
-}
+body.dark-mode .doc-title h2 { color: var(--kn-accent) !important; }
+body.dark-mode .doc-title .subtitle { color: var(--kn-text-muted) !important; }
 
-/* عنوان الصفحة */
-body.dark-mode .doc-title h2 {
-  color: var(--kn-accent) !important;
-}
-
-body.dark-mode .doc-title .subtitle {
-  color: var(--kn-text-muted) !important;
-}
-
-/* الحقول (fields) */
 body.dark-mode .field {
   background: var(--kn-surface-alt) !important;
   color: var(--kn-text) !important;
   border-color: var(--kn-border);
 }
 
-/* breadcrumb / عناصر مختلفة */
-body.dark-mode p,
-body.dark-mode li,
-body.dark-mode span,
-body.dark-mode div {
-  color: inherit;
-}
+body.dark-mode p, body.dark-mode li, body.dark-mode span, body.dark-mode div { color: inherit; }
+body.dark-mode .text-muted { color: var(--kn-text-muted) !important; }
 
-body.dark-mode .text-muted {
-  color: var(--kn-text-muted) !important;
-}
-
-/* الفواتير والعقود */
-body.dark-mode .info-grid > div {
-  background: var(--kn-surface-alt) !important;
-}
-
-body.dark-mode .info-grid h6 {
-  color: var(--kn-accent) !important;
-}
-
+body.dark-mode .info-grid > div { background: var(--kn-surface-alt) !important; }
+body.dark-mode .info-grid h6 { color: var(--kn-accent) !important; }
 body.dark-mode .info-grid .field-line {
   border-bottom-color: var(--kn-border) !important;
   color: var(--kn-text);
 }
 
-body.dark-mode .payment-box {
-  background: var(--kn-surface-alt) !important;
-}
-
-body.dark-mode .payment-box h6 {
-  color: var(--kn-accent) !important;
-}
-
+body.dark-mode .payment-box { background: var(--kn-surface-alt) !important; }
+body.dark-mode .payment-box h6 { color: var(--kn-accent) !important; }
 body.dark-mode .payment-box .row-line {
   border-bottom-color: var(--kn-border) !important;
+  color: var(--kn-text) !important;
 }
 
-/* الأسعار */
 body.dark-mode .price-card {
   background: var(--kn-surface) !important;
   border-color: var(--kn-border) !important;
 }
-
-body.dark-mode .price-card h4 {
-  color: var(--kn-accent) !important;
-}
-
-body.dark-mode .price-tag {
-  color: var(--kn-accent) !important;
-}
-
+body.dark-mode .price-card h4 { color: var(--kn-accent) !important; }
+body.dark-mode .price-tag { color: var(--kn-accent) !important; }
 body.dark-mode ul.features li {
   border-bottom-color: var(--kn-border) !important;
   color: var(--kn-text);
 }
 
-/* البروشور */
-body.dark-mode .feature {
-  background: var(--kn-surface-alt) !important;
-}
+body.dark-mode .feature { background: var(--kn-surface-alt) !important; }
+body.dark-mode .feature strong { color: var(--kn-accent) !important; }
 
-body.dark-mode .feature strong {
-  color: var(--kn-accent) !important;
-}
-
-/* Print boxes */
-body.dark-mode .ribbon {
-  color: white !important;
-}
-
-/* الجداول */
-body.dark-mode table {
-  color: var(--kn-text);
-}
-
-body.dark-mode table th {
-  background: var(--kn-primary) !important;
-  color: var(--kn-text-inverse) !important;
-}
-
+body.dark-mode .ribbon { color: white !important; }
 body.dark-mode table td {
   color: var(--kn-text) !important;
   border-color: var(--kn-border) !important;
 }
 
-/* ألوان النصوص الشائعة */
-body.dark-mode .text-primary,
-body.dark-mode .text-dark {
-  color: var(--kn-accent) !important;
-}
-
-body.dark-mode .bg-light,
-body.dark-mode .bg-white {
+body.dark-mode .text-primary, body.dark-mode .text-dark { color: var(--kn-accent) !important; }
+body.dark-mode .bg-light, body.dark-mode .bg-white {
   background: var(--kn-surface-alt) !important;
   color: var(--kn-text) !important;
 }
 
-/* الرسوم المتحركة */
-@keyframes knFadeIn {
-  from { opacity: 0; transform: translate(-50%, 10px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
-
 /* ═══════════════════════════════════════════════════
-   🌙 DARK MODE — قواعد قوية (تتجاوز inline styles)
+   🌙 DARK MODE — تجاوز الأنماط المُدمجة (inline styles)
    ═══════════════════════════════════════════════════ */
-
-/* الخلفيات الفاتحة المُدمجة → داكنة */
 html[data-theme="dark"] [style*="background: #f8fafc"],
 html[data-theme="dark"] [style*="background:#f8fafc"],
 html[data-theme="dark"] [style*="background: #f8f9fa"],
@@ -668,7 +558,6 @@ body.dark-mode [style*="background: #fef9c3"] {
   color: var(--kn-text) !important;
 }
 
-/* ═══ النصوص القاتمة المُدمجة → فاتحة ═══ */
 html[data-theme="dark"] [style*="color: #0d3b66"],
 html[data-theme="dark"] [style*="color:#0d3b66"],
 html[data-theme="dark"] [style*="color: #0b3d91"],
@@ -689,72 +578,25 @@ body.dark-mode [style*="color: #666"] {
   color: var(--kn-text) !important;
 }
 
-/* ═══ الجداول ═══ */
-html[data-theme="dark"] table,
-html[data-theme="dark"] .table,
-body.dark-mode table,
-body.dark-mode .table {
-  --bs-table-bg: transparent !important;
-  --bs-table-color: var(--kn-text) !important;
-  --bs-table-border-color: var(--kn-border) !important;
-  --bs-table-hover-bg: var(--kn-surface-hover) !important;
-  --bs-table-hover-color: var(--kn-text) !important;
-  color: var(--kn-text) !important;
-  background: transparent !important;
-}
-
-html[data-theme="dark"] table td,
-html[data-theme="dark"] table th,
-html[data-theme="dark"] .table td,
-html[data-theme="dark"] .table th,
-body.dark-mode table td,
-body.dark-mode table th,
-body.dark-mode .table td,
-body.dark-mode .table th {
-  color: var(--kn-text) !important;
-  background: transparent !important;
-  border-color: var(--kn-border) !important;
-}
-
-html[data-theme="dark"] table th,
-body.dark-mode table th,
-html[data-theme="dark"] .table th,
-body.dark-mode .table th {
-  background: var(--kn-primary) !important;
-  color: white !important;
-}
-
-/* ═══ الصفوف داخل البطاقات ═══ */
-html[data-theme="dark"] .card,
-html[data-theme="dark"] .card-body,
-body.dark-mode .card,
-body.dark-mode .card-body {
-  background: var(--kn-surface) !important;
-  color: var(--kn-text) !important;
-}
-
-/* ═══ صناديق التنبيه ═══ */
+/* صناديق التنبيه */
 html[data-theme="dark"] .alert,
 body.dark-mode .alert {
   background: var(--kn-surface-alt) !important;
   color: var(--kn-text) !important;
   border-color: var(--kn-border) !important;
 }
-
 html[data-theme="dark"] .alert-warning,
 body.dark-mode .alert-warning {
   background: #422006 !important;
   color: #fef9c3 !important;
   border-color: var(--kn-accent) !important;
 }
-
 html[data-theme="dark"] .alert-info,
 body.dark-mode .alert-info {
   background: #0c4a6e !important;
   color: #e0f2fe !important;
   border-color: #0ea5e9 !important;
 }
-
 html[data-theme="dark"] .alert-danger,
 body.dark-mode .alert-danger {
   background: #450a0a !important;
@@ -762,60 +604,19 @@ body.dark-mode .alert-danger {
   border-color: #dc2626 !important;
 }
 
-/* ═══ spinner / loading ═══ */
+/* Spinner / Loading */
 html[data-theme="dark"] .spinner-border,
-body.dark-mode .spinner-border {
-  color: var(--kn-accent) !important;
-}
+body.dark-mode .spinner-border { color: var(--kn-accent) !important; }
 
-/* ═══ روابط ═══ */
-html[data-theme="dark"] a,
-body.dark-mode a {
-  color: var(--kn-accent-light);
-}
+/* روابط */
+html[data-theme="dark"] a, body.dark-mode a { color: var(--kn-accent-light); }
+html[data-theme="dark"] a:hover, body.dark-mode a:hover { color: var(--kn-accent); }
 
-html[data-theme="dark"] a:hover,
-body.dark-mode a:hover {
-  color: var(--kn-accent);
-}
-
-/* ═══ العناصر المُدمجة داخل pricing.html ═══ */
-html[data-theme="dark"] .price-card,
-body.dark-mode .price-card {
-  background: var(--kn-surface) !important;
-  border-color: var(--kn-border) !important;
-  color: var(--kn-text);
-}
-
-html[data-theme="dark"] ul.features li,
-body.dark-mode ul.features li {
-  color: var(--kn-text) !important;
-  border-bottom-color: var(--kn-border) !important;
-}
-
-html[data-theme="dark"] .price-tag,
-body.dark-mode .price-tag {
-  color: var(--kn-accent) !important;
-}
-
-/* ═══ صندوق "خدمات إضافية" ═══ */
-html[data-theme="dark"] .table-hover tbody tr:hover,
-body.dark-mode .table-hover tbody tr:hover {
-  background: var(--kn-surface-hover) !important;
-  color: var(--kn-text) !important;
-}
-
-/* ═══ Quickstart ═══ */
+/* Quickstart */
 html[data-theme="dark"] .header h1,
-body.dark-mode .header h1 {
-  color: var(--kn-accent) !important;
-}
-
+body.dark-mode .header h1 { color: var(--kn-accent) !important; }
 html[data-theme="dark"] .step-body strong,
-body.dark-mode .step-body strong {
-  color: var(--kn-accent) !important;
-}
-
+body.dark-mode .step-body strong { color: var(--kn-accent) !important; }
 html[data-theme="dark"] code,
 body.dark-mode code {
   background: var(--kn-surface-alt) !important;
@@ -824,461 +625,84 @@ body.dark-mode code {
   border-radius: 4px;
 }
 
-/* ═══ العقد / الفواتير — info-grid ═══ */
-html[data-theme="dark"] .info-grid > div,
-body.dark-mode .info-grid > div {
-  background: var(--kn-surface-alt) !important;
-  color: var(--kn-text);
-}
-
-html[data-theme="dark"] .info-grid h6,
-body.dark-mode .info-grid h6 {
-  color: var(--kn-accent) !important;
-}
-
-html[data-theme="dark"] .info-grid .field-line,
-body.dark-mode .info-grid .field-line {
-  color: var(--kn-text) !important;
-  border-bottom-color: var(--kn-border) !important;
-}
-
-html[data-theme="dark"] .payment-box,
-body.dark-mode .payment-box {
-  background: var(--kn-surface-alt) !important;
-}
-
-html[data-theme="dark"] .payment-box h6,
-body.dark-mode .payment-box h6 {
-  color: var(--kn-accent) !important;
-}
-
-html[data-theme="dark"] .payment-box .row-line,
-body.dark-mode .payment-box .row-line {
-  color: var(--kn-text) !important;
-  border-bottom-color: var(--kn-border) !important;
-}
-
-html[data-theme="dark"] .totals table td,
-body.dark-mode .totals table td {
-  color: var(--kn-text) !important;
-}
-
-/* ═══ البروشور — features ═══ */
-html[data-theme="dark"] .feature,
-body.dark-mode .feature {
-  background: var(--kn-surface-alt) !important;
-  color: var(--kn-text);
-}
-
-html[data-theme="dark"] .feature strong,
-body.dark-mode .feature strong {
-  color: var(--kn-accent) !important;
-}
-
-/* ═══ Responsive — إصلاح الهوامش على الهاتف ═══ */
-@media (max-width: 575.98px) {
-  body {
-    padding: 4px !important;
-  }
-  
-  .doc {
-    border-radius: 0 !important;
-  }
-  
-  .doc-content {
-    padding: 15px 12px !important;
-  }
-  
-  .card {
-    padding: 12px !important;
-  }
-  
-  .card-body {
-    padding: 12px !important;
-  }
-  
-  h1 { font-size: 1.3rem !important; }
-  h2 { font-size: 1.2rem !important; }
-  h3 { font-size: 1.1rem !important; }
-  h4 { font-size: 1rem !important; }
-  
-  /* الجداول — منع الفوضى */
-  table, .table {
-    font-size: 0.8rem !important;
-  }
-  
-  table th, table td,
-  .table th, .table td {
-    padding: 6px 8px !important;
-  }
-  
-  /* الأزرار */
-  .btn {
-    font-size: 0.85rem !important;
-    padding: 8px 12px !important;
-  }
-  
-  .btn-lg {
-    font-size: 0.95rem !important;
-    padding: 10px 15px !important;
-  }
-  
-  /* الصناديق */
-  .price-card {
-    padding: 18px 14px !important;
-  }
-  
-  .price-tag {
-    font-size: 1.6rem !important;
-  }
-  
-  /* إخفاء العناصر الزائدة */
-  .hide-mobile {
-    display: none !important;
-  }
-}
-
-/* ═══ Responsive — تابلت ═══ */
-@media (min-width: 576px) and (max-width: 991.98px) {
-  body {
-    padding: 12px !important;
-  }
-  
-  .doc-content {
-    padding: 25px 20px !important;
-  }
-}
-
-/* ═══ فئات مساعدة للوضع الليلي ═══ */
-.kn-surface {
-  background: var(--kn-surface) !important;
-  color: var(--kn-text) !important;
-}
-
-.kn-surface-alt {
-  background: var(--kn-surface-alt) !important;
-  color: var(--kn-text) !important;
-}
-
-.kn-info-box {
-  background: var(--kn-surface-alt);
-  border-radius: 15px;
-  border-right: 4px solid var(--kn-accent);
-  color: var(--kn-text);
-}
-
-.kn-h4-clean {
-  border: none !important;
-  padding: 0 !important;
-  color: var(--kn-primary) !important;
-}
-
-html[data-theme="dark"] .kn-h4-clean,
-body.dark-mode .kn-h4-clean {
-  color: var(--kn-accent) !important;
-}
-
-/* ═══════════════════════════════════════════════════
-   🌙 Dark Mode — دعم متغيرات brand.css
-   ═══════════════════════════════════════════════════ */
-
-/* متغيرات brand.css في الوضع الداكن */
-body.dark-mode,
-html[data-theme="dark"] {
-  --kn-navy: #7eb8e8;
-  --kn-navy-dark: #a5cdf0;
-  --kn-navy-light: #5fa3d9;
-  --kn-gold: #e5c668;
-  --kn-gold-light: #f4dc94;
-  --kn-cream: #334155;
-  --kn-light: #334155;
-  --kn-text: #f1f5f9;
-  --kn-muted: #94a3b8;
-}
-
-/* عناوين brand.css */
-body.dark-mode .brand-text h1,
-body.dark-mode .brand-text p,
-body.dark-mode h4,
-body.dark-mode .doc-title h2,
-html[data-theme="dark"] .brand-text h1,
-html[data-theme="dark"] .brand-text p,
-html[data-theme="dark"] h4,
-html[data-theme="dark"] .doc-title h2 {
-  color: var(--kn-accent) !important;
-}
-
-/* خطوط doc-header */
-body.dark-mode .doc-header,
-html[data-theme="dark"] .doc-header {
-  border-bottom-color: var(--kn-accent) !important;
-}
-
-body.dark-mode .doc-header::after,
-html[data-theme="dark"] .doc-header::after {
-  background: var(--kn-accent) !important;
-}
-
-/* شعار */
-body.dark-mode .brand-logo,
-html[data-theme="dark"] .brand-logo {
-  border-color: var(--kn-accent) !important;
-  background: var(--kn-surface) !important;
-}
-
-/* doc-footer */
-body.dark-mode .doc-footer,
-html[data-theme="dark"] .doc-footer {
-  border-top-color: var(--kn-accent) !important;
-}
-
-body.dark-mode .doc-footer .copyright,
-html[data-theme="dark"] .doc-footer .copyright {
-  color: var(--kn-accent) !important;
-}
-
-/* حقول */
-body.dark-mode .field,
-html[data-theme="dark"] .field {
-  background: var(--kn-surface-alt) !important;
-  color: var(--kn-text) !important;
-  border-color: var(--kn-border) !important;
-}
-
-/* التوقيعات */
+/* توقيعات العقد */
 body.dark-mode .signature .block .title,
-html[data-theme="dark"] .signature .block .title {
-  color: var(--kn-accent) !important;
-}
-
+html[data-theme="dark"] .signature .block .title { color: var(--kn-accent) !important; }
 body.dark-mode .signature .block .name,
 body.dark-mode .signature .block .line,
 html[data-theme="dark"] .signature .block .name,
-html[data-theme="dark"] .signature .block .line {
-  color: var(--kn-text-muted) !important;
-}
+html[data-theme="dark"] .signature .block .line { color: var(--kn-text-muted) !important; }
 
 /* العلامة المائية */
 body.dark-mode .doc::before,
-html[data-theme="dark"] .doc::before {
-  color: rgba(201, 162, 39, 0.06) !important;
-}
+html[data-theme="dark"] .doc::before { color: rgba(201, 162, 39, 0.06) !important; }
 
-/* روابط الفوتر */
-body.dark-mode .doc-footer a,
-html[data-theme="dark"] .doc-footer a {
+/* privacy.html و eula.html */
+body.dark-mode .container, html[data-theme="dark"] .container { color: var(--kn-text) !important; }
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4, body.dark-mode h5, body.dark-mode h6,
+html[data-theme="dark"] h1, html[data-theme="dark"] h2, html[data-theme="dark"] h3, html[data-theme="dark"] h4, html[data-theme="dark"] h5, html[data-theme="dark"] h6 {
   color: var(--kn-accent) !important;
 }
-
-/* privacy.html و eula.html — Bootstrap عناصر */
-body.dark-mode .container,
-html[data-theme="dark"] .container {
-  color: var(--kn-text) !important;
-}
-
-body.dark-mode h1, body.dark-mode h2,
-body.dark-mode h3, body.dark-mode h4,
-body.dark-mode h5, body.dark-mode h6,
-html[data-theme="dark"] h1, html[data-theme="dark"] h2,
-html[data-theme="dark"] h3, html[data-theme="dark"] h4,
-html[data-theme="dark"] h5, html[data-theme="dark"] h6 {
-  color: var(--kn-accent) !important;
-}
-
 body.dark-mode p, body.dark-mode li, body.dark-mode ul,
-html[data-theme="dark"] p, html[data-theme="dark"] li, html[data-theme="dark"] ul {
-  color: var(--kn-text) !important;
-}
+html[data-theme="dark"] p, html[data-theme="dark"] li, html[data-theme="dark"] ul { color: var(--kn-text) !important; }
+body.dark-mode a, html[data-theme="dark"] a { color: var(--kn-accent-light) !important; }
+body.dark-mode hr, html[data-theme="dark"] hr { border-color: var(--kn-border) !important; }
+body.dark-mode .text-muted, html[data-theme="dark"] .text-muted { color: var(--kn-text-muted) !important; }
+body.dark-mode .text-primary, html[data-theme="dark"] .text-primary { color: var(--kn-accent) !important; }
 
-body.dark-mode a,
-html[data-theme="dark"] a {
-  color: var(--kn-accent-light) !important;
-}
+/* فئات مساعدة */
+.kn-surface { background: var(--kn-surface) !important; color: var(--kn-text) !important; }
+.kn-surface-alt { background: var(--kn-surface-alt) !important; color: var(--kn-text) !important; }
+.kn-info-box { background: var(--kn-surface-alt); border-radius: 15px; border-right: 4px solid var(--kn-accent); color: var(--kn-text); }
+.kn-h4-clean { border: none !important; padding: 0 !important; color: var(--kn-primary) !important; }
+html[data-theme="dark"] .kn-h4-clean, body.dark-mode .kn-h4-clean { color: var(--kn-accent) !important; }
 
-body.dark-mode hr,
-html[data-theme="dark"] hr {
-  border-color: var(--kn-border) !important;
-}
+/* إخفاء زر الطباعة العائم فقط */
+#btn-floating-print, .btn-floating-print { display: none !important; }
 
-body.dark-mode .text-muted,
-html[data-theme="dark"] .text-muted {
-  color: var(--kn-text-muted) !important;
-}
-
-body.dark-mode .text-primary,
-html[data-theme="dark"] .text-primary {
-  color: var(--kn-accent) !important;
-}
-
-/* أزرار Bootstrap */
-body.dark-mode .btn-primary,
-html[data-theme="dark"] .btn-primary {
-  background: var(--kn-primary) !important;
-  border-color: var(--kn-primary) !important;
-  color: white !important;
-}
-
-body.dark-mode .btn-outline-primary,
-html[data-theme="dark"] .btn-outline-primary {
-  color: var(--kn-accent) !important;
-  border-color: var(--kn-accent) !important;
-}
-
-/* ═══════════════════════════════════════════════════
-   🌙 إصلاح زر الوضع الليلي — لا يغطي الوقت
-   ═══════════════════════════════════════════════════ */
-.kn-theme-toggle {
-  position: fixed;
-  top: auto !important;
-  left: auto !important;
-  bottom: 90px !important;
-  left: 12px !important;
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 50%;
-  border: none;
-  background: var(--kn-surface);
-  color: var(--kn-primary);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-  cursor: pointer;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.25s ease;
-  z-index: 9997;
-}
-
-.kn-theme-toggle:active {
-  transform: scale(0.9);
-}
-
-body.dark-mode .kn-theme-toggle {
-  background: var(--kn-surface);
-  color: var(--kn-accent);
-}
-
-/* على الموبايل — فوق الشريط السفلي */
-@media (max-width: 575.98px) {
-  .kn-theme-toggle {
-    bottom: 95px !important;
-    left: 10px !important;
-    width: 42px !important;
-    height: 42px !important;
-  }
-}
-
-
-/* ═══════════════════════════════════════════════════
-   🌙 زر الوضع الليلي — نسخة محسّنة
-   ═══════════════════════════════════════════════════ */
-.kn-theme-toggle {
-  position: fixed;
-  top: 12px !important;
-  right: 12px !important;
-  left: auto !important;
-  bottom: auto !important;
-  width: 32px !important;
-  height: 32px !important;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: white;
-  cursor: pointer;
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.25s ease;
-  z-index: 10000;
-  padding: 0;
-  line-height: 1;
-}
-
-.kn-theme-toggle:hover,
-.kn-theme-toggle:active {
-  transform: scale(1.1);
-  background: rgba(255,255,255,0.25);
-}
-
-body.dark-mode .kn-theme-toggle {
-  background: rgba(0,0,0,0.3);
-  border-color: rgba(255,255,255,0.2);
-  color: var(--kn-accent);
-}
-
-/* إخفاء الزر في وضع الطباعة */
-@media print {
-  .kn-theme-toggle { display: none !important; }
-}
-
-/* على الشاشات الكبيرة */
-@media (min-width: 992px) {
-  .kn-theme-toggle {
-    top: 15px !important;
-    right: 15px !important;
-    width: 36px !important;
-    height: 36px !important;
-    font-size: 1rem;
-  }
-}
-
-/* إعادة سهم القوائم المنسدلة */
-select.form-select {
-  -webkit-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
-  background-repeat: no-repeat !important;
-  background-position: left .75rem center !important;
-  background-size: 16px 12px !important;
-  padding-left: 2.25rem !important;
-}
-
-/* تصميم العناوين العائمة - النسخة النهائية */
-.floating-group {
-  position: relative;
-  margin-bottom: 20px;
-}
-
+/* =========================================
+   الحقول العائمة (تحديث لتدعم الوضع الليلي)
+   ========================================= */
+.floating-group { position: relative; margin-bottom: 20px; }
 .floating-group input {
   width: 100%;
-  padding: 22px 14px 8px 14px; 
-  border: 2px solid #cbd5e1;
+  padding: 22px 14px 8px 14px;
+  border: 2px solid var(--kn-border, #cbd5e1);
   border-radius: 10px;
   font-size: 15px;
   font-family: inherit;
   outline: none;
-  background: #ffffff; /* لون أبيض صريح */
+  background: var(--kn-surface, #ffffff);
+  color: var(--kn-text, #1e293b);
   box-sizing: border-box;
   transition: 0.3s;
 }
-
 .floating-group input:focus {
-  border-color: #0d6efd;
+  border-color: var(--kn-primary, #0d6efd);
   box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
 }
-
 .floating-group label {
   position: absolute;
   right: 14px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: #ffffff; /* هذه الخلفية هي التي ستخفي الخط */
+  background-color: var(--kn-surface, #ffffff);
   padding: 0 6px;
-  color: #64748b;
+  color: var(--kn-text-muted, #64748b);
   font-size: 15px;
   pointer-events: none;
   transition: 0.2s ease-out;
-  z-index: 10; /* لضمان ظهورها فوق الخط */
+  z-index: 10;
 }
-
-/* عندما يكون الحقل في وضع التركيز أو به نص، يصعد النص للأعلى */
 .floating-group input:focus ~ label,
 .floating-group input:not(:placeholder-shown) ~ label {
-  top: 0; 
+  top: 0;
   font-size: 12px;
-  color: #0d6efd;
+  color: var(--kn-primary, #0d6efd);
   font-weight: 700;
+}
+
+/* الحفاظ على لون شاشة الدخول كما هي حتى في الوضع الليلي */
+body.dark-mode #loginOverlay {
+  background: linear-gradient(135deg,#0b3d91,#0d6efd) !important;
 }

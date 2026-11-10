@@ -19,7 +19,7 @@
   background:#fff!important;border:1.5px solid var(--kn-line)!important;border-radius:16px!important;
   box-shadow:0 8px 18px -10px rgba(15,28,51,.35)!important;transition:border-color .2s,box-shadow .2s}
 #loginOverlay .floating-group input:focus{
-  border-color:var(--kn-o2)!important;outline:none!important;
+  border-color:var(--kn-accent)!important;outline:none!important;
   box-shadow:0 0 0 4px rgba(245,124,0,.16),0 12px 24px -12px rgba(15,28,51,.4)!important}
 
 /* خانات التفعيل */
@@ -28,7 +28,7 @@
   padding:14px 16px!important;font-size:1rem!important;box-sizing:border-box;
   box-shadow:0 8px 18px -10px rgba(15,28,51,.35)!important;transition:border-color .2s,box-shadow .2s}
 #kn-setup-wizard input[type="text"]:focus,#kn-setup-wizard input[type="tel"]:focus,#kn-setup-wizard input[type="email"]:focus{
-  border-color:var(--kn-o2)!important;outline:none!important;
+  border-color:var(--kn-accent)!important;outline:none!important;
   box-shadow:0 0 0 4px rgba(245,124,0,.16),0 12px 24px -12px rgba(15,28,51,.4)!important}
 #kn-setup-wizard ::placeholder{color:#9aa7b8!important;opacity:1}
 #kn-setup-wizard label{color:var(--kn-navy)!important;font-weight:700!important;font-size:.95rem!important}
@@ -43,7 +43,7 @@
 /* الأزرار الرئيسية: حبة برتقالية */
 #loginBtn,#kn-wiz-submit,#eula-accept{
   border:none!important;border-radius:999px!important;color:#fff!important;font-weight:800!important;min-height:54px;cursor:pointer;
-  background:linear-gradient(135deg,var(--kn-o1),var(--kn-o2))!important;
+  background:linear-gradient(135deg,var(--kn-primary),var(--kn-accent))!important;
   box-shadow:0 16px 26px -12px rgba(245,124,0,.7)!important;transition:transform .15s,box-shadow .15s}
 #loginBtn:active,#kn-wiz-submit:active,#eula-accept:active{transform:translateY(1px);box-shadow:0 8px 16px -10px rgba(245,124,0,.7)!important}
 #loginBtn:disabled{opacity:.65;filter:grayscale(.4);cursor:not-allowed}
