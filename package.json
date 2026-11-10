@@ -5,10 +5,10 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node -e \"const fs=require('fs');if(fs.existsSync('www'))fs.rmSync('www',{recursive:true});fs.mkdirSync('www');fs.readdirSync('.').forEach(f=>{(f.endsWith('.js')||f.endsWith('.html')||f.endsWith('.css')||f.endsWith('.json')||f.endsWith('.png'))&&f!='package.json'&&f!='package-lock.json'&&f!='main.js'&&f!='preload.js'&&fs.copyFileSync(f,'www/'+f)});if(fs.existsSync('lib'))fs.cpSync('lib','www/lib',{recursive:true})\"",
+    "build": "node obfuscate.js",
     "start": "electron .",
-    "build-win": "electron-builder --win --x64 --publish never",
-    "build-win32": "electron-builder --win --ia32"
+    "build-win": "npm run build && electron-builder --win --x64 --publish never",
+    "build-win32": "npm run build && electron-builder --win --ia32"
   },
   "repository": {
     "type": "git",
@@ -38,7 +38,8 @@
   "devDependencies": {
     "@capacitor/cli": "^8.6.0",
     "electron": "^44.7.2",
-    "electron-builder": "^26.18.0"
+    "electron-builder": "^26.18.0",
+    "javascript-obfuscator": "^5.10.0"
   },
   "build": {
     "appId": "com.kodnaqi.diagnostics",
@@ -49,7 +50,8 @@
     "files": [
       "main.js",
       "preload.js",
-      "www/**/*",
+      "trial-manager.js",
+      "www_dist/**/*",
       "package.json",
       "!android/",
       "!*.md",
@@ -70,11 +72,12 @@
       "createStartMenuShortcut": true,
       "installerIcon": "build/icons/win/icon.ico",
       "uninstallerIcon": "build/icons/win/icon.ico",
-      "installerHeaderIcon": "www/logo.png"
+      "installerHeaderIcon": "www_dist/logo.png"
     },
     "asarUnpack": [
       "main.js",
-      "preload.js"
+      "preload.js",
+      "trial-manager.js"
     ],
     "publish": [
       {

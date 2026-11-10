@@ -90,3 +90,6 @@ launch-checklist.html
 firebase-config.js
 admin.html
 *.bak_*
+www_dist/
+node_modules/
+dist/
