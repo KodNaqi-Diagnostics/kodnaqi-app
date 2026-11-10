@@ -160,7 +160,7 @@
 
   function fmtDate(ts) {
     if (!ts) return '—';
-    try { return new Date(ts).toLocaleDateString('ar-EG'); } catch (e) { return '—'; }
+    try { return new Date(ts).toLocaleDateString('en-US'); } catch (e) { return '—'; }
   }
 
   window.licRender = function() {
@@ -1109,8 +1109,8 @@
         return;
       }
 
-      const date = new Date().toLocaleDateString('ar-EG');
-      const expiry = lic.expires ? new Date(lic.expires).toLocaleDateString('ar-EG') : '—';
+      const date = new Date().toLocaleDateString('en-US');
+      const expiry = lic.expires ? new Date(lic.expires).toLocaleDateString('en-US') : '—';
       const prices = { 'B': 150, 'S': 300, 'A': 500, 'E': 1000, 'TRIAL': 0 };
       const priceUSD = prices[lic.tier] || 0;
 
@@ -1316,7 +1316,7 @@
         for (let i = 1; i <= 5; i++) {
           starsHtml += `<span style="color: ${i <= r.stars ? '#f59e0b' : '#e2e8f0'}; font-size:1.5rem;">★</span>`;
         }
-        const date = new Date(r.date).toLocaleDateString('ar-EG');
+        const date = new Date(r.date).toLocaleDateString('en-US');
         
         return `
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:15px; margin-bottom:10px;">

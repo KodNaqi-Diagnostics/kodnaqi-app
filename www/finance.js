@@ -34,7 +34,7 @@ async function renderFinance() {
     let html = '';
     for (const v of recent) {
       const patient = await dbGet('patients', v.patient_id);
-      const date = new Date(v.date).toLocaleDateString('ar-EG');
+      const date = new Date(v.date).toLocaleDateString('en-US');
       const remainingClass = v.remaining > 0 ? 'text-danger fw-bold' : 'text-success';
       html += `
         <div class="list-group-item">
@@ -195,7 +195,7 @@ async function renderStats() {
       return vd >= d && vd < nextDay;
     });
 
-    dayLabels.push(d.toLocaleDateString('ar-EG', { weekday: 'short' }));
+    dayLabels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
     dayCounts.push(dayVisits.length);
     dayRevenue.push(dayVisits.reduce((s, v) => s + (v.paid || 0), 0));
   }

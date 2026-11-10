@@ -267,8 +267,8 @@ async function showNotificationHistory(visitId) {
       for (var i = 0; i < filtered.length; i++) {
         var n = filtered[i];
         var d = new Date(n.sent_at);
-        var dateStr = d.toLocaleDateString('ar-EG') + ' ' +
-          d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        var dateStr = d.toLocaleDateString('en-US') + ' ' +
+          d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         html += '<div class="card mb-2 p-2">' +
           '<div class="d-flex justify-content-between align-items-center mb-1">' +
@@ -340,8 +340,8 @@ async function renderNotificationsPage() {
       for (var i = 0; i < limit; i++) {
         var n = all[i];
         var d = new Date(n.sent_at);
-        var dateStr = d.toLocaleDateString('ar-EG') + ' ' +
-          d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        var dateStr = d.toLocaleDateString('en-US') + ' ' +
+          d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         html += '<div class="card mb-2 p-2">' +
           '<div class="d-flex justify-content-between align-items-center mb-1">' +

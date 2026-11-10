@@ -51,7 +51,7 @@
     const sortedTests = [..._allTests].sort(function(a, b) {
       const nameA = (a.name_ar || a.name || '').toString();
       const nameB = (b.name_ar || b.name || '').toString();
-      return nameA.localeCompare(nameB, 'ar');
+      return nameA.localeCompare(nameB, 'en-US');
     });
 
     const testsHtml = sortedTests.map(function(t) {
@@ -221,7 +221,7 @@
   // ═══════════════════════════════════════════════════
   async function showRestorePrompt(data) {
     const date = new Date(data.savedAt);
-    const dateStr = date.toLocaleDateString('ar-EG', {
+    const dateStr = date.toLocaleDateString('en-US', {
       year: 'numeric', month: 'long', day: 'numeric'
     });
 

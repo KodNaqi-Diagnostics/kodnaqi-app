@@ -112,7 +112,7 @@
     
     const days = Math.round(CONFIG.duration / 86400000);
     const expires = new Date(now + CONFIG.duration);
-    console.log('[DevMode] ✅ مُفعَّل (' + reason + ') — ينتهي: ' + expires.toLocaleDateString('ar-EG'));
+    console.log('[DevMode] ✅ مُفعَّل (' + reason + ') — ينتهي: ' + expires.toLocaleDateString('en-US'));
     return true;
   }
 

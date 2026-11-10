@@ -188,7 +188,7 @@ function renderCloudSection() {
   let lastText = 'لا يوجد';
   if (lastUpload) {
     const d = new Date(lastUpload);
-    lastText = d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'});
+    lastText = d.toLocaleDateString('en-US') + ' ' + d.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
   }
 
   // 🔐 قسم التشفير

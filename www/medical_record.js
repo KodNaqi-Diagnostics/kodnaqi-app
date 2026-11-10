@@ -168,8 +168,8 @@ async function renderMedicalContent(patientId) {
       var v = visits[i];
       var vTests = await dbGetByIndex('visit_tests', 'visit_id', v.id);
       var d = new Date(v.date);
-      var dateStr = d.toLocaleDateString('ar-EG') + ' ' + 
-        d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      var dateStr = d.toLocaleDateString('en-US') + ' ' + 
+        d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
       
       html += '<div class="list-group-item">' +
         '<div class="d-flex justify-content-between align-items-center mb-1">' +

@@ -355,7 +355,7 @@
         '✅ تم الاسترجاع بنجاح!\n\n' +
         '📁 الملف: ' + filename + '\n' +
         '🏥 المعمل: ' + (backup._lab || 'غير معروف') + '\n' +
-        '📅 التاريخ: ' + new Date(backup._created).toLocaleDateString('ar-EG') + '\n' +
+        '📅 التاريخ: ' + new Date(backup._created).toLocaleDateString('en-US') + '\n' +
         '📊 السجلات: ' + restoredRecords + '\n\n' +
         '⚠️ سيُعاد تحميل التطبيق الآن.'
       );
