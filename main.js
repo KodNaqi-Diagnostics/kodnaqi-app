@@ -4,6 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { machineIdSync } = require('node-machine-id');
 const { autoUpdater } = require('electron-updater');
+const { getTrialStatus } = require('./trial-manager');
 
 // ✅ 1. تفعيل SharedArrayBuffer لمنع الشاشة السوداء
 app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
@@ -122,6 +123,11 @@ app.whenReady().then(() => {
 
   // إعداد قناة الاتصال لجلب كود الجهاز
   ipcMain.handle('get-device-code', () => generateStableDeviceCode());
+
+// إرسال حالة التجربة إلى الواجهة
+ipcMain.handle('get-trial-status', () => {
+    return getTrialStatus();
+});
 
   // إنشاء النافذة
   createWindow();

@@ -30,6 +30,7 @@
     "@devlas/capacitor-thermal-printer": "^0.8.1",
     "@tailwindcss/vite": "^4.3.3",
     "@thumbmarkjs/thumbmarkjs": "^1.12.0",
+    "electron-store": "^12.0.0",
     "electron-updater": "^6.1.0",
     "node-machine-id": "^1.1.12",
     "tailwindcss": "^4.3.3"

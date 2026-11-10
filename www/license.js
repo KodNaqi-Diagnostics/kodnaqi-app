@@ -383,25 +383,41 @@
 
   // ═══ التجريبية ═══
   async function getTrialStatus() {
-    // ═══ إصلاح أمني: إذا كان الجهاز قد فعّل ترخيصاً مدفوعاً سابقاً، يُمنع من التجريبي ═══
-    if (safeGet('kodnaqi_ever_activated') === 'true') {
-      return { active: false, daysLeft: 0, startMs: 0, elapsed: 0, expired: true };
-    }
-
-    let start = safeGet(TRIAL_KEY);
-    if (!start) {
-      start = String(Date.now());
-      safeSet(TRIAL_KEY, start);
-      try { await window.KodNaqiSecurity.updateLastSeen(Date.now()); } catch(e) {}
-    }
-    const startMs = parseInt(start, 10) || Date.now();
-    const elapsed = Date.now() - startMs;
-    const totalMs = TRIAL_DAYS * 86400000;
-    const remaining = totalMs - elapsed;
-    const daysLeft = Math.max(0, Math.ceil(remaining / 86400000));
-    const expired = remaining <= 0;
-    return { active: !expired, daysLeft, startMs, elapsed, expired };
+  // 1. إذا كنا في بيئة Electron (ويندوز) - نستخدم النظام الآمن
+  if (window.electronAPI && window.electronAPI.getTrialStatus) {
+      try {
+          const status = await window.electronAPI.getTrialStatus();
+          return {
+              active: status.isTrialActive,
+              daysLeft: status.daysLeft,
+              startMs: status.trialStartDate,
+              elapsed: Date.now() - status.trialStartDate,
+              expired: !status.isTrialActive
+          };
+      } catch (e) {
+          console.error('Trial check failed:', e);
+          return { active: false, daysLeft: 0, startMs: 0, elapsed: 0, expired: true };
+      }
   }
+
+  // 2. الخطة البديلة للويب (المتصفح) أو الأندرويد
+  if (safeGet('kodnaqi_ever_activated') === 'true') {
+    return { active: false, daysLeft: 0, startMs: 0, elapsed: 0, expired: true };
+  }
+
+  let start = safeGet(TRIAL_KEY);
+  if (!start) {
+    start = String(Date.now());
+    safeSet(TRIAL_KEY, start);
+  }
+  const startMs = parseInt(start, 10) || Date.now();
+  const elapsed = Date.now() - startMs;
+  const totalMs = TRIAL_DAYS * 86400000;
+  const remaining = totalMs - elapsed;
+  const daysLeft = Math.max(0, Math.ceil(remaining / 86400000));
+  const expired = remaining <= 0;
+  return { active: !expired, daysLeft, startMs, elapsed, expired };
+}
 
   // ═══ القراءة النشطة (ترخيص أو تجريبية) ═══
     async function getActivePayload() {

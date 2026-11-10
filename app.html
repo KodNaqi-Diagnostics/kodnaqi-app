@@ -2286,16 +2286,13 @@ document.addEventListener('DOMContentLoaded', function() {
 <button class="kn-theme-toggle" onclick="toggleDarkMode()" id="themeToggleBtn" title="الوضع الليلي">
     <i class="bi bi-moon-fill"></i>
 </button>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // إخفاء زر البصمة في الويندوز
     const biometricBtn = document.getElementById('biometricLoginBtn');
-    if (biometricBtn) {
-        // إذا كان التطبيق يعمل على أندرويد أو ويندوز (Capacitor أو Electron)
-        if (window.Capacitor || window.electronAPI) {
-            biometricBtn.style.display = 'none'; // إخفاء الزر في التطبيق
-        } else {
-            biometricBtn.style.display = 'block'; // إظهاره في المتصفح
-        }
+    if (biometricBtn && window.electronAPI) {
+        biometricBtn.style.display = 'none';
     }
 });
 </script>
