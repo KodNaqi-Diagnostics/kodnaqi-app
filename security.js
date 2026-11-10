@@ -130,53 +130,57 @@
   }
 
   async function getDeviceCode() {
-    if (_cachedCode) {
-      try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
-      return _cachedCode;
+  // 1. إذا كان الكود موجوداً في الذاكرة المؤقتة للجلسة، أرجعه فوراً
+  if (_cachedCode) return _cachedCode;
+
+  // 2. الأولوية القصوى: بيئة الأندرويد (Capacitor) - ANDROID_ID الثابت
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
+    try {
+      const info = await window.Capacitor.Plugins.Device.getId();
+      if (info && info.identifier) {
+        // نقوم بتشفير الـ ANDROID_ID لنحصل على 6 حروف/أرقام
+        const hex = await sha256Hex('KODNAQI-ANDROID|' + info.identifier);
+        _cachedCode = hexToBase36(hex, 6);
+        console.log('[Security] Using Native Android ID:', _cachedCode);
+        try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
+        return _cachedCode;
+      }
+    } catch (e) {
+      console.warn('[Security] Capacitor Device getId failed, falling back...', e);
     }
-  // محاولة استرجاع الكود المخزن (ثابت ولا يتغير)
+  }
+
+  // 3. جسر الأندرويد القديم (AndroidBridge) - احتياطي
+  if (window.AndroidBridge && typeof window.AndroidBridge.getDeviceId === 'function') {
+    try {
+      const id = window.AndroidBridge.getDeviceId();
+      if (id) {
+        const hex = await sha256Hex('KODNAQI-ANDROID|' + id);
+        _cachedCode = hexToBase36(hex, 6);
+        try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
+        return _cachedCode;
+      }
+    } catch(e) {}
+  }
+
+  // 4. الخطة البديلة للويب (PWA) والويندوز
+  // نبحث في الذاكرة المحلية أولاً
   try {
     const stored = localStorage.getItem('kodnaqi_device_code_v1');
     if (stored && stored.length === 6) {
       _cachedCode = stored;
-      try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
-  return _cachedCode;
+      return _cachedCode;
     }
-  } catch (e) {}
+  } catch(e) {}
 
-    // 1) جسر أندرويد (مستقبلي — APK)
-    if (window.AndroidBridge && typeof window.AndroidBridge.getDeviceId === 'function') {
-      try {
-        const id = window.AndroidBridge.getDeviceId();
-        if (id) {
-          const hex = await sha256Hex('KODNAQI-ANDROID|' + id);
-          _cachedCode = hexToBase36(hex, 6);
-          console.log('[Security] Using native Android ID');
-          try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
+  // إذا لم يوجد شيء، نولد كوداً عشوائياً ونحفظه (للويب فقط)
+  const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase();
+  _cachedCode = randomStr;
+  try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
+  
+  console.log('[Security] Generated new stable Device Code (Web fallback):', _cachedCode);
   return _cachedCode;
-        }
-      } catch (e) {}
-    }
-
-    // 2) بصمة مستقرة (الافتراضي — تعيش حتى بعد مسح البيانات)
-    try {
-      const fp = await getStableFingerprint();
-      if (fp && fp.length > 20) {
-        const hex = await sha256Hex('KODNAQI-FP|' + fp);
-        _cachedCode = hexToBase36(hex, 6);
-        console.log('[Security] Using stable fingerprint');
-        try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
-  return _cachedCode;
-      }
-    } catch (e) {}
-
-    // 3) احتياطي (نادر جدًا)
-    const fb = await getDeviceFingerprint();
-    const hex2 = await sha256Hex('KODNAQI|' + fb);
-    _cachedCode = hexToBase36(hex2, 6);
-    try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
-  return _cachedCode;
-  }
+}
 
   async function getPublicKey() {
     if (_cachedPublicKey) return _cachedPublicKey;
