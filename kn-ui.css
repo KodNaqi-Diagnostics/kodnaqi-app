@@ -44,8 +44,8 @@
 #loginBtn,#kn-wiz-submit,#eula-accept{
   border:none!important;border-radius:999px!important;color:#fff!important;font-weight:800!important;min-height:54px;cursor:pointer;
   background:linear-gradient(135deg,var(--kn-primary),var(--kn-accent))!important;
-  box-shadow:0 16px 26px -12px rgba(245,124,0,.7)!important;transition:transform .15s,box-shadow .15s}
-#loginBtn:active,#kn-wiz-submit:active,#eula-accept:active{transform:translateY(1px);box-shadow:0 8px 16px -10px rgba(245,124,0,.7)!important}
+  box-shadow:0 16px 26px -12px rgba(0,0,0,0.1)!important;transition:transform .15s,box-shadow .15s}
+#loginBtn:active,#kn-wiz-submit:active,#eula-accept:active{transform:translateY(1px);box-shadow:0 8px 16px -10px rgba(0,0,0,0.1)!important}
 #loginBtn:disabled{opacity:.65;filter:grayscale(.4);cursor:not-allowed}
 
 /* الاتفاقية */
