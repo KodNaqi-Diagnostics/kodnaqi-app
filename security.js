@@ -129,16 +129,31 @@
     return signals.join('||');
   }
 
-  async function getDeviceCode() {
-  // 1. إذا كان الكود موجوداً في الذاكرة المؤقتة للجلسة، أرجعه فوراً
-  if (_cachedCode) return _cachedCode;
+async function getDeviceCode() {
+  // ========================================================
+  // 0. الأولوية القصوى: بيئة الويندوز (Electron) - لا تلمسها
+  // ========================================================
+  if (window.electronAPI && window.electronAPI.getDeviceCode) {
+    try {
+      const rawCode = await window.electronAPI.getDeviceCode(); // سيعيد مثلاً ABC-DEF
+      if (rawCode) {
+        _cachedCode = rawCode.replace('-', ''); // إزالة الشرطة ليكون 6 حروف
+        console.log('[Security] Using native Electron Device Code:', _cachedCode);
+        try { localStorage.setItem('kodnaqi_device_code_v1', _cachedCode); } catch(e) {}
+        return _cachedCode;
+      }
+    } catch (e) {
+      console.warn('[Security] Electron Code failed', e);
+    }
+  }
 
-  // 2. الأولوية القصوى: بيئة الأندرويد (Capacitor) - ANDROID_ID الثابت
+  // ========================================================
+  // 1. الأولوية الثانية: بيئة الأندرويد (Capacitor)
+  // ========================================================
   if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
     try {
       const info = await window.Capacitor.Plugins.Device.getId();
       if (info && info.identifier) {
-        // نقوم بتشفير الـ ANDROID_ID لنحصل على 6 حروف/أرقام
         const hex = await sha256Hex('KODNAQI-ANDROID|' + info.identifier);
         _cachedCode = hexToBase36(hex, 6);
         console.log('[Security] Using Native Android ID:', _cachedCode);
@@ -150,7 +165,9 @@
     }
   }
 
-  // 3. جسر الأندرويد القديم (AndroidBridge) - احتياطي
+  // ========================================================
+  // 2. الأولوية الثالثة: جسر الأندرويد القديم (احتياطي)
+  // ========================================================
   if (window.AndroidBridge && typeof window.AndroidBridge.getDeviceId === 'function') {
     try {
       const id = window.AndroidBridge.getDeviceId();
@@ -163,7 +180,9 @@
     } catch(e) {}
   }
 
-  // 4. الخطة البديلة للويب (PWA) والويندوز
+  // ========================================================
+  // 3. الخطة البديلة للويب (PWA)
+  // ========================================================
   // نبحث في الذاكرة المحلية أولاً
   try {
     const stored = localStorage.getItem('kodnaqi_device_code_v1');
