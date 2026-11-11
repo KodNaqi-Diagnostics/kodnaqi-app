@@ -1,5 +1,5 @@
 const { app, safeStorage, ipcMain } = require('electron');
-const Store = require('electron-store');
+const Store = require('electron-store').default;
 const { machineIdSync } = require('node-machine-id');
 const { execSync } = require('child_process');
 
