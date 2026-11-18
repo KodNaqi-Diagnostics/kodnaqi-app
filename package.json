@@ -48,16 +48,17 @@
       "output": "dist"
     },
     "files": [
-      "main.js",
-      "preload.js",
-      "trial-manager.js",
-      "www_dist/**/*",
-      "package.json",
-      "!android/",
-      "!*.md",
-      "!.github/",
-      "!www/*.bak"
-    ],
+  "main.js",
+  "preload.js",
+  "trial-manager.js",
+  "www/**/*",
+  "www_dist/**/*",
+  "package.json",
+  "!android/",
+  "!*.md",
+  "!.github/",
+  "!www/*.bak"
+],
     "win": {
       "target": [
         "nsis",

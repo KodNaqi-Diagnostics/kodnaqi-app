@@ -30,11 +30,30 @@ function generateStableDeviceCode() {
 // ✅ 4. إعدادات التحديث التلقائي
 autoUpdater.autoDownload = false;
 
-// ✅ 5. إنشاء النافذة الرئيسية
+// ✅ 5. دالة مساعدة: البحث عن ملف في كل المسارات المحتملة (مهمة جداً بعد التشفير/Obfuscation)
+function resolveFilePath(url) {
+  const possiblePaths = [
+    path.join(__dirname, 'www', url),
+    path.join(__dirname, 'www_dist', url),
+    path.join(process.resourcesPath || '', 'www', url),
+    path.join(process.resourcesPath || '', 'app.asar.unpacked', 'www', url),
+    path.join(__dirname, url)
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) return p;
+  }
+  console.error('[Protocol] File not found. Tried:', possiblePaths);
+  return null;
+}
+
+// ✅ 6. إنشاء النافذة الرئيسية
 function createWindow() {
-  // البحث عن الأيقونة
+  // البحث عن الأيقونة في كل المسارات المحتملة
   const iconPath = [
     path.join(__dirname, 'www', 'logo.png'),
+    path.join(__dirname, 'www_dist', 'logo.png'),
+    path.join(process.resourcesPath || '', 'www', 'logo.png'),
     path.join(__dirname, 'logo.png')
   ].find(fs.existsSync);
 
@@ -56,17 +75,17 @@ function createWindow() {
 
   // تحميل الصفحة عبر البروتوكول المخصص
   win.loadURL('app://./index.html');
-  
+
   // إظهار النافذة فقط عندما تكون جاهزة (لمنع الشاشة البيضاء)
   win.once('ready-to-show', () => win.show());
 
-// منع التطبيق من الانتقال لصفحات خارجية داخل النافذة
-win.webContents.on('will-navigate', (event, url) => {
-  if (!url.startsWith('app://')) {
-    event.preventDefault();
-    shell.openExternal(url);
-  }
-});
+  // منع التطبيق من الانتقال لصفحات خارجية داخل النافذة
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('app://')) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
 
   // منع فتح النوافذ الخارجية داخل التطبيق (أمان)
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -75,38 +94,47 @@ win.webContents.on('will-navigate', (event, url) => {
   });
 }
 
-// ✅ 6. تهيئة التطبيق (تحدث مرة واحدة فقط)
+// ✅ 7. تهيئة التطبيق
 app.whenReady().then(() => {
-  
-  // معالجة طلبات الملفات (app://) بكفاءة عالية
+
+  // معالجة طلبات الملفات (app://) بكفاءة عالية — تدعم كل مسارات الإخراج المحتملة
   protocol.handle('app', async (request) => {
     try {
       // تنظيف الرابط من أي استعلامات مثل ?v=1
       let url = request.url.replace('app://', '').split('?')[0];
       url = decodeURIComponent(url);
-      
+
       // إزالة النقطة والسلاش من بداية المسار
       if (url.startsWith('./')) url = url.substring(2);
       if (url.startsWith('/')) url = url.substring(1);
 
-      // البحث عن الملف في مجلد www
-      const filePath = path.join(__dirname, 'www', url);
+      // المسار الافتراضي
+      if (!url || url === '') url = 'index.html';
+
+      // البحث عن الملف في كل المسارات المحتملة (مهم بعد الـ obfuscation)
+      const filePath = resolveFilePath(url);
+      if (!filePath) {
+        console.error('[Protocol] Requested URL:', request.url);
+        return new Response('Not Found', { status: 404 });
+      }
+
       const data = await fs.promises.readFile(filePath);
-      
+
       const ext = path.extname(filePath).toLowerCase();
       const mimeTypes = {
-        '.html': 'text/html', 
-        '.css': 'text/css', 
+        '.html': 'text/html',
+        '.css': 'text/css',
         '.js': 'application/javascript',
-        '.json': 'application/json', 
-        '.png': 'image/png', 
+        '.json': 'application/json',
+        '.png': 'image/png',
         '.jpg': 'image/jpeg',
-        '.svg': 'image/svg+xml', 
-        '.woff': 'font/woff', 
-        '.woff2': 'font/woff2', 
-        '.ttf': 'font/ttf'
+        '.svg': 'image/svg+xml',
+        '.woff': 'font/woff',
+        '.woff2': 'font/woff2',
+        '.ttf': 'font/ttf',
+        '.ico': 'image/x-icon'
       };
-      
+
       return new Response(data, {
         headers: {
           'Content-Type': mimeTypes[ext] || 'application/octet-stream',
@@ -116,7 +144,7 @@ app.whenReady().then(() => {
         }
       });
     } catch (e) {
-      // في حال عدم وجود الملف، نعيد 404 بصمت
+      console.error('[Protocol] Error:', e);
       return new Response('Not Found', { status: 404 });
     }
   });
@@ -124,10 +152,10 @@ app.whenReady().then(() => {
   // إعداد قناة الاتصال لجلب كود الجهاز
   ipcMain.handle('get-device-code', () => generateStableDeviceCode());
 
-// إرسال حالة التجربة إلى الواجهة
-ipcMain.handle('get-trial-status', () => {
+  // إرسال حالة التجربة إلى الواجهة
+  ipcMain.handle('get-trial-status', () => {
     return getTrialStatus();
-});
+  });
 
   // إنشاء النافذة
   createWindow();
