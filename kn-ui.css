@@ -53,3 +53,26 @@
 #kodnaqi-eula-dialog h3{font-size:1.05rem!important;font-weight:800!important;margin:1.1rem 0 .3rem!important}
 #kodnaqi-eula-dialog h3:first-child{margin-top:0!important}
 #kodnaqi-eula-dialog p{font-size:.98rem!important;line-height:1.95!important;color:#334155!important;margin:0 0 .6rem!important}
+
+/* تكبير الواجهة على شاشات الكمبيوتر */
+@media (min-width: 900px) {
+  html {
+    font-size: 17px;
+  }
+
+  button,
+  .btn,
+  [class*="btn"],
+  input,
+  select,
+  textarea {
+    min-height: 46px;
+    font-size: 1.05rem;
+  }
+
+  .bi,
+  i[class^="bi-"],
+  .icon {
+    font-size: 1.25em;
+  }
+}

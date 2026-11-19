@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>طريقة تثبيت KodNaqi على ويندوز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0d3b66;
+      --accent: #c9a227;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --success: #059669;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Cairo', system-ui, sans-serif;
+      background: linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px;
+      line-height: 1.7;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      box-shadow: 0 20px 50px -20px rgba(13, 59, 102, 0.25);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0d3b66 0%, #1e6091 100%);
+      color: white;
+      padding: 32px 40px;
+      text-align: center;
+    }
+
+    .header .icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .header h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 1.05rem;
+    }
+
+    .content {
+      padding: 36px 40px 40px;
+    }
+
+    .alert {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-right: 5px solid var(--accent);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 32px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .alert .alert-icon {
+      font-size: 1.6rem;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .alert strong {
+      color: #92400e;
+      display: block;
+      margin-bottom: 4px;
+      font-size: 1.05rem;
+    }
+
+    .alert p {
+      color: #78350f;
+      font-size: 0.98rem;
+      margin: 0;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .steps {
+      list-style: none;
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .steps li {
+      position: relative;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px 18px 20px;
+      padding-right: 70px;
+      transition: 0.2s;
+    }
+
+    .steps li:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 8px 20px -10px rgba(13, 59, 102, 0.15);
+    }
+
+    .steps li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary), #1e6091);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+
+    .steps li strong {
+      display: block;
+      color: var(--primary);
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+    }
+
+    .steps li span {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .note {
+      margin-top: 32px;
+      padding: 20px;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 14px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .note .note-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .note p {
+      margin: 0;
+      color: #166534;
+      font-size: 0.98rem;
+    }
+
+    .footer {
+      margin-top: 28px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .footer strong {
+      color: var(--primary);
+    }
+
+    .contact-box {
+      margin-top: 28px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      text-align: center;
+    }
+
+    .contact-box h3 {
+      color: var(--primary);
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+      font-size: 1.02rem;
+    }
+
+    .contact-item a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .contact-item a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 20px 12px; }
+      .header { padding: 28px 24px; }
+      .content { padding: 28px 24px 32px; }
+      .header h1 { font-size: 1.45rem; }
+      .steps li { padding-right: 62px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <span class="icon">🖥️</span>
+        <h1>طريقة تثبيت KodNaqi على ويندوز</h1>
+        <p>دليل سريع وآمن لتجاوز رسالة الحماية</p>
+      </div>
+
+      <div class="content">
+        <div class="alert">
+          <span class="alert-icon">⚠️</span>
+          <div>
+            <strong>رسالة طبيعية وليست فيروس</strong>
+            <p>
+              بعد تشغيل ملف التثبيت قد تظهر رسالة من ويندوز تقول
+              <b>«Windows protected your PC»</b>
+              أو <b>«حماية ويندوز جهازك»</b>.
+              هذا يحدث لأن التطبيق جديد ولم يحصل بعد على شهادة توقيع رقمية مدفوعة.
+            </p>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span>📋</span>
+          خطوات التثبيت
+        </div>
+
+        <ol class="steps">
+          <li>
+            <strong>شغّل ملف التثبيت</strong>
+            <span>انقر نقراً مزدوجاً على ملف <b>KodNaqi-Setup.exe</b></span>
+          </li>
+          <li>
+            <strong>اضغط على «More info»</strong>
+            <span>أو «مزيد من المعلومات» إذا كانت الواجهة بالعربية</span>
+          </li>
+          <li>
+            <strong>اختر «Run anyway»</strong>
+            <span>أو «تشغيل على أي حال» ثم أكمل خطوات التثبيت بشكل طبيعي</span>
+          </li>
+          <li>
+            <strong>اتبع معالج التثبيت</strong>
+            <span>اختر مجلد التثبيت إن رغبت، ثم اضغط «تثبيت» وانتظر حتى ينتهي</span>
+          </li>
+        </ol>
+
+        <div class="note">
+          <span class="note-icon">✅</span>
+          <p>
+            التطبيق آمن ويعمل بدون إنترنت. جميع بيانات المرضى والنتائج تُحفظ على جهازك فقط ولا تُرسل إلى أي خادم خارجي بدون إذنك.
+          </p>
+        </div>
+
+        <div class="contact-box">
+          <h3>هل واجهت مشكلة أثناء التثبيت؟</h3>
+          <p style="margin-bottom: 12px; color: var(--muted);">تواصل معنا وسنساعدك مباشرة</p>
+          <div class="contact-item">
+            <span>📱</span>
+            <a href="https://wa.me/249111729111" target="_blank" dir="ltr">+249 111 729 111</a>
+          </div>
+          <div class="contact-item">
+            <span>✉️</span>
+            <a href="mailto:kodnaqi@gmail.com">kodnaqi@gmail.com</a>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p style="margin-top: 8px;"><strong>KodNaqi Diagnostics</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
